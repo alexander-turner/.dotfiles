@@ -2,7 +2,7 @@
 set fish_greeting ''
 # Instead have a rainbow talking cow say something random
 if status is-interactive
-		fortune -s | cowsay -f $(ls /usr/share/cowsay/cows/ | shuf -n1) #| lolcat
+		fortune -s | cowsay -y 
 end
 
 # Instead have fortune!
