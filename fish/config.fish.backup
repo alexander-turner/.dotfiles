@@ -127,6 +127,3 @@ end
 set -gx PATH $PATH "/home/turn/bin" "/home/turn/.local/bin"
 set -gx EDITOR "/usr/bin/vim"
 set -gx GCM_CREDENTIAL_STORE "cache"
-
-# The next line updates PATH for the Google Cloud SDK.
-if [ -f '/home/turn/Downloads/google-cloud-sdk/path.fish.inc' ]; . '/home/turn/Downloads/google-cloud-sdk/path.fish.inc'; end

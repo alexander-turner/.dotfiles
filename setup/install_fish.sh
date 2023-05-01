@@ -1,26 +1,23 @@
 #!/bin/bash
 
-# Replace this variable with the URL of your dotfiles repository
-DOTFILES_REPO_URL="your_git_repository_url"
-
-# Install Fish (example for Ubuntu/Debian)
+# Install Fish 
 sudo apt-get update
 sudo apt-get install -y fish
 
 # Clone your dotfiles repository to the home directory
-if [ ! -d ~/dotfiles ]; then
-  git clone "$DOTFILES_REPO_URL" ~/dotfiles
+if [ ! -d ~/.dotfiles ]; then # TODO is this needed?
+  git clone "$DOTFILES_REPO_URL" ~/.dotfiles
 fi
 
 # Create a symbolic link for Fish configuration
 mkdir -p ~/.config
 if [ ! -L ~/.config/fish ]; then
-  ln -s ~/dotfiles/fish ~/.config/fish
+  ln -s ~/.dotfiles/fish ~/.config/fish
 fi
 
 # Set Fish as the default shell
 if [ "$(grep "/usr/bin/fish" /etc/shells)" == "" ]; then
-  echo "/usr/bin/fish" >> /etc/shells
+  echo "/usr/bin/fish" >> /etc/shells # TODO set this only for my user?
 fi
 
 if [ "$SHELL" != "/usr/bin/fish" ]; then
