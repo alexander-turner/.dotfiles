@@ -4,11 +4,6 @@
 sudo apt-get update
 sudo apt-get install -y fish
 
-# Clone your dotfiles repository to the home directory
-if [ ! -d ~/.dotfiles ]; then # TODO is this needed?
-  git clone "$DOTFILES_REPO_URL" ~/.dotfiles
-fi
-
 # Create a symbolic link for Fish configuration
 mkdir -p ~/.config
 if [ ! -L ~/.config/fish ]; then
@@ -17,7 +12,7 @@ fi
 
 # Set Fish as the default shell
 if [ "$(grep "/usr/bin/fish" /etc/shells)" == "" ]; then
-  echo "/usr/bin/fish" >> /etc/shells # TODO set this only for my user?
+  echo "/usr/bin/fish" >> /etc/shells 
 fi
 
 if [ "$SHELL" != "/usr/bin/fish" ]; then
@@ -27,14 +22,16 @@ else
   echo "Fish is already the default shell."
 fi
 
-# # Install themes 
-# curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source 
-# fisher install jorgebucaran/fisher
-#
-# # Download a nerd font and install it
-# # TODO install
-#
-# # Install the tide theme
-# fisher install IlanCosman/tide@v5
-#
-# # Configure the theme if not already configured
+# Install themes using fish 
+fish << FISH_SCRIPT
+  curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source
+  fisher install jorgebucaran/fisher
+
+  # Download a nerd font and install it
+  # TODO install
+
+  # Install the tide theme
+  fisher install IlanCosman/tide@v5
+
+  # Configure the theme if not already configured
+FISH_SCRIPT

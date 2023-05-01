@@ -1,4 +1,10 @@
-# Setup wandb API key (maybe auto-scp it after ssh'ing into a new server? and then read from that file)
-#  NOTE Check ~/.netrc
+#!/bin/bash
 
+# If not currently in ~/.dotfiles, go there
+
+# Copy {bash,vim,net}rc to ~/
+
+# Run fish_config 
+
+# Copy fish config to appropriate location
 
