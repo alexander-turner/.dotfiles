@@ -4,6 +4,15 @@
 sudo apt-get update
 sudo apt-get install -y fish
 
+# Create Fish configuration directory if it doesn't exist
+FISH_CONFIG_DIR="$HOME/.config/fish"
+if [ ! -d "$FISH_CONFIG_DIR" ]; then
+  mkdir -p "$FISH_CONFIG_DIR"
+fi
+
+# Set the correct permissions for the Fish configuration directory
+chown -R "$USER:$USER" "$HOME/.config"
+
 # Create a symbolic link for Fish configuration
 mkdir -p ~/.config
 if [ ! -L ~/.config/fish ]; then
@@ -11,7 +20,7 @@ if [ ! -L ~/.config/fish ]; then
 fi
 
 # Set Fish as the default shell
-if [ "$(grep "/usr/bin/fish" /etc/shells)" == "" ]; then
+if [ "$(grep "/usr/bin/fish" /etc/shells)" = "" ]; then
   echo "/usr/bin/fish" >> /etc/shells 
 fi
 

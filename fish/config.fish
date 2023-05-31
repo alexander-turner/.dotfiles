@@ -77,6 +77,10 @@ function cdls
     ls
 end
 
+function flash
+    sh /home/turn/bin/keyboard_flash.sh
+end
+
 # Git aliases
 function gac
     git add :/
@@ -127,6 +131,7 @@ end
 set -gx PATH $PATH "/home/turn/bin" "/home/turn/.local/bin"
 set -gx EDITOR "/usr/bin/vim"
 set -gx GCM_CREDENTIAL_STORE "cache"
+set PATH $PATH /usr/local/go/bin
 
 # The next line updates PATH for the Google Cloud SDK.
 if [ -f '/home/turn/Downloads/google-cloud-sdk/path.fish.inc' ]; . '/home/turn/Downloads/google-cloud-sdk/path.fish.inc'; end
