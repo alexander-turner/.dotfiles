@@ -9,17 +9,9 @@ end
 
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
-set -l __conda_setup (command -v conda >/dev/null 2>&1; and conda "shell.fish" "hook" 2>/dev/null)
-if test "$status" -eq 0
-    eval $__conda_setup
-else
-    if test -f "/home/turn/miniconda3/etc/fish/conf.d/conda.fish"
-        source "/home/turn/miniconda3/etc/fish/conf.d/conda.fish"
-    else
-        set -gx PATH "/home/turn/miniconda3/bin" $PATH
-    end
+if test -f /home/turn/miniconda3/bin/conda
+    eval /home/turn/miniconda3/bin/conda "shell.fish" "hook" $argv | source
 end
-set -e __conda_setup
 # <<< conda initialize <<<
 
 . /usr/share/autojump/autojump.fish
@@ -79,6 +71,10 @@ end
 
 function flash
     sh /home/turn/bin/keyboard_flash.sh
+end
+
+function yank # Copy to clipboard
+    xclip -sel c
 end
 
 # Git aliases
