@@ -1,11 +1,10 @@
 # No default greeting
 set fish_greeting ''
-# Instead have a rainbow talking cow say something random
-if status is-interactive
-		fortune -s | cowsay -y 
+# Instead have a rainbow talking cow say something random, on non-macs
+if status is-interactive; and [ "$(uname)" != "Darwin" ]; then 
+    fortune -s | cowsay -y
 end
 
-# Instead have fortune!
 
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
@@ -14,7 +13,12 @@ if test -f /home/turn/miniconda3/bin/conda
 end
 # <<< conda initialize <<<
 
-. /usr/share/autojump/autojump.fish
+# If 
+if [ "$(uname)" != "Darwin" ]; 
+	. /usr/share/autojump/autojump.fish
+end
+[ -f /opt/homebrew/share/autojump/autojump.fish ]; and source /opt/homebrew/share/autojump/autojump.fish
+set -gx PROMPT_COMMAND "$PROMPT_COMMAND; history -a"
 
 # Custom settings
 fish_vi_key_bindings
@@ -61,7 +65,7 @@ function blowitaway
 end
 
 function ls
-    command ls --hide="*~" --color="always" $argv
+    command ls --color="always" $argv
 end
 
 function cdls
@@ -128,6 +132,11 @@ set -gx PATH $PATH "/home/turn/bin" "/home/turn/.local/bin"
 set -gx EDITOR "/usr/bin/vim"
 set -gx GCM_CREDENTIAL_STORE "cache"
 set PATH $PATH /usr/local/go/bin
+
+# Run homebrew
+if [ "$(uname)" = "Darwin" ]; 
+	eval "$(/opt/homebrew/bin/brew shellenv)"
+end
 
 # The next line updates PATH for the Google Cloud SDK.
 if [ -f '/home/turn/Downloads/google-cloud-sdk/path.fish.inc' ]; . '/home/turn/Downloads/google-cloud-sdk/path.fish.inc'; end

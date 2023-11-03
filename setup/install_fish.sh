@@ -1,8 +1,11 @@
 #!/bin/bash
 
-# Install Fish 
-sudo apt-get update
-sudo apt-get install -y fish
+if [ "$(uname)" == "Darwin" ]; then
+ brew install fish
+else
+ sudo apt-get update
+ sudo apt-get install -y fish
+fi
 
 # Create Fish configuration directory if it doesn't exist
 FISH_CONFIG_DIR="$HOME/.config/fish"
@@ -11,7 +14,7 @@ if [ ! -d "$FISH_CONFIG_DIR" ]; then
 fi
 
 # Set the correct permissions for the Fish configuration directory
-chown -R "$USER:$USER" "$HOME/.config"
+chown -R "$USER" "$HOME/.config"
 
 # Create a symbolic link for Fish configuration
 mkdir -p ~/.config
@@ -37,10 +40,10 @@ fish << FISH_SCRIPT
   fisher install jorgebucaran/fisher
 
   # Download a nerd font and install it
-  # TODO install
+  read -p `Please install FiraCode from https://github.com/tonsky/FiraCode` placeholder
 
   # Install the tide theme
-  fisher install IlanCosman/tide@v5
+  fisher install IlanCosman/tide@v6
 
-  # Configure the theme if not already configured
+# Configure the theme if not already configured
 FISH_SCRIPT
