@@ -39,8 +39,10 @@ function e
     exit
 end
 
-function rm
-    command rm -I --preserve-root=all $argv
+if [ "$(uname)" != "Darwin" ];
+	function rm
+		command rm -I --preserve-root=all $argv
+	end
 end
 
 function findfile

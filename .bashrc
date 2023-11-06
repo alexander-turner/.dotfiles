@@ -2,6 +2,12 @@
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
 # for examples
 
+# Determine if the current system is a Mac and cache the result
+IS_MAC=false
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  IS_MAC=true
+fi
+
 # If not running interactively, don't do anything
 case $- in
     *i*) ;;
@@ -137,8 +143,10 @@ unset __conda_setup
 # Custom settings
 set -o vi
 
-# Disable flow control
-stty -ixon
+# Disable flow control, but only if we have a terminal attached
+if [ -t 0 ]; then
+  stty -ixon
+fi
 
 # Custom aliases
 alias compress='~/bin/media_upload/compress.sh'
@@ -187,4 +195,6 @@ if [[ "$-" =~ i && -x "${WHICH_FISH}" && ! "${SHELL}" -ef "${WHICH_FISH}" ]]; th
 fi
 
 # If mac, start homebrew
-eval "$(/opt/homebrew/bin/brew shellenv)"
+if [ "$IS_MAC" = true]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
