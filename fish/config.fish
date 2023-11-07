@@ -1,30 +1,41 @@
 # No default greeting
 set fish_greeting ''
-# Instead have a rainbow talking cow say something random, on non-macs
-if status is-interactive; and [ "$(uname)" != "Darwin" ]; then 
+
+# Check if the operating system is macOS and set IS_MAC flag
+set IS_MAC 'false'
+if uname | grep -q "Darwin"
+    set IS_MAC 'true'
+end
+
+# Use a rainbow talking cow to say something random on non-macOS systems
+if status is-interactive; and not $IS_MAC
     fortune -s | cowsay -y
 end
 
-
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
-if test -f /home/turn/miniconda3/bin/conda
-    eval /home/turn/miniconda3/bin/conda "shell.fish" "hook" $argv | source
+if test -f ~/miniconda3/bin/conda
+    eval ~/miniconda3/bin/conda "shell.fish" "hook" $argv | source
 end
 # <<< conda initialize <<<
 
-# If 
-if [ "$(uname)" != "Darwin" ]; 
-	. /usr/share/autojump/autojump.fish
+# Autojump setup
+if not $IS_MAC
+    . /usr/share/autojump/autojump.fish
+else
+    [ -f /opt/homebrew/share/autojump/autojump.fish ]; and source /opt/homebrew/share/autojump/autojump.fish
 end
-[ -f /opt/homebrew/share/autojump/autojump.fish ]; and source /opt/homebrew/share/autojump/autojump.fish
+
+# Set PROMPT_COMMAND for history appending
 set -gx PROMPT_COMMAND "$PROMPT_COMMAND; history -a"
 
 # Custom settings
 fish_vi_key_bindings
 
 # Disable flow control
-stty -ixon
+if not $IS_MAC
+	stty -ixon
+end
 
 # Custom functions
 function compress
@@ -39,7 +50,8 @@ function e
     exit
 end
 
-if [ "$(uname)" != "Darwin" ];
+# macOS does not need --preserve-root=all for rm
+if not $IS_MAC
 	function rm
 		command rm -I --preserve-root=all $argv
 	end
@@ -76,11 +88,16 @@ function cdls
 end
 
 function flash
-    sh /home/turn/bin/keyboard_flash.sh
+    sh ~/bin/keyboard_flash.sh
 end
 
+# Clipboard function differs between macOS and others
 function yank # Copy to clipboard
-    xclip -sel c
+	if $IS_MAC
+		pbcopy
+	else
+		xclip -sel c
+	end
 end
 
 # Git aliases
@@ -130,15 +147,16 @@ function get
 end
 
 # Add to PATH
-set -gx PATH $PATH "/home/turn/bin" "/home/turn/.local/bin"
+set -gx PATH $PATH ~/bin ~/.local/bin
 set -gx EDITOR "/usr/bin/vim"
 set -gx GCM_CREDENTIAL_STORE "cache"
 set PATH $PATH /usr/local/go/bin
 
-# Run homebrew
-if [ "$(uname)" = "Darwin" ]; 
+# Run homebrew on macOS
+if $IS_MAC 
 	eval "$(/opt/homebrew/bin/brew shellenv)"
 end
 
-# The next line updates PATH for the Google Cloud SDK.
-if [ -f '/home/turn/Downloads/google-cloud-sdk/path.fish.inc' ]; . '/home/turn/Downloads/google-cloud-sdk/path.fish.inc'; end
+# Google Cloud SDK path update
+if [ -f '~/Downloads/google-cloud-sdk/path.fish.inc' ]; . '~/Downloads/google-cloud-sdk/path.fish.inc'; end
+

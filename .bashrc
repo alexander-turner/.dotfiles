@@ -195,6 +195,6 @@ if [[ "$-" =~ i && -x "${WHICH_FISH}" && ! "${SHELL}" -ef "${WHICH_FISH}" ]]; th
 fi
 
 # If mac, start homebrew
-if [ "$IS_MAC" = true]; then
+if [[ "$IS_MAC" = true ]]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
