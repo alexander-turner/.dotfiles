@@ -100,6 +100,10 @@ function yank # Copy to clipboard
 	end
 end
 
+function get_ps
+    echo (whoami)'@'(hostname)': '(pwd)
+end
+
 # Git aliases
 function gac
     git add :/
@@ -160,3 +164,8 @@ end
 # Google Cloud SDK path update
 if [ -f '~/Downloads/google-cloud-sdk/path.fish.inc' ]; . '~/Downloads/google-cloud-sdk/path.fish.inc'; end
 
+# Run extra commands if the file exists
+set CONFIG_PATH "~/.fish_config_extras"
+if [ -f "$CONFIG_PATH" ]; 
+  source "$CONFIG_PATH"
+end

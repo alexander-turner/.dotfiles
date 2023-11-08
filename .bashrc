@@ -179,7 +179,6 @@ function cdls() { cd $1; ls; }
 # Add to PATH
 export PATH="$PATH:/home/turn/bin:/home/turn/.local/bin"
 export EDITOR="/usr/bin/vim"
-export GCM_CREDENTIAL_STORE="cache"
 
 # start fish shell
 WHICH_FISH="$(which fish)"
@@ -198,3 +197,8 @@ fi
 if [[ "$IS_MAC" = true ]]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
+
+EXTRAS_PATH="~/.bashrc_extras"
+if [[ -f "$EXTRAS_PATH" ]]; then
+  source "$EXTRAS_PATH"
+fi 
