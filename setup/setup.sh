@@ -1,10 +1,17 @@
 #!/bin/bash
 
-# If not currently in ~/.dotfiles, go there
+# Check if the current directory is not ~/.dotfiles
+if [ "$(pwd)" != "$HOME/.dotfiles" ]; then
+  # If not, change directory to ~/.dotfiles
+  cd "$HOME/.dotfiles" || exit  # Exit if the directory change fails
+fi
 
-# Copy {bash,vim,net}rc to ~/
+# Use brace expansion to create links to .bashrc, .vimrc, and .netrc in the home directory
+ln "$PWD"/.{bash,vim,net}rc "$HOME"
 
-# Run fish_config 
+# Use brace expansion to ensure the extras files exist in the home directory
+touch "$HOME"/.{bashrc,fish_config}_extras
 
-# Copy fish config to appropriate location
-
+# Run fish_config
+# Assuming fish_config.sh is an executable script in the current directory
+./fish_config.sh
