@@ -138,7 +138,8 @@ unset __conda_setup
 # <<< conda initialize <<<
 
 # Autojump
-[[ -s /home/turn/.autojump/etc/profile.d/autojump.sh ]] && source /home/turn/.autojump/etc/profile.d/autojump.sh
+# if test -f /usr/local/google/home/alexmturner/.autojump/share/autojump/autojump.fish; . /usr/local/google/home/alexmturner/.autojump/share/autojump/autojump.fish; end
+[[ -s ~/.autojump/etc/profile.d/autojump.sh ]] && source ~/.autojump/etc/profile.d/autojump.sh
 
 # Custom settings
 set -o vi
