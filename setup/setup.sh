@@ -7,11 +7,12 @@ if [ "$(pwd)" != "$HOME/.dotfiles" ]; then
 fi
 
 # Use brace expansion to create links to .bashrc, .vimrc, and .netrc in the home directory
-ln "$PWD"/.{bash,vim,net}rc "$HOME"
+ln "$PWD"/.{bash,vim}rc "$HOME"
+ln "$PWD"/.gitconfig "$HOME"
 
 # Use brace expansion to ensure the extras files exist in the home directory
 touch "$HOME"/.{bashrc,fish_config}_extras
 
 # Run fish_config
 # Assuming fish_config.sh is an executable script in the current directory
-./fish_config.sh
+./setup/install_fish.sh
