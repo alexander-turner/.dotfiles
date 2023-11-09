@@ -83,5 +83,3 @@ nnoremap <F9> :!%:p<Enter>
 " " copy selected text to clipboard
 " vnoremap <leader>y "+y
 
-call plug#begin('~/.vim/plugged')
-Plug 'catppuccin/nvim', { 'as': 'catppuccin' }
