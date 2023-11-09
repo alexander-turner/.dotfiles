@@ -144,11 +144,6 @@ unset __conda_setup
 # Custom settings
 set -o vi
 
-# Disable flow control, but only if we have a terminal attached
-if [ -t 0 ]; then
-  stty -ixon
-fi
-
 # Custom aliases
 alias compress='~/bin/media_upload/compress.sh'
 alias obsidian='~/bin/obsidian-launch.sh'

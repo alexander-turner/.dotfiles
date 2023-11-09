@@ -32,11 +32,6 @@ set -gx PROMPT_COMMAND "$PROMPT_COMMAND; history -a"
 # Custom settings
 fish_vi_key_bindings
 
-# Disable flow control
-if not $IS_MAC
-	stty -ixon
-end
-
 # Custom functions
 function compress
     ~/bin/media_upload/compress.sh
