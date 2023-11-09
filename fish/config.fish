@@ -62,15 +62,15 @@ function findfile
 end
 
 function editbashrc
-    vim ~/.bashrc
+    nvim ~/.bashrc
 end
 
 function editfishrc
-    vim ~/.config/fish/config.fish
+    nvim ~/.config/fish/config.fish
 end
 
 function crontab
-    set -gx VISUAL vim
+    set -gx VISUAL nvim
     command crontab $argv
 end
 
@@ -152,7 +152,7 @@ end
 
 # Add to PATH
 set -gx PATH $PATH ~/bin ~/.local/bin
-set -gx EDITOR "/usr/bin/vim"
+set -Ux EDITOR nvim
 set -gx GCM_CREDENTIAL_STORE "cache"
 set PATH $PATH /usr/local/go/bin
 
