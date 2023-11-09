@@ -12,6 +12,10 @@ if [ "$(uname)" == "Darwin" ]; then
 else
   sudo apt-get install neovim python3-pynvim
 fi
+# Install vim-plug for plugin management
+sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
+       https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+
 
 # Link .bashrc, .vimrc, and .gitconfig to the home directory, with warnings for existing files
 for file in .bashrc .vimrc .gitconfig; do
@@ -30,8 +34,7 @@ done
 # Create neovim settings which include current vimrc files
 NEOVIM_CONFIG_DIR="$HOME/.config/nvim/"
 mkdir -p "$NEOVIM_CONFIG_DIR"
-# Only append this line if it isn't already present in neovim's init
-grep -qxF "source $PWD/.vimrc" "$NEOVIM_CONFIG_DIR/init.vim" || echo "source $PWD/.vimrc" >> "$NEOVIM_CONFIG_DIR/init.vim"
+ln "$PWD"/init.vim "$NEOVIM_CONFIG_DIR" 
 
 # Use brace expansion to ensure the extras files exist in the home directory
 touch "$HOME"/.{bashrc,fish_config}_extras
