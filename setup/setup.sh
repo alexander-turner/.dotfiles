@@ -8,10 +8,9 @@ fi
 
 # Install neovim
 if [ "$(uname)" == "Darwin" ]; then
-  brew install neovim
+  brew install neovim pynvim
 else
-  sudo apt-get update
-  sudo apt-get install neovim
+  sudo apt-get install neovim python3-pynvim
 fi
 
 # Link .bashrc, .vimrc, and .gitconfig to the home directory, with warnings for existing files
