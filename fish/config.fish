@@ -162,7 +162,7 @@ if test -f '~/Downloads/google-cloud-sdk/path.fish.inc'
 end
 
 # Run extra commands if the file exists
-set CONFIG_PATH "~/.fish_config_extras"
+set CONFIG_PATH ~/.fish_config_extras
 if test -f $CONFIG_PATH
     source $CONFIG_PATH
 end
