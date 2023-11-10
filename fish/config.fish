@@ -157,10 +157,12 @@ if $IS_MAC
 end
 
 # Google Cloud SDK path update
-if [ -f '~/Downloads/google-cloud-sdk/path.fish.inc' ]; . '~/Downloads/google-cloud-sdk/path.fish.inc'; end
+if test -f '~/Downloads/google-cloud-sdk/path.fish.inc'
+    . ~/Downloads/google-cloud-sdk/path.fish.inc; 
+end
 
 # Run extra commands if the file exists
 set CONFIG_PATH "~/.fish_config_extras"
-if [ -f "$CONFIG_PATH" ]; 
-  source "$CONFIG_PATH"
+if test -f $CONFIG_PATH
+    source $CONFIG_PATH
 end
