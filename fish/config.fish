@@ -8,7 +8,7 @@ if uname | grep -q "Darwin"
 end
 
 # Use a rainbow talking cow to say something random on non-macOS systems
-if status is-interactive; and not $IS_MAC
+if status is-interactive; and not $IS_MAC; and type -q fortune
     fortune -s | cowsay -y
 end
 
@@ -21,13 +21,14 @@ end
 
 # Autojump setup
 if not $IS_MAC
-    . /usr/share/autojump/autojump.fish
+	if test -f ~/.autojump/share/autojump/autojump.fish; 
+		. ~/.autojump/share/autojump/autojump.fish;
+	else
+		. /usr/share/autojump/autojump.fish
+	end
 else
     [ -f /opt/homebrew/share/autojump/autojump.fish ]; and source /opt/homebrew/share/autojump/autojump.fish
 end
-
-# Set PROMPT_COMMAND for history appending
-set -gx PROMPT_COMMAND "$PROMPT_COMMAND; history -a"
 
 # Custom settings
 fish_vi_key_bindings
@@ -57,15 +58,15 @@ function findfile
 end
 
 function editbashrc
-    nvim ~/.bashrc
+    vim ~/.bashrc
 end
 
 function editfishrc
-    nvim ~/.config/fish/config.fish
+    vim ~/.config/fish/config.fish
 end
 
 function crontab
-    set -gx VISUAL nvim
+    set -gx VISUAL vim
     command crontab $argv
 end
 
@@ -84,6 +85,10 @@ end
 
 function flash
     sh ~/bin/keyboard_flash.sh
+end
+
+function python --description 'Alias for python3'
+    python3 $argv
 end
 
 # Clipboard function differs between macOS and others
@@ -147,7 +152,7 @@ end
 
 # Add to PATH
 set -gx PATH $PATH ~/bin ~/.local/bin
-set -Ux EDITOR nvim
+set -gx EDITOR "/usr/bin/vim"
 set -gx GCM_CREDENTIAL_STORE "cache"
 set PATH $PATH /usr/local/go/bin
 
@@ -157,12 +162,10 @@ if $IS_MAC
 end
 
 # Google Cloud SDK path update
-if test -f '~/Downloads/google-cloud-sdk/path.fish.inc'
-    . ~/Downloads/google-cloud-sdk/path.fish.inc; 
-end
+if [ -f '~/Downloads/google-cloud-sdk/path.fish.inc' ]; . '~/Downloads/google-cloud-sdk/path.fish.inc'; end
 
 # Run extra commands if the file exists
-set CONFIG_PATH ~/.fish_config_extras
-if test -f $CONFIG_PATH
-    source $CONFIG_PATH
+set CONFIG_PATH "~/.extras.fish"
+if [ -f "$CONFIG_PATH" ]; 
+  source "$CONFIG_PATH"
 end

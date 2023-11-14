@@ -38,7 +38,7 @@ mkdir -p "$NEOVIM_CONFIG_DIR"
 ln -f "$PWD"/init.vim "$NEOVIM_CONFIG_DIR" 
 
 # Use brace expansion to ensure the extras files exist in the home directory
-touch "$HOME"/.{bashrc,fish_config}_extras
+touch "$HOME"/.extras_{bashrc,.fish}
 
 # Run fish_config
 # Assuming fish_config.sh is an executable script in the current directory

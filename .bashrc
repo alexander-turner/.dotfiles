@@ -138,7 +138,6 @@ unset __conda_setup
 # <<< conda initialize <<<
 
 # Autojump
-# if test -f /usr/local/google/home/alexmturner/.autojump/share/autojump/autojump.fish; . /usr/local/google/home/alexmturner/.autojump/share/autojump/autojump.fish; end
 [[ -s ~/.autojump/etc/profile.d/autojump.sh ]] && source ~/.autojump/etc/profile.d/autojump.sh
 
 # Custom settings
@@ -194,7 +193,7 @@ if [[ "$IS_MAC" = true ]]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
-EXTRAS_PATH="~/.bashrc_extras"
+EXTRAS_PATH="~/.extras.bashrc"
 if [[ -f "$EXTRAS_PATH" ]]; then
   source "$EXTRAS_PATH"
 fi 
