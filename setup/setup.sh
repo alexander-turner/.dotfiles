@@ -27,14 +27,15 @@ for file in .bashrc .vimrc .gitconfig; do
       * ) echo "Skipping $file";;
     esac
   else
-    ln "$PWD/$file" "$HOME"
+    ln -f "$PWD/$file" "$HOME"
   fi
 done
 
 # Create neovim settings which include current vimrc files
 NEOVIM_CONFIG_DIR="$HOME/.config/nvim/"
 mkdir -p "$NEOVIM_CONFIG_DIR"
-ln "$PWD"/init.vim "$NEOVIM_CONFIG_DIR" 
+# NOTE this just forces the hardlink
+ln -f "$PWD"/init.vim "$NEOVIM_CONFIG_DIR" 
 
 # Use brace expansion to ensure the extras files exist in the home directory
 touch "$HOME"/.{bashrc,fish_config}_extras

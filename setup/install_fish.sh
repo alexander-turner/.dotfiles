@@ -19,7 +19,7 @@ chown -R "$USER" "$HOME/.config"
 # Create a symbolic link for Fish configuration
 mkdir -p ~/.config
 if [ ! -L ~/.config/fish ]; then
-  ln -s ~/.dotfiles/fish ~/.config/fish
+  ln -sf ~/.dotfiles/fish ~/.config/fish
 fi
 
 # Set Fish as the default shell
