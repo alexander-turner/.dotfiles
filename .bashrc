@@ -2,17 +2,17 @@
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
 # for examples
 
-# Determine if the current system is a Mac and cache the result
-IS_MAC=false
-if [[ "$OSTYPE" == "darwin"* ]]; then
-  IS_MAC=true
-fi
-
 # If not running interactively, don't do anything
 case $- in
     *i*) ;;
       *) return;;
 esac
+#
+# Determine if the current system is a Mac and cache the result
+IS_MAC=false
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  IS_MAC=true
+fi
 
 # don't put duplicate lines or lines starting with space in the history.
 # See bash(1) for more options
@@ -33,7 +33,7 @@ shopt -s checkwinsize
 # match all files and zero or more directories and subdirectories.
 #shopt -s globstar
 
-# make less more friendly for non-text input files, see lesspipe(1)
+# make `less` more friendly for non-text input files, see lesspipe(1)
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
 
 # set variable identifying the chroot you work in (used in the prompt below)
