@@ -193,7 +193,7 @@ if [[ "$IS_MAC" = true ]]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
-EXTRAS_PATH="~/.extras.bashrc"
-if [[ -f "$EXTRAS_PATH" ]]; then
-  source "$EXTRAS_PATH"
+EXTRAS_PATH=~/.extras.bash
+if [[ -f $EXTRAS_PATH ]]; then
+  source $EXTRAS_PATH
 fi 
