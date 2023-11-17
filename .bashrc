@@ -2,23 +2,24 @@
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
 # for examples
 
-# If not running interactively, don't do anything
-case $- in
-    *i*) ;;
-      *) return;;
-esac
-#
 # Determine if the current system is a Mac and cache the result
 IS_MAC=false
 if [[ "$OSTYPE" == "darwin"* ]]; then
   IS_MAC=true
 fi
 
+# If not running interactively, don't do anything
+case $- in
+    *i*) ;;
+      *) return;;
+esac
+
 # don't put duplicate lines or lines starting with space in the history.
 # See bash(1) for more options
 HISTCONTROL=ignoreboth
 
 # append to the history file, don't overwrite it
+export PROMPT_COMMAND=""
 shopt -s histappend
 
 # for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
@@ -33,7 +34,7 @@ shopt -s checkwinsize
 # match all files and zero or more directories and subdirectories.
 #shopt -s globstar
 
-# make `less` more friendly for non-text input files, see lesspipe(1)
+# make less more friendly for non-text input files, see lesspipe(1)
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
 
 # set variable identifying the chroot you work in (used in the prompt below)
@@ -138,10 +139,15 @@ unset __conda_setup
 # <<< conda initialize <<<
 
 # Autojump
-[[ -s ~/.autojump/etc/profile.d/autojump.sh ]] && source ~/.autojump/etc/profile.d/autojump.sh
+[[ -s /home/turn/.autojump/etc/profile.d/autojump.sh ]] && source /home/turn/.autojump/etc/profile.d/autojump.sh
 
 # Custom settings
 set -o vi
+
+# Disable flow control, but only if we have a terminal attached
+if [ -t 0 ]; then
+  stty -ixon
+fi
 
 # Custom aliases
 alias compress='~/bin/media_upload/compress.sh'
@@ -149,8 +155,8 @@ alias obsidian='~/bin/obsidian-launch.sh'
 alias e='exit'
 alias rm='rm -I --preserve-root=all'
 alias findfile='find / -type f 2> /dev/null | grep'
-alias editbashrc='vim ~/.bashrc'
-alias crontab="export VISUAL=vim; crontab"
+alias editbashrc='nvim ~/.bashrc'
+alias crontab="export VISUAL=nvim; crontab"
 alias gac="git add :/; git commit -m" 
 alias blowitaway="rm -rf"
 alias ls='ls --color="always"'
@@ -173,7 +179,7 @@ function cdls() { cd $1; ls; }
 
 # Add to PATH
 export PATH="$PATH:/home/turn/bin:/home/turn/.local/bin"
-export EDITOR="/usr/bin/vim"
+export EDITOR='nvim'
 
 # start fish shell
 WHICH_FISH="$(which fish)"
@@ -193,7 +199,7 @@ if [[ "$IS_MAC" = true ]]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
-EXTRAS_PATH=~/.extras.bash
-if [[ -f $EXTRAS_PATH ]]; then
-  source $EXTRAS_PATH
+EXTRAS_PATH="~/.extras.bash"
+if [[ -f "$EXTRAS_PATH" ]]; then
+  source "$EXTRAS_PATH"
 fi 
