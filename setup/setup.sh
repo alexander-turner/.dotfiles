@@ -6,10 +6,9 @@ if [ "$(pwd)" != "$HOME/.dotfiles" ]; then
   cd "$HOME/.dotfiles" || exit  # Exit if the directory change fails
 fi
 
-# Install neovim and a wally-cli dependency
 if [ "$(uname)" == "Darwin" ]; then
   brew install neovim pynvim # neovim
-  brew install libusb # wally-cli
+  # brew install libusb # wally-cli
 else # Assume linux
   sudo apt-get install neovim python3-pynvim
 fi
@@ -18,25 +17,7 @@ sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.
        https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 
 # Install wally-cli for keyboard flashing
-# WALLY_DIR="$HOME"/bin/wally-cli
-# mkdir -p "$WALLY_DIR"
 go install github.com/zsa/wally-cli@latest
-# if [ "$(uname)" == "Darwin" ]; then
-#   brew install libusb 
-#   curl -o "$WALLY_DIR"/wally-cli "https://github.com/zsa/wally-cli/releases/download/2.0.1-osx/wally-cli"
-# else # Assume debian
-#   sudo apt install libusb-1.0-0-dev
-#   sudo cp ./setup/50-zsa.rules /etc/udev/rules.d/50-zsa.rules
-#   
-#   sudo groupadd plugdev
-#   sudo usermod -aG plugdev "$USER"
-#   echo "Reboot if wally-cli isn't working yet!"
-#   
-#   # Install wally
-#   gh repo clone zsa/wally-cli "$WALLY_DIR"
-#   go build "$WALLY_DIR"
-# fi
-
 
 # Link .bashrc, .vimrc, and .gitconfig to the home directory, with warnings for existing files
 for file in .bashrc .vimrc .gitconfig; do
