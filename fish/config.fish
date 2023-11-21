@@ -154,7 +154,7 @@ end
 set -gx PATH $PATH ~/bin ~/.local/bin
 set -gx EDITOR "/usr/bin/vim"
 set -gx GCM_CREDENTIAL_STORE "cache"
-set PATH $PATH /usr/local/go/bin
+set PATH $PATH /usr/local/go/bin $HOME/go/bin
 
 # Run homebrew on macOS
 if $IS_MAC 

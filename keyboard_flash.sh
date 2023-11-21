@@ -3,4 +3,4 @@
 curl -s -L "https://oryx.zsa.io/rXDjb/latest/binary" -o "/tmp/ergodox.hex"
 
 # Install it with wally-cli
-~/bin/wally-cli/wally-cli "/tmp/ergodox.hex"
+wally-cli "/tmp/ergodox.hex"
