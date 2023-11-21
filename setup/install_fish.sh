@@ -40,7 +40,7 @@ fish << FISH_SCRIPT
   fisher install jorgebucaran/fisher
 
   # Download a nerd font and install it
-  read -p `Please install FiraCode from https://github.com/tonsky/FiraCode` placeholder
+  read -p $(Please install FiraCode from https://github.com/tonsky/FiraCode) placeholder
 
   # Install the tide theme
   fisher install IlanCosman/tide@v6
