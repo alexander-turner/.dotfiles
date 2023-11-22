@@ -8,7 +8,7 @@ fi
 
 if [ "$(uname)" == "Darwin" ]; then
   brew install neovim pynvim # neovim
-  # brew install libusb # wally-cli
+  brew install libusb pkg-config # wally-cli
 else # Assume linux
   sudo apt-get install neovim python3-pynvim
 fi
