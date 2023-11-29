@@ -1,11 +1,5 @@
 #!/bin/bash
 
-# Check if the current directory is not $HOME/.dotfiles
-if [ "$(pwd)" != "$HOME/.dotfiles" ]; then
-  # If not, change directory to $HOME/.dotfiles
-  cd "$HOME/.dotfiles" || exit  # Exit if the directory change fails
-fi
-
 if [ "$(uname)" == "Darwin" ]; then
   brew install neovim pynvim # neovim
   brew install libusb pkg-config # wally-cli
@@ -40,8 +34,9 @@ mkdir -p "$NEOVIM_CONFIG_DIR"
 ln -f "$PWD"/init.vim "$NEOVIM_CONFIG_DIR" 
 
 # Use brace expansion to ensure the extras files exist in the home directory
-touch "$HOME"/.extras_{bashrc,.fish}
+touch "$HOME"/.extras.{bashrc,fish}
 
-# Run fish_config
-# Assuming fish_config.sh is an executable script in the current directory
-./setup/install_fish.sh
+# Install fish and configure
+SCRIPT_DIR="$(dirname "$0")"      # Get the directory of the current script
+"$SCRIPT_DIR"/install_fish.sh     # Execute install_fish.sh from that directory
+
