@@ -27,6 +27,7 @@ HISTFILESIZE=2000
 
 # check the window size after each command and, if necessary,
 # update the values of LINES and COLUMNS.
+export PROMPT_COMMAND=""
 shopt -s checkwinsize
 
 # If set, the pattern "**" used in a pathname expansion context will
