@@ -89,3 +89,34 @@ if (has("termguicolors"))
   set termguicolors
 endif
 syntax enable
+
+" Set the width of a tab character
+set tabstop=4
+
+" Control the number of spaces for autoindent
+set shiftwidth=4
+
+" Convert tabs to spaces
+set expandtab
+
+" Enable smart/auto indentation
+set smartindent
+" Alternatively, you can use:
+" set autoindent
+
+" Enable file-type specific indentation
+filetype plugin indent on
+
+" Set soft tabstop
+set softtabstop=4
+
+" Copy the indentation from the previous line
+set copyindent
+
+" Preserve as much of the indent structure as possible
+set preserveindent
+
+" Custom indentation rules for specific file types
+autocmd FileType python setlocal shiftwidth=4 tabstop=4 expandtab
+autocmd FileType html setlocal shiftwidth=2 tabstop=2 expandtab
+
