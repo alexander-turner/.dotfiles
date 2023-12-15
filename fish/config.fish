@@ -58,15 +58,15 @@ function findfile
 end
 
 function editbashrc
-    vim ~/.bashrc
+    nvim ~/.bashrc
 end
 
 function editfishrc
-    vim ~/.config/fish/config.fish
+    nvim ~/.config/fish/config.fish
 end
 
 function crontab
-    set -gx VISUAL vim
+    set -gx VISUAL nvim
     command crontab $argv
 end
 
@@ -150,11 +150,16 @@ function get
     git $argv
 end
 
+# Use GDM's bashrc, but from fish
+function bashdm
+	bash -c "source ~/.extras.bash; $argv"
+end
+
 # Add to PATH
 set -gx PATH $PATH ~/bin ~/.local/bin
 set -gx EDITOR "/usr/bin/vim"
 set -gx GCM_CREDENTIAL_STORE "cache"
-set PATH $PATH /usr/local/go/bin $HOME/go/bin
+set PATH $PATH /usr/local/go/bin
 
 # Run homebrew on macOS
 if $IS_MAC 
@@ -162,10 +167,15 @@ if $IS_MAC
 end
 
 # Google Cloud SDK path update
-if [ -f '~/Downloads/google-cloud-sdk/path.fish.inc' ]; . '~/Downloads/google-cloud-sdk/path.fish.inc'; end
+if [ -f '~/Downloads/google-cloud-sdk/path.fish.inc' ]
+	. ~/Downloads/google-cloud-sdk/path.fish.inc
+end
 
-# Run extra commands if the file exists
-set CONFIG_PATH "~/.extras.fish"
-if [ -f "$CONFIG_PATH" ]; 
-  source "$CONFIG_PATH"
+# Run extra commands
+set CONFIG_PATH ~/.extras.fish
+touch $CONFIG_PATH 
+source $CONFIG_PATH
+
+function editfishextras
+	nvim $CONFIG_PATH
 end
