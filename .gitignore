@@ -2,3 +2,4 @@
 fish/fish_variables
 *.swp
 fish/(completions|functions)*
+.DS_Store
