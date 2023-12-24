@@ -131,5 +131,3 @@ nnoremap <C-H> <C-W><C-H>
 set splitbelow
 set splitright
 
-" Consolidate keybindings across tmux and vim
-Plugin 'christoomey/vim-tmux-navigator'

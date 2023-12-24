@@ -2,3 +2,5 @@
 fish/fish_variables
 *.swp
 fish/(completions|functions)*
+*.swo
+*.tmp*

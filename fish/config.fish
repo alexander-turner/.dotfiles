@@ -161,9 +161,12 @@ set -gx EDITOR "/usr/bin/vim"
 set -gx GCM_CREDENTIAL_STORE "cache"
 set PATH $PATH /usr/local/go/bin
 
-# Run homebrew on macOS
+# Path homebrew
 if $IS_MAC 
 	eval "$(/opt/homebrew/bin/brew shellenv)"
+else
+	set -gx PATH /home/linuxbrew/.linuxbrew/bin $PATH
+	set -gx PATH /home/linuxbrew/.linuxbrew/sbin $PATH
 end
 
 # Google Cloud SDK path update
