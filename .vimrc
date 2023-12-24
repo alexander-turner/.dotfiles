@@ -37,7 +37,7 @@ augroup vimrcEx
   au!
 
   " For all text files set 'textwidth' to 78 characters.
-  autocmd FileType text setlocal textwidth=78
+  " autocmd FileType text setlocal textwidth=78
 augroup END                                  
 
 " Add optional packages.
@@ -120,3 +120,16 @@ set preserveindent
 autocmd FileType python setlocal shiftwidth=4 tabstop=4 expandtab
 autocmd FileType html setlocal shiftwidth=2 tabstop=2 expandtab
 
+" SPLIT MANAGEMENT
+" Easier split navigations
+nnoremap <C-J> <C-W><C-J>
+nnoremap <C-K> <C-W><C-K>
+nnoremap <C-L> <C-W><C-L>
+nnoremap <C-H> <C-W><C-H>
+
+" More natural split opening
+set splitbelow
+set splitright
+
+" Consolidate keybindings across tmux and vim
+Plugin 'christoomey/vim-tmux-navigator'
