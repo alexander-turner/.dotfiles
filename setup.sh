@@ -18,7 +18,7 @@ fi
 go install github.com/zsa/wally-cli@latest
 
 # Link .bashrc, .vimrc, and .gitconfig to the home directory, with warnings for existing files
-for file in .bashrc .vimrc .gitconfig; do
+for file in .bashrc .vimrc .gitconfig .tmux.conf; do
 	if [ -e "$HOME/$file" ]; then
 		# Prompt the user to confirm overwriting the existing file
 		read -rp "$file already exists. Overwrite? (y/N) " choice
