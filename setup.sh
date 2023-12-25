@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ "$(uname)" == "Darwin" ]; then
-  brew install neovim pynvim # neovim
+  brew install neovim pyvim # neovim
   brew install libusb pkg-config # wally-cli
 else # Assume linux
   sudo apt-get install neovim python3-pynvim
@@ -37,6 +37,6 @@ ln -f "$PWD"/init.vim "$NEOVIM_CONFIG_DIR"
 touch "$HOME"/.extras.{bashrc,fish}
 
 # Install fish and configure
-SCRIPT_DIR="$(dirname "$0")"      # Get the directory of the current script
+SCRIPT_DIR="$(dirname "$0")"/bin      # Get the directory of the current script
 "$SCRIPT_DIR"/install_fish.sh     # Execute install_fish.sh from that directory
 
