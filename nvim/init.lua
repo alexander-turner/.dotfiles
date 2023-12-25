@@ -1,5 +1,7 @@
 -- bootstrap lazy.nvim, LazyVim and your plugins
 require("config.lazy")
+-- Include vimrc settings
+vim.cmd("source ~/.vimrc")
 
 return {
   -- add gruvbox
@@ -11,5 +13,5 @@ return {
     opts = {
       colorscheme = "catppuccin-latte",
     },
-  }
+  },
 }

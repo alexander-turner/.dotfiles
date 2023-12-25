@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ "$(uname)" == "Darwin" ]; then
-	brew install neovim pynvim     # neovim
+	brew install neovim pyvim     # neovim
 	brew install libusb pkg-config # wally-cli
 else                            # Assume linux
 	# First install brew (so that we can get up-to-date neovim)
@@ -31,7 +31,8 @@ for file in .bashrc .vimrc .gitconfig .tmux.conf; do
 	fi
 done
 
-# Link neovim settings to those included in the repo
+# Create neovim settings which include current vimrc files
+NEOVIM_CONFIG_DIR="$HOME/.config/nvim/"
 mkdir -p "$NEOVIM_CONFIG_DIR"
 ln -s "$PWD"/nvim "$HOME"/.config/nvim
 
@@ -39,5 +40,6 @@ ln -s "$PWD"/nvim "$HOME"/.config/nvim
 touch "$HOME"/.extras.{bashrc,fish}
 
 # Install fish and configure
-SCRIPT_DIR="$(dirname "$0")"  # Get the directory of the current script
-"$SCRIPT_DIR"/install_fish.sh # Execute install_fish.sh from that directory
+SCRIPT_DIR="$(dirname "$0")"/bin      # Get the directory of the current script
+"$SCRIPT_DIR"/install_fish.sh     # Execute install_fish.sh from that directory
+
