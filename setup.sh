@@ -3,6 +3,7 @@
 if [ "$(uname)" == "Darwin" ]; then
 	brew install neovim pyvim     # neovim
 	brew install libusb pkg-config # wally-cli
+	brew install coreutils # For aliasing ls to gls
 else                            # Assume linux
 	# First install brew (so that we can get up-to-date neovim)
 	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -10,9 +11,6 @@ else                            # Assume linux
 
 	sudo apt-get install python3-pynvim
 fi
-# Install vim-plug for plugin management
-# sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
-# https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 
 # Install wally-cli for keyboard flashing
 go install github.com/zsa/wally-cli@latest
@@ -34,7 +32,7 @@ done
 # Create neovim settings which include current vimrc files
 NEOVIM_CONFIG_DIR="$HOME/.config/nvim/"
 mkdir -p "$NEOVIM_CONFIG_DIR"
-ln -s "$PWD"/nvim "$HOME"/.config/nvim
+ln -sf "$PWD"/nvim "$HOME"/.config/nvim
 
 # Use brace expansion to ensure the extras files exist in the home directory
 touch "$HOME"/.extras.{bashrc,fish}

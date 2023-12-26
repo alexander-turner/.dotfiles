@@ -7,20 +7,8 @@ else
  sudo apt-get install -y fish
 fi
 
-# Create Fish configuration directory if it doesn't exist
-FISH_CONFIG_DIR="$HOME/.config/fish"
-if [ ! -d "$FISH_CONFIG_DIR" ]; then
-  mkdir -p "$FISH_CONFIG_DIR"
-fi
-
 # Set the correct permissions for the Fish configuration directory
 chown -R "$USER" "$HOME/.config"
-
-# Create a symbolic link for Fish configuration
-mkdir -p ~/.config
-if [ ! -L ~/.config/fish ]; then
-  ln -sf ~/.dotfiles/fish ~/.config/fish
-fi
 
 # Set Fish as the default shell
 if [ "$(grep "/usr/bin/fish" /etc/shells)" = "" ]; then
@@ -47,3 +35,24 @@ fish << FISH_SCRIPT
 
 # Configure the theme if not already configured
 FISH_SCRIPT
+
+# Create Fish configuration directory if it doesn't exist
+FISH_CONFIG_DIR="$HOME/.config/fish"
+DOTFILES_DIR="$HOME/.dotfiles"
+
+# See if user wants preset settings
+echo "Do you want to accept preset tide settings? (Y/n)"
+read answer
+
+if echo "$answer" | grep -iq "^y" ;then
+    echo "You accepted the preset settings."
+    cp -r "$DOTFILES_DIR"/fish "$FISH_CONFIG_DIR"
+else
+    echo "You declined preset settings."
+    tide configure
+fi
+
+# Hardlink the fish config file -- will overwrite existing config.fish
+cp "$FISH_CONFIG_DIR"/config.fish "$FISH_CONFIG_DIR"/config.fish.backup
+ln -f "$DOTFILES_DIR"/.config.fish "$FISH_CONFIG_DIR"/config.fish
+
