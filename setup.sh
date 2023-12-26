@@ -31,8 +31,16 @@ done
 
 # Create neovim settings which include current vimrc files
 NEOVIM_CONFIG_DIR="$HOME/.config/nvim/"
-mkdir -p "$NEOVIM_CONFIG_DIR"
-ln -sf "$PWD"/nvim "$HOME"/.config/nvim
+# Backup existing configs
+mv ~/.config/nvim{,.bak}
+mv ~/.local/share/nvim{,.bak}
+mv ~/.local/state/nvim{,.bak}
+mv ~/.cache/nvim{,.bak}
+# Remove directory if not a symlink
+if [ ! -L "$NEOVIM_CONFIG_DIR" ]; then
+    rm -rf "$NEOVIM_CONFIG_DIR"
+fi 
+ln -s "$PWD"/nvim "$NEOVIM_CONFIG_DIR"
 
 # Use brace expansion to ensure the extras files exist in the home directory
 touch "$HOME"/.extras.{bashrc,fish}
