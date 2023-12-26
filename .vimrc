@@ -122,10 +122,10 @@ autocmd FileType html setlocal shiftwidth=2 tabstop=2 expandtab
 
 " SPLIT MANAGEMENT
 " Easier split navigations
-nnoremap <C-J> <C-W><C-J>
-nnoremap <C-K> <C-W><C-K>
-nnoremap <C-L> <C-W><C-L>
-nnoremap <C-H> <C-W><C-H>
+" nnoremap <C-J> <C-W><C-J>
+" nnoremap <C-K> <C-W><C-K>
+" nnoremap <C-L> <C-W><C-L>
+" nnoremap <C-H> <C-W><C-H>
 
 " More natural split opening
 set splitbelow

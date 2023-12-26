@@ -1,9 +1,9 @@
 #!/bin/bash
 
 if [ "$(uname)" == "Darwin" ]; then
-	brew install neovim pyvim     # neovim
+	brew install neovim pyvim      # neovim
 	brew install libusb pkg-config # wally-cli
-	brew install coreutils # For aliasing ls to gls
+	brew install coreutils         # For aliasing ls to gls
 else                            # Assume linux
 	# First install brew (so that we can get up-to-date neovim)
 	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -38,14 +38,15 @@ mv ~/.local/state/nvim{,.bak}
 mv ~/.cache/nvim{,.bak}
 # Remove directory if not a symlink
 if [ ! -L "$NEOVIM_CONFIG_DIR" ]; then
-    rm -rf "$NEOVIM_CONFIG_DIR"
-fi 
-ln -s "$PWD"/nvim "$NEOVIM_CONFIG_DIR"
+	rm -rf "$NEOVIM_CONFIG_DIR"
+fi
+git clone https://github.com/LazyVim/starter ~/.config/nvim
+rm -rf ~/.config/nvim/.git
+ln -f "$PWD"/init.lua "$NEOVIM_CONFIG_DIR"/init.lua
 
 # Use brace expansion to ensure the extras files exist in the home directory
 touch "$HOME"/.extras.{bashrc,fish}
 
 # Install fish and configure
-SCRIPT_DIR="$(dirname "$0")"/bin      # Get the directory of the current script
-"$SCRIPT_DIR"/install_fish.sh     # Execute install_fish.sh from that directory
-
+SCRIPT_DIR="$(dirname "$0")"/bin # Get the directory of the current script
+"$SCRIPT_DIR"/install_fish.sh    # Execute install_fish.sh from that directory
