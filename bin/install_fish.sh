@@ -1,10 +1,10 @@
 #!/bin/bash
 
 if [ "$(uname)" == "Darwin" ]; then
- brew install fish
+	brew install fish
 else
- sudo apt-get update
- sudo apt-get install -y fish
+	sudo apt-get update
+	sudo apt-get install -y fish
 fi
 
 # Set the correct permissions for the Fish configuration directory
@@ -12,18 +12,18 @@ chown -R "$USER" "$HOME/.config"
 
 # Set Fish as the default shell
 if [ "$(grep "/usr/bin/fish" /etc/shells)" = "" ]; then
-  echo "/usr/bin/fish" >> /etc/shells 
+	echo "/usr/bin/fish" >>/etc/shells
 fi
 
 if [ "$SHELL" != "/usr/bin/fish" ]; then
-  chsh -s /usr/bin/fish
-  echo "Fish is now set as the default shell. Please log out and log back in for the changes to take effect."
+	chsh -s /usr/bin/fish
+	echo "Fish is now set as the default shell. Please log out and log back in for the changes to take effect."
 else
-  echo "Fish is already the default shell."
+	echo "Fish is already the default shell."
 fi
 
-# Install themes using fish 
-fish << FISH_SCRIPT
+# Install themes using fish
+fish <<FISH_SCRIPT
   curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source
   fisher install jorgebucaran/fisher
 
@@ -39,20 +39,17 @@ FISH_SCRIPT
 # Create Fish configuration directory if it doesn't exist
 FISH_CONFIG_DIR="$HOME/.config/fish"
 DOTFILES_DIR="$HOME/.dotfiles"
+ln -f "$DOTFILES_DIR"/.config.fish "$DOTFILES_DIR"/fish/config.fish
 
 # See if user wants preset settings
 echo "Do you want to accept preset tide settings? (Y/n)"
 read answer
 
-if echo "$answer" | grep -iq "^y" ;then
-    echo "You accepted the preset settings."
-    cp -r "$DOTFILES_DIR"/fish "$FISH_CONFIG_DIR"
+if echo "$answer" | grep -iq "^y"; then
+	echo "You accepted the preset settings."
+	cp -r "$DOTFILES_DIR"/fish "$FISH_CONFIG_DIR"
 else
-    echo "You declined preset settings."
-    tide configure
+	echo "You declined preset settings."
+	tide configure
+	ln -f "$DOTFILES_DIR"/.config.fish "$FISH_CONFIG_DIR"/config.fish
 fi
-
-# Hardlink the fish config file -- will overwrite existing config.fish
-cp "$FISH_CONFIG_DIR"/config.fish "$FISH_CONFIG_DIR"/config.fish.backup
-ln -f "$DOTFILES_DIR"/.config.fish "$FISH_CONFIG_DIR"/config.fish
-
