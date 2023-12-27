@@ -2,7 +2,7 @@
 
 # Function to check if a command exists
 command_exists() {
-    command -v "$1" >/dev/null 2>&1
+	command -v "$1" >/dev/null 2>&1
 }
 
 if [ "$(uname)" == "Darwin" ]; then
@@ -10,15 +10,15 @@ if [ "$(uname)" == "Darwin" ]; then
 	brew install libusb pkg-config # wally-cli
 	brew install coreutils         # For aliasing ls to gls
 else                            # Assume linux
-    if ! command_exists brew; then
-	    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-        echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> $HOME/.profile
-        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-    fi
-	brew install neovim 
+	if ! command_exists brew; then
+		/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+		echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >>$HOME/.profile
+		eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+	fi
+	brew install neovim
 
-    # sudo apt-get update
-	sudo apt-get install python3-pynvim 
+	# sudo apt-get update
+	sudo apt-get install python3-pynvim
 fi
 
 # Install wally-cli for keyboard flashing
@@ -41,9 +41,9 @@ done
 # Create neovim settings which include current vimrc files
 # Backup existing configs
 for directory in ~/.config/nvim ~.local/{share,state}/nvim ~/cache/nvim; do
-    rm -rf "$directory.bak"
-    mv "$directory"{,.bak}
+	rm -rf "$directory.bak" 2>/dev/null
 done
+mv "$directory"{,.bak} 2>/dev/null
 
 # Remove directory if not a symlink
 NEOVIM_CONFIG_DIR="$HOME/.config/nvim/"
