@@ -39,13 +39,14 @@ for file in .bashrc .vimrc .gitconfig .tmux.conf; do
 done
 
 # Create neovim settings which include current vimrc files
-NEOVIM_CONFIG_DIR="$HOME/.config/nvim/"
 # Backup existing configs
-mv ~/.config/nvim{,.bak}
-mv ~/.local/share/nvim{,.bak}
-mv ~/.local/state/nvim{,.bak}
-mv ~/.cache/nvim{,.bak}
+for directory in ~/.config/nvim ~.local/{share,state}/nvim ~/cache/nvim; do
+    rm -rf "$directory.bak"
+    mv "$directory"{,.bak}
+done
+
 # Remove directory if not a symlink
+NEOVIM_CONFIG_DIR="$HOME/.config/nvim/"
 if [ ! -L "$NEOVIM_CONFIG_DIR" ]; then
 	rm -rf "$NEOVIM_CONFIG_DIR"
 fi
