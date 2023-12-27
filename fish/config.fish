@@ -74,8 +74,17 @@ function blowitaway
     command rm -rf $argv
 end
 
+# Handle ls across OS's
+function ls_alias
+    if $IS_MAC
+        command gls $argv
+    else
+        command ls $argv
+    end
+end
+        
 function ls
-    command ls --color="always" --ignore="*~" $argv
+        ls_alias --color="always" --ignore="*~" $argv
 end
 
 function cdls

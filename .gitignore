@@ -10,3 +10,4 @@ fish/(completions|functions)*
 >>>>>>> 523d273dabfbcf0b467aae8ed663a372e9acf370
 *orig
 *vimrc
+nvim*

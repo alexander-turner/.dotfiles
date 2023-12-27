@@ -7,7 +7,7 @@ if [ "$(uname)" == "Darwin" ]; then
 else                            # Assume linux
 	# First install brew (so that we can get up-to-date neovim)
 	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-	sudo brew install neovim
+	sudo brew install neovim # TODO not installing properly, brew isn't installed?
 
 	sudo apt-get install python3-pynvim
 fi
@@ -42,6 +42,8 @@ if [ ! -L "$NEOVIM_CONFIG_DIR" ]; then
 fi
 git clone https://github.com/LazyVim/starter ~/.config/nvim
 rm -rf ~/.config/nvim/.git
+# TODO add ~/.config/nvim/lua/config/lazy.lua because disable checker
+# TODO create extras file so that settings can differ
 ln -f "$PWD"/init.lua "$NEOVIM_CONFIG_DIR"/init.lua
 
 # Use brace expansion to ensure the extras files exist in the home directory

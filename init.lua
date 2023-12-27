@@ -4,6 +4,8 @@ require("config.lazy")
 vim.cmd("source ~/.vimrc")
 
 return {
+  { 'numToStr/Comment.nvim', lazy = false, },
+
   -- add gruvbox
   { "catppuccin/nvim", name = "catppuccin", priority = 1000 },
 
