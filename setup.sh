@@ -54,7 +54,7 @@ git clone https://github.com/LazyVim/starter ~/.config/nvim
 rm -rf ~/.config/nvim/.git
 ln -f "$HOME"/.dotfiles/nvim_config_lazy.lua "$NEOVIM_CONFIG_DIR"/lua/config/lazy.lua
 
-EXTRAS_FILE = "$HOME"/.nvim.extras.lua
+EXTRAS_FILE="$HOME"/.nvim.extras.lua
 touch "$EXTRAS_FILE"
 ln -f "$EXTRAS_FILE" "$NEOVIM_CONFIG_DIR"/extras.lua
 
