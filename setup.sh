@@ -30,11 +30,11 @@ for file in .bashrc .vimrc .gitconfig .tmux.conf; do
 		# Prompt the user to confirm overwriting the existing file
 		read -rp "$file already exists. Overwrite? (y/N) " choice
 		case "$choice" in
-		y | Y) ln -f "$PWD/$file" "$HOME" ;;
+		y | Y) ln -f "$HOME/.dotfiles/$file" "$HOME" ;;
 		*) echo "Skipping $file" ;;
 		esac
 	else
-		ln -f "$PWD/$file" "$HOME"
+		ln -f "$HOME/.dotfiles/$file" "$HOME"
 	fi
 done
 
@@ -52,9 +52,14 @@ if [ ! -L "$NEOVIM_CONFIG_DIR" ]; then
 fi
 git clone https://github.com/LazyVim/starter ~/.config/nvim
 rm -rf ~/.config/nvim/.git
-# TODO add ~/.config/nvim/lua/config/lazy.lua because disable checker
-# TODO create extras file so that settings can differ
-ln -f "$PWD"/init.lua "$NEOVIM_CONFIG_DIR"/init.lua
+ln -f "$HOME"/.dotfiles/nvim_config_lazy.lua "$NEOVIM_CONFIG_DIR"/lua/config/lazy.lua
+
+EXTRAS_FILE = "$HOME"/.nvim.extras.lua
+touch "$EXTRAS_FILE"
+ln -f "$EXTRAS_FILE" "$NEOVIM_CONFIG_DIR"/extras.lua
+
+# Sync baseline plugins
+ln -f "$HOME"/.dotfiles/init.lua "$NEOVIM_CONFIG_DIR"/init.lua
 
 # Use brace expansion to ensure the extras files exist in the home directory
 touch "$HOME"/.extras.{bashrc,fish}
