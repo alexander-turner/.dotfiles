@@ -1,16 +1,16 @@
 #!/bin/bash
 
 command_exists() {
-    command -v "$1" >/dev/null 2>&1
+	command -v "$1" >/dev/null 2>&1
 }
 
 if ! command_exists fish; then
-    if [ "$(uname)" == "Darwin" ]; then
-	    brew install fish
-    else
-	    sudo apt-get update
-	    sudo apt-get install -y fish
-    fi
+	if [ "$(uname)" == "Darwin" ]; then
+		brew install fish
+	else
+		sudo apt-get update
+		sudo apt-get install -y fish
+	fi
 fi
 
 # Set the correct permissions for the Fish configuration directory
@@ -53,9 +53,12 @@ read answer
 
 if echo "$answer" | grep -iq "^y"; then
 	echo "You accepted the preset settings."
-	cp "$DOTFILES_DIR"/fish "$FISH_CONFIG_DIR"
+	# Copy if the directory doesn't exist already
+	if [ ! -d "$FISH_CONFIG_DIR" ]; then
+		cp -r "$DOTFILES_DIR"/fish "$FISH_CONFIG_DIR"
+	fi
 else
 	echo "You declined preset settings."
-	tide configure
+	fish -c "tide configure"
 	ln -f "$DOTFILES_DIR"/.config.fish "$FISH_CONFIG_DIR"/config.fish
 fi
