@@ -1,10 +1,16 @@
 #!/bin/bash
 
-if [ "$(uname)" == "Darwin" ]; then
-	brew install fish
-else
-	sudo apt-get update
-	sudo apt-get install -y fish
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+if ! command_exists fish; then
+    if [ "$(uname)" == "Darwin" ]; then
+	    brew install fish
+    else
+	    sudo apt-get update
+	    sudo apt-get install -y fish
+    fi
 fi
 
 # Set the correct permissions for the Fish configuration directory
@@ -47,7 +53,7 @@ read answer
 
 if echo "$answer" | grep -iq "^y"; then
 	echo "You accepted the preset settings."
-	cp -r "$DOTFILES_DIR"/fish "$FISH_CONFIG_DIR"
+	cp "$DOTFILES_DIR"/fish "$FISH_CONFIG_DIR"
 else
 	echo "You declined preset settings."
 	tide configure

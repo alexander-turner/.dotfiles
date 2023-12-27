@@ -1,15 +1,24 @@
 #!/bin/bash
 
+# Function to check if a command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
 if [ "$(uname)" == "Darwin" ]; then
 	brew install neovim pyvim      # neovim
 	brew install libusb pkg-config # wally-cli
 	brew install coreutils         # For aliasing ls to gls
 else                            # Assume linux
-	# First install brew (so that we can get up-to-date neovim)
-	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-	sudo brew install neovim # TODO not installing properly, brew isn't installed?
+    if ! command_exists brew; then
+	    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> $HOME/.profile
+        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+    fi
+	brew install neovim 
 
-	sudo apt-get install python3-pynvim
+    # sudo apt-get update
+	sudo apt-get install python3-pynvim 
 fi
 
 # Install wally-cli for keyboard flashing
