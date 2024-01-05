@@ -15,3 +15,5 @@ Also installs a cool `fish` theme, [`tide`](https://github.com/IlanCosman/tide):
 3. Installs `neovim` and sets it as default editor. Furthermore, sets up `Lazynvim`, which is basically a full-fledged IDE. It even has Copilot support. (But don't use this for confidential information!)
 ![](https://user-images.githubusercontent.com/292349/213447056-92290767-ea16-430c-8727-ce994c93e9cc.png)
 4. Installs a bunch of nice shortcuts, including `git` aliases (e.g. `git add` -> `ga`). 
+
+This script also creates `~/.extras.fish` and `~/.extras.bash` which are automatically sourced by `config.fish` and `.bashrc`. These files are not tracked by the repository. Thus, these files are perfect for storing API keys and other information which shouldn't be shown to Github.
