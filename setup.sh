@@ -41,26 +41,29 @@ done
 # Create neovim settings which include current vimrc files
 # Backup existing configs
 for directory in ~/.config/nvim ~.local/{share,state}/nvim ~/cache/nvim; do
-	rm -rf "$directory.bak" 2>/dev/null
+	echo "Backing up $directory into $directory.bak."
+	# rm -rf "$directory.bak" 2>/dev/null
+	mv "$directory"{,.bak} 2>/dev/null
 done
-mv "$directory"{,.bak} 2>/dev/null
 
 # Remove directory if not a symlink
 NEOVIM_CONFIG_DIR="$HOME/.config/nvim/"
 if [ ! -L "$NEOVIM_CONFIG_DIR" ]; then
 	rm -rf "$NEOVIM_CONFIG_DIR"
 fi
-git clone https://github.com/LazyVim/starter ~/.config/nvim
-rm -rf ~/.config/nvim/.git
-ln -f "$HOME"/.dotfiles/nvim_config_lazy.lua "$NEOVIM_CONFIG_DIR"/lua/config/lazy.lua
-ln -f "$HOME"/.dotfiles/lazyvim.json "$NEOVIM_CONFIG_DIR"/lazyvim.json
+ln -s nvim $NEOVIM_CONFIG_DIR # symlink to this repo's nvim config folder
 
-EXTRAS_FILE="$HOME"/.nvim.extras.lua
-touch "$EXTRAS_FILE"
-ln -f "$EXTRAS_FILE" "$NEOVIM_CONFIG_DIR"/extras.lua
-
-# Sync baseline plugins
-ln -f "$HOME"/.dotfiles/init.lua "$NEOVIM_CONFIG_DIR"/init.lua
+# git clone https://github.com/LazyVim/starter ~/.config/nvim
+# rm -rf ~/.config/nvim/.git
+# ln -f "$HOME"/.dotfiles/nvim_config_lazy.lua "$NEOVIM_CONFIG_DIR"/lua/config/lazy.lua
+# ln -f "$HOME"/.dotfiles/lazyvim.json "$NEOVIM_CONFIG_DIR"/lazyvim.json
+#
+# EXTRAS_FILE="$HOME"/.nvim.extras.lua
+# touch "$EXTRAS_FILE"
+# ln -f "$EXTRAS_FILE" "$NEOVIM_CONFIG_DIR"/extras.lua
+#
+# # Sync baseline plugins
+# ln -f "$HOME"/.dotfiles/init.lua "$NEOVIM_CONFIG_DIR"/init.lua
 
 # Use brace expansion to ensure the extras files exist in the home directory
 touch "$HOME"/.extras.{bashrc,fish}
