@@ -82,9 +82,9 @@ function ls_alias
         command ls $argv
     end
 end
-        
+
 function ls
-        ls_alias --color="always" --ignore="*~" $argv
+    ls_alias --color="always" --ignore="*~" $argv
 end
 
 function cdls
@@ -177,6 +177,7 @@ else
     set -gx PATH /home/linuxbrew/.linuxbrew/bin $PATH
     set -gx PATH /home/linuxbrew/.linuxbrew/sbin $PATH
 end
+set -U HOMEBREW_NO_ANALYTICS 1
 
 # Google Cloud SDK path update
 if [ -f '~/Downloads/google-cloud-sdk/path.fish.inc' ]

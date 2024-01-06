@@ -51,7 +51,7 @@ NEOVIM_CONFIG_DIR="$HOME/.config/nvim/"
 if [ ! -L "$NEOVIM_CONFIG_DIR" ]; then
 	rm -rf "$NEOVIM_CONFIG_DIR"
 fi
-ln -s nvim $NEOVIM_CONFIG_DIR # symlink to this repo's nvim config folder
+ln -s ./nvim $NEOVIM_CONFIG_DIR # symlink to this repo's nvim config folder
 
 # git clone https://github.com/LazyVim/starter ~/.config/nvim
 # rm -rf ~/.config/nvim/.git
