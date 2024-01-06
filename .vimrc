@@ -131,3 +131,5 @@ autocmd FileType html setlocal shiftwidth=2 tabstop=2 expandtab
 set splitbelow
 set splitright
 
+" Handle text wrapping 
+set wrap 
