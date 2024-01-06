@@ -42,15 +42,14 @@ done
 # Backup existing configs
 for directory in ~/.config/nvim ~.local/{share,state}/nvim ~/cache/nvim; do
 	echo "Backing up $directory into $directory.bak."
-	# rm -rf "$directory.bak" 2>/dev/null
 	cp "$directory"{,.bak} 2>/dev/null
 done
 
 # Remove directory if not a symlink
-NEOVIM_CONFIG_DIR="$HOME/.config/nvim/"
+NEOVIM_CONFIG_DIR="$HOME/.config/nvim"
 if [ ! -L "$NEOVIM_CONFIG_DIR" ]; then
 	rm -rf "$NEOVIM_CONFIG_DIR"
-	ln -s ./nvim $NEOVIM_CONFIG_DIR # symlink to this repo's nvim config folder
+	ln -s "$HOME/.dotfiles/nvim" "$NEOVIM_CONFIG_DIR" # symlink to this repo's nvim config folder
 fi
 
 # Use brace expansion to ensure the extras files exist in the home directory
