@@ -50,20 +50,8 @@ done
 NEOVIM_CONFIG_DIR="$HOME/.config/nvim/"
 if [ ! -L "$NEOVIM_CONFIG_DIR" ]; then
 	rm -rf "$NEOVIM_CONFIG_DIR"
+	ln -s ./nvim $NEOVIM_CONFIG_DIR # symlink to this repo's nvim config folder
 fi
-ln -s ./nvim $NEOVIM_CONFIG_DIR # symlink to this repo's nvim config folder
-
-# git clone https://github.com/LazyVim/starter ~/.config/nvim
-# rm -rf ~/.config/nvim/.git
-# ln -f "$HOME"/.dotfiles/nvim_config_lazy.lua "$NEOVIM_CONFIG_DIR"/lua/config/lazy.lua
-# ln -f "$HOME"/.dotfiles/lazyvim.json "$NEOVIM_CONFIG_DIR"/lazyvim.json
-#
-# EXTRAS_FILE="$HOME"/.nvim.extras.lua
-# touch "$EXTRAS_FILE"
-# ln -f "$EXTRAS_FILE" "$NEOVIM_CONFIG_DIR"/extras.lua
-#
-# # Sync baseline plugins
-# ln -f "$HOME"/.dotfiles/init.lua "$NEOVIM_CONFIG_DIR"/init.lua
 
 # Use brace expansion to ensure the extras files exist in the home directory
 touch "$HOME"/.extras.{bashrc,fish}
