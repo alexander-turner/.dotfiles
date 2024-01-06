@@ -43,7 +43,7 @@ done
 for directory in ~/.config/nvim ~.local/{share,state}/nvim ~/cache/nvim; do
 	echo "Backing up $directory into $directory.bak."
 	# rm -rf "$directory.bak" 2>/dev/null
-	mv "$directory"{,.bak} 2>/dev/null
+	cp "$directory"{,.bak} 2>/dev/null
 done
 
 # Remove directory if not a symlink
