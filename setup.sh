@@ -38,6 +38,11 @@ for file in .bashrc .vimrc .gitconfig .tmux.conf; do
 	fi
 done
 
+# Tmux configuration
+git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm # Tmux plugin manager
+tmux source ~/.tmux.conf
+~/.tmux/plugins/tpm/bin/install_plugins
+
 # Create neovim settings which include current vimrc files
 # Backup existing configs
 for directory in ~/.config/nvim ~.local/{share,state}/nvim ~/cache/nvim; do
