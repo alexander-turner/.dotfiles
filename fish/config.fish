@@ -2,9 +2,9 @@
 set fish_greeting ''
 
 # Check if the operating system is macOS and set IS_MAC flag
-set IS_MAC false
-if uname | grep -q Darwin
-    set IS_MAC true
+set IS_MAC 'false'
+if uname | grep -q "Darwin"
+    set IS_MAC 'true'
 end
 
 # Use a rainbow talking cow to say something random on non-macOS systems
@@ -15,17 +15,17 @@ end
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
 if test -f ~/miniconda3/bin/conda
-    eval ~/miniconda3/bin/conda "shell.fish" hook $argv | source
+    eval ~/miniconda3/bin/conda "shell.fish" "hook" $argv | source
 end
 # <<< conda initialize <<<
 
 # Autojump setup
 if not $IS_MAC
-    if test -f ~/.autojump/share/autojump/autojump.fish
-        . ~/.autojump/share/autojump/autojump.fish
-    else
-        . /usr/share/autojump/autojump.fish
-    end
+	if test -f ~/.autojump/share/autojump/autojump.fish; 
+		. ~/.autojump/share/autojump/autojump.fish;
+	else
+		. /usr/share/autojump/autojump.fish
+	end
 else
     [ -f /opt/homebrew/share/autojump/autojump.fish ]; and source /opt/homebrew/share/autojump/autojump.fish
 end
@@ -48,13 +48,13 @@ end
 
 # macOS does not need --preserve-root=all for rm
 if not $IS_MAC
-    function rm
-        command rm -I --preserve-root=all $argv
-    end
+	function rm
+		command rm -I --preserve-root=all $argv
+	end
 end
 
 function findfile
-    find / -type f 2>/dev/null | grep $argv
+    find / -type f 2> /dev/null | grep $argv
 end
 
 function editbashrc
@@ -74,17 +74,8 @@ function blowitaway
     command rm -rf $argv
 end
 
-# Handle ls across OS's
-function ls_alias
-    if $IS_MAC
-        command gls $argv
-    else
-        command ls $argv
-    end
-end
-
 function ls
-    ls_alias --color="always" --ignore="*~" $argv
+    command ls --color="always" $argv
 end
 
 function cdls
@@ -102,11 +93,11 @@ end
 
 # Clipboard function differs between macOS and others
 function yank # Copy to clipboard
-    if $IS_MAC
-        pbcopy
-    else
-        xclip -sel c
-    end
+	if $IS_MAC
+		pbcopy
+	else
+		xclip -sel c
+	end
 end
 
 function get_ps
@@ -144,7 +135,7 @@ function gco
 end
 
 function gk
-    gitk --all &
+    gitk --all&
 end
 
 function gx
@@ -159,36 +150,27 @@ function get
     git $argv
 end
 
-# Use GDM's bashrc, but from fish
-function bashdm
-    bash -c "source ~/.extras.bash; $argv"
-end
-
 # Add to PATH
 set -gx PATH $PATH ~/bin ~/.local/bin
-set -gx EDITOR /usr/bin/vim
-set -gx GCM_CREDENTIAL_STORE cache
+set -gx EDITOR "/usr/bin/vim"
+set -gx GCM_CREDENTIAL_STORE "cache"
 set PATH $PATH /usr/local/go/bin
 
-# Path homebrew
-if $IS_MAC
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-else
-    set -gx PATH /home/linuxbrew/.linuxbrew/bin $PATH
-    set -gx PATH /home/linuxbrew/.linuxbrew/sbin $PATH
+# Run homebrew on macOS
+if $IS_MAC 
+	eval "$(/opt/homebrew/bin/brew shellenv)"
 end
-set -U HOMEBREW_NO_ANALYTICS 1
 
 # Google Cloud SDK path update
 if [ -f '~/Downloads/google-cloud-sdk/path.fish.inc' ]
-    . ~/Downloads/google-cloud-sdk/path.fish.inc
+	. ~/Downloads/google-cloud-sdk/path.fish.inc
 end
 
 # Run extra commands
 set CONFIG_PATH ~/.extras.fish
-touch $CONFIG_PATH
+touch $CONFIG_PATH 
 source $CONFIG_PATH
 
 function editfishextras
-    nvim $CONFIG_PATH
+	nvim $CONFIG_PATH
 end
