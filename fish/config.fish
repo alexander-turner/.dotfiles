@@ -159,16 +159,13 @@ function get
     git $argv
 end
 
-# Use GDM's bashrc, but from fish
-function bashdm
-    bash -c "source ~/.extras.bash; $argv"
-end
-
-# Add to PATH
 set -gx PATH $PATH ~/bin ~/.local/bin
-set -gx EDITOR /usr/bin/vim
-set -gx GCM_CREDENTIAL_STORE cache
+set -gx EDITOR nvim
 set PATH $PATH /usr/local/go/bin
+
+function n
+    nvim $argv
+end
 
 # Path homebrew
 if $IS_MAC
