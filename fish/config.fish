@@ -78,6 +78,10 @@ function ls
     command ls --color="always" $argv
 end
 
+function ssh
+    command ssh -t "tmux attach -t default || tmux new -s default" $argv
+end
+
 function cdls
     cd $argv
     ls
