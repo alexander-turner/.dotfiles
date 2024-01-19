@@ -78,8 +78,13 @@ function ls
     command ls --color="always" $argv
 end
 
+
 function ssh
-    command ssh -t "tmux attach -t default || tmux new -s default" $argv
+    if $IS_MAC
+        command /usr/bin/ssh -t $argv 'tmux attach -t default || tmux new -s default'
+    else
+        command ssh -t $argv 'tmux attach -t default || tmux new -s default'
+    end
 end
 
 function cdls
