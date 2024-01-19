@@ -45,7 +45,7 @@ FISH_SCRIPT
 # Create Fish configuration directory if it doesn't exist
 FISH_CONFIG_DIR="$HOME/.config/fish"
 DOTFILES_DIR="$HOME/.dotfiles"
-ln -f "$DOTFILES_DIR"/fish/config.fish "$FISH_CONFIG_DIR"
+ln -f "$DOTFILES_DIR"/fish/config.fish "$FISH_CONFIG_DIR/config.fish"
 
 # See if user wants preset settings
 echo 'Do you want to accept preset tide settings? (Y/n)'
