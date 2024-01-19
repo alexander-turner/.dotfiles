@@ -3,6 +3,7 @@ require("config.lazy")
 
 -- Include vimrc settings
 vim.cmd("source ~/.vimrc")
+vim.cmd.colorscheme("catppuccin-latte")
 
 return {
 
