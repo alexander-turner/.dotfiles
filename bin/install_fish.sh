@@ -45,10 +45,10 @@ FISH_SCRIPT
 # Create Fish configuration directory if it doesn't exist
 FISH_CONFIG_DIR="$HOME/.config/fish"
 DOTFILES_DIR="$HOME/.dotfiles"
-ln -f "$FISH_CONFIG_DIR"/config.fish "$DOTFILES_DIR"/fish/config.fish
+ln -f "$DOTFILES_DIR"/fish/config.fish "$FISH_CONFIG_DIR"
 
 # See if user wants preset settings
-echo "Do you want to accept preset tide settings? (Y/n)"
+echo 'Do you want to accept preset tide settings? (Y/n)'
 read answer
 
 if echo "$answer" | grep -iq "^y"; then

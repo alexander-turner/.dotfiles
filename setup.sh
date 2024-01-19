@@ -30,11 +30,11 @@ for file in .bashrc .vimrc .gitconfig .tmux.conf; do
 		# Prompt the user to confirm overwriting the existing file
 		read -rp "$file already exists. Overwrite? (y/N) " choice
 		case "$choice" in
-		y | Y) ln -f "$HOME/.dotfiles/$file" "$HOME" ;;
+		y | Y) ln -f "$HOME/$file" "$HOME/.dotfiles/$file" ;;
 		*) echo "Skipping $file" ;;
 		esac
 	else
-		ln -f "$HOME/.dotfiles/$file" "$HOME"
+		ln -f "$HOME/$file" "$HOME/.dotfiles/$file"
 	fi
 done
 
