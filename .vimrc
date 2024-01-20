@@ -80,8 +80,10 @@ nnoremap <F9> :!%:p<Enter>
 " " sort selected lines
 " vnoremap <leader>s :sort<CR>
 "
-" " copy selected text to clipboard
-" vnoremap <leader>y "+y
+" copy selected text to clipboard
+vnoremap <leader>y "+y
+" set clipboard+=unnamedplus
+
 
 " Fix issue where visual mode highlighting was invisible
 set nocompatible
