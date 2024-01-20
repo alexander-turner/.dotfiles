@@ -192,3 +192,7 @@ source $CONFIG_PATH
 function editfishextras
     nvim $CONFIG_PATH
 end
+
+function n
+    nvim $argv
+end

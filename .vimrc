@@ -134,4 +134,3 @@ set splitright
 " Handle text wrapping 
 set wrap 
 set scrolloff=3
-

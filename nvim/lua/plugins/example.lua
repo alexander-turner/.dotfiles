@@ -12,6 +12,8 @@ return {
   -- add gruvbox
   { "ellisonleao/gruvbox.nvim" },
 
+  { "neoclide/coc.nvim" },
+
   -- Configure LazyVim to load gruvbox
   {
     "LazyVim/LazyVim",
