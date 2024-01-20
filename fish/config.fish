@@ -33,6 +33,12 @@ end
 # Custom settings
 fish_vi_key_bindings
 
+if status is-interactive
+    and not set -q TMUX
+    # Create session 'main' or attach to 'main' if already exists.
+    tmux new-session -A -s main
+end
+
 # Custom functions
 function compress
     ~/bin/media_upload/compress.sh
@@ -74,17 +80,17 @@ function blowitaway
     command rm -rf $argv
 end
 
-# Handle ls across OS's
-function ls_alias
-    if $IS_MAC
-        command gls $argv
-    else
-        command ls $argv
-    end
+function ls
+    command ls --color="always" $argv
 end
 
-function ls
-    ls_alias --color="always" --ignore="*~" $argv
+
+function ssh
+    if $IS_MAC
+        command /usr/bin/ssh $argv
+    else
+        command ssh $argv
+    end
 end
 
 function cdls
@@ -159,16 +165,14 @@ function get
     git $argv
 end
 
-# Use GDM's bashrc, but from fish
-function bashdm
-    bash -c "source ~/.extras.bash; $argv"
-end
-
 # Add to PATH
 set -gx PATH $PATH ~/bin ~/.local/bin
-set -gx EDITOR /usr/bin/vim
-set -gx GCM_CREDENTIAL_STORE cache
+set -gx EDITOR nvim
 set PATH $PATH /usr/local/go/bin
+
+function n
+    nvim $argv
+end
 
 # Path homebrew
 if $IS_MAC
@@ -177,7 +181,6 @@ else
     set -gx PATH /home/linuxbrew/.linuxbrew/bin $PATH
     set -gx PATH /home/linuxbrew/.linuxbrew/sbin $PATH
 end
-set -U HOMEBREW_NO_ANALYTICS 1
 
 # Google Cloud SDK path update
 if [ -f '~/Downloads/google-cloud-sdk/path.fish.inc' ]
