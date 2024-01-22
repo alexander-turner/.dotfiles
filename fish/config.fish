@@ -81,7 +81,7 @@ function blowitaway
 end
 
 function ls
-    command ls --color="always" $argv
+    command ls --color="always" --ignore-backups $argv
 end
 
 
@@ -174,6 +174,20 @@ function n
     nvim $argv
 end
 
+# Trash-cli aliases 
+function tp
+    trash-put $argv
+end
+
+function tl
+    trash-list $argv
+end
+
+# No unsafe rm by default; to override use "\rm"
+function rm
+    echo "rm is disabled; use the reversible 'trash-put' instead (aliased to 'tp'). To force rm, use 'command rm'."
+end
+
 # Path homebrew
 if $IS_MAC
     eval "$(/opt/homebrew/bin/brew shellenv)"
@@ -194,8 +208,4 @@ source $CONFIG_PATH
 
 function editfishextras
     nvim $CONFIG_PATH
-end
-
-function n
-    nvim $argv
 end
