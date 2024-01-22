@@ -11,3 +11,4 @@ fish/(completions|functions)*
 *orig
 *vimrc
 *lazy-lock\.json
+nvim/lazyvim.json
