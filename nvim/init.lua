@@ -14,4 +14,6 @@ return {
       colorscheme = "catppuccin-latte",
     },
   },
+  -- { "neoclide/coc.nvim" },
+  -- { "cmp", name = "tab-completion" },
 }

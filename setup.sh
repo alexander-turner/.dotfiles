@@ -24,17 +24,25 @@ fi
 # Install wally-cli for keyboard flashing
 go install github.com/zsa/wally-cli@latest
 
+# Install reversible trash option
+pip install trash-cli
+# Clear trash which is over 30 days old, daily
+(
+	crontab -l
+	echo "@daily $(which trash-empty) 30"
+) | crontab -
+
 # Link .bashrc, .vimrc, and .gitconfig to the home directory, with warnings for existing files
 for file in .bashrc .vimrc .gitconfig .tmux.conf; do
 	if [ -e "$HOME/$file" ]; then
 		# Prompt the user to confirm overwriting the existing file
 		read -rp "$file already exists. Overwrite? (y/N) " choice
 		case "$choice" in
-		y | Y) ln -f "$HOME/$file" "$HOME/.dotfiles/$file" ;;
+		y | Y) ln -f "$HOME/.dotfiles/$file" "$HOME/$file" ;;
 		*) echo "Skipping $file" ;;
 		esac
 	else
-		ln -f "$HOME/$file" "$HOME/.dotfiles/$file"
+		ln -f "$HOME/.dotfiles/$file" "$HOME/$file"
 	fi
 done
 

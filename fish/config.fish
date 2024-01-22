@@ -12,14 +12,6 @@ set -gx PATH $PATH ~/bin ~/.local/bin
 set -gx EDITOR nvim
 set PATH $PATH /usr/local/go/bin
 
-# Path homebrew
-if $IS_MAC
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-else
-    set -gx PATH /home/linuxbrew/.linuxbrew/bin $PATH
-    set -gx PATH /home/linuxbrew/.linuxbrew/sbin $PATH
-end
-
 # Use a rainbow talking cow to say something random on non-macOS systems
 if status is-interactive; and not $IS_MAC; and type -q fortune
     fortune -s | cowsay -y
@@ -94,7 +86,7 @@ function blowitaway
 end
 
 function ls
-    command ls --color="always" $argv
+    command ls --color="always" --ignore-backups $argv
 end
 
 
@@ -180,6 +172,28 @@ end
 
 function n
     nvim $argv
+end
+
+# Trash-cli aliases 
+function tp
+    trash-put $argv
+end
+
+function tl
+    trash-list $argv
+end
+
+# No unsafe rm by default; to override use "\rm"
+function rm
+    echo "rm is disabled; use the reversible 'trash-put' instead (aliased to 'tp'). To force rm, use 'command rm'."
+end
+
+# Path homebrew
+if $IS_MAC
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+else
+    set -gx PATH /home/linuxbrew/.linuxbrew/bin $PATH
+    set -gx PATH /home/linuxbrew/.linuxbrew/sbin $PATH
 end
 
 # Google Cloud SDK path update
