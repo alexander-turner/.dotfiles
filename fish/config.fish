@@ -7,6 +7,19 @@ if uname | grep -q Darwin
     set IS_MAC true
 end
 
+# Add to PATH
+set -gx PATH $PATH ~/bin ~/.local/bin
+set -gx EDITOR nvim
+set PATH $PATH /usr/local/go/bin
+
+# Path homebrew
+if $IS_MAC
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+else
+    set -gx PATH /home/linuxbrew/.linuxbrew/bin $PATH
+    set -gx PATH /home/linuxbrew/.linuxbrew/sbin $PATH
+end
+
 # Use a rainbow talking cow to say something random on non-macOS systems
 if status is-interactive; and not $IS_MAC; and type -q fortune
     fortune -s | cowsay -y
@@ -165,21 +178,8 @@ function get
     git $argv
 end
 
-# Add to PATH
-set -gx PATH $PATH ~/bin ~/.local/bin
-set -gx EDITOR nvim
-set PATH $PATH /usr/local/go/bin
-
 function n
     nvim $argv
-end
-
-# Path homebrew
-if $IS_MAC
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-else
-    set -gx PATH /home/linuxbrew/.linuxbrew/bin $PATH
-    set -gx PATH /home/linuxbrew/.linuxbrew/sbin $PATH
 end
 
 # Google Cloud SDK path update
