@@ -9,6 +9,7 @@ if [ "$(uname)" == "Darwin" ]; then
 	brew install neovim pyvim      # neovim
 	brew install libusb pkg-config # wally-cli
 	brew install coreutils         # For aliasing ls to gls
+	brew install pipx              # In case can't use systemwide pip
 else                            # Assume linux
 	if ! command_exists brew; then
 		/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -18,14 +19,15 @@ else                            # Assume linux
 	brew install neovim
 
 	# sudo apt-get update
-	sudo apt-get install python3-pynvim
+	sudo apt-get install python3-pynvim pipx
 fi
+pipx ensurepath
 
 # Install wally-cli for keyboard flashing
 go install github.com/zsa/wally-cli@latest
 
 # Install reversible trash option
-pip install trash-cli
+pipx install trash-cli
 # Clear trash which is over 30 days old, daily
 if ! crontab -l | grep -q "trash-empty"; then
 	(
