@@ -85,10 +85,19 @@ function blowitaway
     command rm -rf $argv
 end
 
-function ls
-    command ls --color="always" --ignore-backups $argv
+# Use gls from coreutils
+if $IS_MAC
+    function LS_CMD
+        command gls $argv
+    end
+else
+    function LS_CMD
+        command ls $argv
+    end
 end
-
+function ls
+    LS_CMD --color="always" --ignore-backups $argv
+end
 
 function ssh
     if $IS_MAC
