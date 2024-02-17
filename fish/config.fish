@@ -7,11 +7,6 @@ if uname | grep -q Darwin
     set IS_MAC true
 end
 
-# Add to PATH
-set -gx PATH $PATH ~/bin ~/.local/bin
-set -gx EDITOR nvim
-set PATH $PATH /usr/local/go/bin
-
 # Use a rainbow talking cow to say something random on non-macOS systems
 if status is-interactive; and not $IS_MAC; and type -q fortune
     fortune -s | cowsay -y
@@ -38,11 +33,11 @@ end
 # Custom settings
 fish_vi_key_bindings
 
-# if status is-interactive
-#     and not set -q TMUX
-#     # Create session 'main' or attach to 'main' if already exists.
-#     tmux new-session -A -s main
-# end
+if status is-interactive
+    and not set -q TMUX
+    # Create session 'main' or attach to 'main' if already exists.
+    tmux new-session -A -s main
+end
 
 # Custom functions
 function compress
@@ -85,19 +80,10 @@ function blowitaway
     command rm -rf $argv
 end
 
-# Use gls from coreutils
-if $IS_MAC
-    function LS_CMD
-        command gls $argv
-    end
-else
-    function LS_CMD
-        command ls $argv
-    end
-end
 function ls
-    LS_CMD --color="always" --ignore-backups $argv
+    command ls --color="always" --ignore-backups $argv
 end
+
 
 function ssh
     if $IS_MAC
@@ -178,6 +164,11 @@ end
 function get
     git $argv
 end
+
+# Add to PATH
+set -gx PATH $PATH ~/bin ~/.local/bin
+set -gx EDITOR nvim
+set PATH $PATH /usr/local/go/bin
 
 function n
     nvim $argv
