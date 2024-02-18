@@ -39,6 +39,8 @@ fish <<FISH_SCRIPT
 # Configure the theme if not already configured
 FISH_SCRIPT
 
+bash ./font_install.sh
+
 # Create Fish configuration directory if it doesn't exist
 FISH_CONFIG_DIR="$HOME/.config/fish"
 DOTFILES_DIR="$HOME/.dotfiles"
