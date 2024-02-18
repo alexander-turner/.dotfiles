@@ -66,6 +66,10 @@ git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm # Tmux plugin 
 tmux source ~/.tmux.conf
 ~/.tmux/plugins/tpm/bin/install_plugins
 
+# Sync iterm2 settings
+mv ~/.config/iterm2{,.bak}
+ln -s ~/.dotfiles/iterm2 ~/.config/iterm2
+
 # Create neovim settings which include current vimrc files
 # Backup existing configs
 for directory in ~/.config/nvim ~.local/{share,state}/nvim ~/cache/nvim; do
