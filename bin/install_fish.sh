@@ -33,9 +33,6 @@ fish <<FISH_SCRIPT
   curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source
   fisher install jorgebucaran/fisher
 
-  # Download a nerd font and install it
-  read -p "Please install FiraCode from https://github.com/tonsky/FiraCode, if you don't already have a nerd font."
-
   # Install the tide theme
   fisher install IlanCosman/tide@v6
 
