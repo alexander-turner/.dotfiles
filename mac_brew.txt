@@ -1,0 +1,14 @@
+bitwarden
+gh
+git
+obsidian
+tmux
+wget
+steam
+rectangle-pro
+--cask iterm2
+anki
+--cask contexts
+--cask private-internet-access
+--cask hiddenbar
+--cask zotero
