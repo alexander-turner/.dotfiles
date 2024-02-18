@@ -10,7 +10,15 @@ if [ "$(uname)" == "Darwin" ]; then
 	brew install libusb pkg-config # wally-cli
 	brew install coreutils         # For aliasing ls to gls
 	brew install pipx              # In case can't use systemwide pip
-else                            # Assume linux
+	brew install wget              # Download files
+
+	# Automatically focus and raise windows under cursor
+	brew tap dimentium/autoraise
+	brew install autoraise
+	brew services start autoraise
+
+	ln ~/.AutoRaise .AutoRaise
+else # Assume linux
 	if ! command_exists brew; then
 		/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 		echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >>$HOME/.profile
@@ -21,7 +29,10 @@ else                            # Assume linux
 	# sudo apt-get update
 	sudo apt-get install python3-pynvim pipx
 fi
-pipx ensurepath
+pipx ensurepath shell-gpt
+
+# Jump to a previously visited directory via a substring of its path
+brew install autojump
 
 # Install wally-cli for keyboard flashing
 go install github.com/zsa/wally-cli@latest
