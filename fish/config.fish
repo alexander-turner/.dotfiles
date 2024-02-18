@@ -33,14 +33,14 @@ end
 # Custom settings
 fish_vi_key_bindings
 
-if status is-interactive
-    and not set -q TMUX
-    # Create session 'main' or attach to 'main' if already exists.
-    tmux new-session -A -s main
-end
+# if status is-interactive
+#     and not set -q TMUX
+#     # Create session 'main' or attach to 'main' if already exists.
+#     tmux new-session -A -s main
+# end
 
 # Custom functions
-function compress
+function compress # TODO pull compress
     ~/bin/media_upload/compress.sh
 end
 
@@ -81,7 +81,7 @@ function blowitaway
 end
 
 function ls
-    command ls --color="always" --ignore-backups $argv
+    /opt/homebrew/opt/coreutils/libexec/gnubin/ls --color="always" --ignore-backups $argv
 end
 
 
@@ -91,11 +91,6 @@ function ssh
     else
         command ssh $argv
     end
-end
-
-function cdls
-    cd $argv
-    ls
 end
 
 function flash
@@ -188,6 +183,11 @@ function rm
     echo "rm is disabled; use the reversible 'trash-put' instead (aliased to 'tp'). To force rm, use 'command rm'."
 end
 
+# # Setup AutoRaise 
+# if $IS_MAC
+#     ./AutoRaise
+# end
+
 # Path homebrew
 if $IS_MAC
     eval "$(/opt/homebrew/bin/brew shellenv)"
@@ -207,5 +207,9 @@ touch $CONFIG_PATH
 source $CONFIG_PATH
 
 function editfishextras
-    nvim $CONFIG_PATH
+    nvim $CONFIG_PATH $argv
+end
+
+function fxtra
+    editfishextras $argv
 end
