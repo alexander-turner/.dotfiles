@@ -101,6 +101,11 @@ function python --description 'Alias for python3'
     python3 $argv
 end
 
+function pip --description 'Alias for pip'
+    # TODO breaks when python gets upgraded past 3.11
+    /opt/homebrew/opt/python@3.11/libexec/bin/pip $argv
+end
+
 # Clipboard function differs between macOS and others
 function yank # Copy to clipboard
     if $IS_MAC
@@ -160,10 +165,8 @@ function get
     git $argv
 end
 
-# Add to PATH
-set -gx PATH $PATH ~/bin ~/.local/bin
+set -gx PATH $PATH ~/bin ~/.local/bin /usr/local/go/bin
 set -gx EDITOR nvim
-set PATH $PATH /usr/local/go/bin
 
 function n
     nvim $argv

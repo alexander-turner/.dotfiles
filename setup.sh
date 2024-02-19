@@ -31,6 +31,9 @@ else # Assume linux
 fi
 pipx ensurepath shell-gpt
 
+brew install python
+python -m pip install trash-cli
+
 # Jump to a previously visited directory via a substring of its path
 brew install autojump
 
