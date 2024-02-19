@@ -71,7 +71,7 @@ tmux source ~/.tmux.conf
 
 # Sync iterm2 settings
 mv ~/.config/iterm2{,.bak}
-ln -s ~/.dotfiles/iterm2 ~/.config/iterm2
+ln -s ~/.dotfiles/apps/iterm2 ~/.config/iterm2
 
 # Create neovim settings which include current vimrc files
 # Backup existing configs
@@ -84,7 +84,7 @@ done
 NEOVIM_CONFIG_DIR="$HOME/.config/nvim"
 if [ ! -L "$NEOVIM_CONFIG_DIR" ]; then
 	rm -rf "$NEOVIM_CONFIG_DIR"
-	ln -s "$HOME/.dotfiles/nvim" "$NEOVIM_CONFIG_DIR" # symlink to this repo's nvim config folder
+	ln -s "$HOME/.dotfiles/apps/nvim" "$NEOVIM_CONFIG_DIR" # symlink to this repo's nvim config folder
 fi
 
 # Use brace expansion to ensure the extras files exist in the home directory
