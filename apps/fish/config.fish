@@ -19,17 +19,6 @@ if test -f ~/miniconda3/bin/conda
 end
 # <<< conda initialize <<<
 
-# Autojump setup
-if not $IS_MAC
-    if test -f ~/.autojump/share/autojump/autojump.fish
-        . ~/.autojump/share/autojump/autojump.fish
-    else
-        . /usr/share/autojump/autojump.fish
-    end
-else
-    [ -f /opt/homebrew/share/autojump/autojump.fish ]; and source /opt/homebrew/share/autojump/autojump.fish
-end
-
 # Custom settings
 fish_vi_key_bindings
 
@@ -42,10 +31,6 @@ fish_vi_key_bindings
 # Custom functions
 function compress # TODO pull compress
     ~/bin/media_upload/compress.sh
-end
-
-function obsidian
-    ~/bin/obsidian-launch.sh
 end
 
 function e
@@ -101,9 +86,8 @@ function python --description 'Alias for python3'
     python3 $argv
 end
 
-function pip --description 'Alias for pip'
-    # TODO breaks when python gets upgraded past 3.11
-    /opt/homebrew/opt/python@3.11/libexec/bin/pip $argv
+function pip
+    python -m pip $argv
 end
 
 # Clipboard function differs between macOS and others
@@ -183,7 +167,8 @@ end
 
 # No unsafe rm by default; to override use "\rm"
 function rm
-    echo "rm is disabled; use the reversible 'trash-put' instead (aliased to 'tp'). To force rm, use 'command rm'."
+    echo "rm is disabled; use the reversible 'trash-put' instead (aliased to 'tp'). To force rm, use 'command rm'. Using trash-put instead:"
+    trash-put $argv
 end
 
 # # Setup AutoRaise 
