@@ -12,3 +12,5 @@ anki
 --cask private-internet-access
 --cask hiddenbar
 --cask zotero
+fortune
+lolcat cowsay

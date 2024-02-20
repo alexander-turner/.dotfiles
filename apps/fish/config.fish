@@ -7,11 +7,6 @@ if uname | grep -q Darwin
     set IS_MAC true
 end
 
-# Use a rainbow talking cow to say something random on non-macOS systems
-if status is-interactive; and not $IS_MAC; and type -q fortune
-    fortune -s | cowsay -y
-end
-
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
 if test -f ~/miniconda3/bin/conda
