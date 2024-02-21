@@ -1,3 +1,4 @@
+#!/usr/bin/env fish
 # No default greeting
 set fish_greeting ''
 
@@ -16,6 +17,17 @@ end
 
 # Custom settings
 fish_vi_key_bindings
+
+# Autojump setup
+if $IS_MAC
+    [ -f /opt/homebrew/share/autojump/autojump.fish ]; and source /opt/homebrew/share/autojump/autojump.fish
+else
+    if test -f ~/.autojump/share/autojump/autojump.fish
+        . ~/.autojump/share/autojump/autojump.fish
+    else
+        . /usr/share/autojump/autojump.fish
+    end
+end
 
 # if status is-interactive
 #     and not set -q TMUX
@@ -82,7 +94,7 @@ function python --description 'Alias for python3'
 end
 
 function pip
-    python -m pip $argv
+    python3 -m pip $argv
 end
 
 # Clipboard function differs between macOS and others
@@ -196,3 +208,5 @@ end
 function fxtra
     editfishextras $argv
 end
+
+test -e {$HOME}/.iterm2_shell_integration.fish; and source {$HOME}/.iterm2_shell_integration.fish
