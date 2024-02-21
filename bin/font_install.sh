@@ -1,7 +1,7 @@
 #/bin/bash
 
 # Fira Code is the terminal font, has nice ligatures
-brew tap homebrew/cask-font/
+brew tap homebrew/cask-font
 brew install --cask font-fira-code
 
 # Download Meslo Nerd Font for non-ASCII Tide theme characters

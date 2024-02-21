@@ -6,42 +6,43 @@ command_exists() {
 }
 
 if [ "$(uname)" == "Darwin" ]; then
-	brew install neovim pyvim      # neovim
-	brew install libusb pkg-config # wally-cli
-	brew install coreutils         # For aliasing ls to gls
-	brew install pipx              # In case can't use systemwide pip
-	brew install wget              # Download files
+	brew install --quiet neovim pyvim      # neovim
+	brew install --quiet libusb pkg-config # wally-cli
+	brew install --quiet coreutils         # For aliasing ls to gls
+	brew install --quiet pipx              # In case can't use systemwide pip
+	brew install --quiet wget              # Download files
 
 	# Automatically focus and raise windows under cursor
 	brew tap dimentium/autoraise
-	brew install autoraise
-	brew services start autoraise
+	brew install --quiet autoraise
+	brew services restart autoraise
 
-	ln ~/.AutoRaise .AutoRaise
+	ln -f ~/.AutoRaise .AutoRaise
 else # Assume linux
 	if ! command_exists brew; then
 		/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 		echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >>$HOME/.profile
 		eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 	fi
-	brew install neovim
+	brew install --quiet neovim
 
 	# sudo apt-get update
 	sudo apt-get install python3-pynvim pipx
 fi
-pipx ensurepath shell-gpt
-
-brew install python
-python -m pip install trash-cli
-
-# Jump to a previously visited directory via a substring of its path
-brew install autojump
-
-# Install wally-cli for keyboard flashing
-go install github.com/zsa/wally-cli@latest
+# pipx ensurepath shell-gpt
+brew install --quiet git-credential-manager
 
 # Install reversible trash option
-pipx install trash-cli
+brew install --quiet python
+python3 -m pip install --quiet trash-cli
+
+# Jump to a previously visited directory via a substring of its path
+brew install --quiet autojump
+
+# Install wally-cli for keyboard flashing
+brew install --quiet go
+go install github.com/zsa/wally-cli@latest
+
 # Clear trash which is over 30 days old, daily
 if ! crontab -l | grep -q "trash-empty"; then
 	(

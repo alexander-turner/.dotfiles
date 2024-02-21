@@ -5,25 +5,22 @@ command_exists() {
 }
 
 if ! command_exists fish; then
-	if [ "$(uname)" == "Darwin" ]; then
-		brew install fish
-	else
-		sudo apt-get update
-		sudo apt-get install -y fish
-	fi
+	brew install fish
 fi
 
 # Set the correct permissions for the Fish configuration directory
 chown -R "$USER" "$HOME/.config"
 
 # Set Fish as the default shell
-if [ "$(grep "/usr/bin/fish" /etc/shells)" = "" ]; then
+if [ "$(grep "fish" /etc/shells)" = "" ]; then
 	echo "/usr/bin/fish" >>/etc/shells
+	echo "/opt/homebrew/bin/fish" >>/etc/shells
 fi
 
-if [ "$SHELL" != "/usr/bin/fish" ]; then
-	chsh -s /usr/bin/fish
-	echo "Fish is now set as the default shell. Please log out and log back in for the changes to take effect."
+if [ "$(grep "fish" "$SHELL")" = "" ]; then
+	echo "Requesting sudo in order to make fish the default shell".
+	sudo chsh -s /usr/bin/fish
+	echo "Fish is now set as the default shell."
 else
 	echo "Fish is already the default shell."
 fi
@@ -39,11 +36,11 @@ fish <<FISH_SCRIPT
 # Configure the theme if not already configured
 FISH_SCRIPT
 
-bash ./font_install.sh
+DOTFILES_DIR="$HOME/.dotfiles"
+bash "$DOTFILES_DIR"/bin/font_install.sh
 
 # Create Fish configuration directory if it doesn't exist
 FISH_CONFIG_DIR="$HOME/.config/fish"
-DOTFILES_DIR="$HOME/.dotfiles"
 ln -f "$DOTFILES_DIR"/apps/fish/config.fish "$FISH_CONFIG_DIR/config.fish"
 
 # See if user wants preset settings
@@ -52,7 +49,7 @@ read answer
 
 if echo "$answer" | grep -iq "^y"; then
 	echo "You accepted the preset settings."
-	# Copy if the directory doesn't exist already
+	# Copy if the directory doesnt exist already
 	if [ ! -d "$FISH_CONFIG_DIR" ]; then
 		cp -r "$DOTFILES_DIR"/fish "$FISH_CONFIG_DIR"
 	fi
