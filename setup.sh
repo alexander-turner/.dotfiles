@@ -5,6 +5,7 @@ command_exists() {
 	command -v "$1" >/dev/null 2>&1
 }
 
+echo "Installing brew packages..."
 if [ "$(uname)" == "Darwin" ]; then
 	brew install --quiet neovim pyvim      # neovim
 	brew install --quiet libusb pkg-config # wally-cli
@@ -30,7 +31,7 @@ else # Assume linux
 	sudo apt-get install python3-pynvim pipx
 fi
 # pipx ensurepath shell-gpt
-brew install --quiet git-credential-manager
+brew install --quiet git-credential-manager node
 
 # Install reversible trash option
 brew install --quiet python
@@ -66,6 +67,7 @@ for file in .bashrc .vimrc .gitconfig .tmux.conf; do
 done
 
 # Tmux configuration
+mv ~/.tmux/plugins/{tpm,.tpm-backup}
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm # Tmux plugin manager
 tmux source ~/.tmux.conf
 ~/.tmux/plugins/tpm/bin/install_plugins

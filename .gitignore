@@ -2,13 +2,11 @@
 fish/fish_variables
 *.swp
 fish/(completions|functions)*
-<<<<<<< HEAD
 *.swo
 *.tmp*
-=======
 .DS_Store
->>>>>>> 523d273dabfbcf0b467aae8ed663a372e9acf370
 *orig
 *vimrc
 *lazy-lock\.json
-nvim/lazyvim.json
+apps/nvim/lazyvim.json
+*lazyvim.json
