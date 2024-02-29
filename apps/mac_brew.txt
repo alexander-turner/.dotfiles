@@ -15,3 +15,5 @@ anki
 fortune
 lolcat cowsay
 --cask anaconda
+--cask docker
+--cask superkey

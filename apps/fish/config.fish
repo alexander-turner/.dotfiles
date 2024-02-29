@@ -10,8 +10,8 @@ end
 
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
-if test -f ~/miniconda3/bin/conda
-    eval ~/miniconda3/bin/conda "shell.fish" hook $argv | source
+if test -f /opt/homebrew/anaconda3/bin/conda
+    eval /opt/homebrew/anaconda3/bin/conda "shell.fish" hook $argv | source
 end
 # <<< conda initialize <<<
 
@@ -174,7 +174,7 @@ end
 
 # No unsafe rm by default; to override use "\rm"
 function rm
-    echo "rm is disabled; use the reversible 'trash-put' instead (aliased to 'tp'). To force rm, use 'command rm'. Using trash-put instead:"
+    echo "rm is disabled; using the reversible 'trash-put' instead (aliased to 'tp'). To force rm, use 'command rm'."
     trash-put $argv
 end
 
