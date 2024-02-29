@@ -17,3 +17,4 @@ lolcat cowsay
 --cask anaconda
 --cask docker
 --cask superkey
+--cask mathpix-snipping-tool
