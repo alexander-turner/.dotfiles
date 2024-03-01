@@ -20,8 +20,34 @@ Also installs a cool `fish` theme, [`tide`](https://github.com/IlanCosman/tide):
 7. Most importantly, the `goosesay` command. A variant on the classic `cowsay` (which renders text inside a cow's speech bubble), `goosesay` goosens up your terminal just the right amount. For example:
 ```fish
 echo "Never gonna give you up" | goosesay | lolcat
+
+ _________________________ 
+< Never gonna give you up >
+ ------------------------- 
+    \ 
+     \ 
+      \     ___
+          .´   ""-⹁
+      _.-´)  e  _  '⹁
+     '-===.<_.-´ '⹁  \
+                   \  \
+                    ;  \
+                    ;   \          _
+                    |    '⹁__..--"" ""-._    _.´)
+                   /                     ""-´  _>
+                  :                          -´/
+                  ;                  .__<   __)
+                   \    '._      .__.-'   .-´
+                    '⹁_    '-⹁__.-´      /
+                       '-⹁__/    ⹁    _.´
+                      ____< /'⹁__/_.""
+                    .´.----´  | |
+                  .´ /        | |
+                 ´´-/      ___| ;
+                          <_    /
+                            `.'´
 ```
-![](https://i.imgur.com/QkY98Cz.png)
+
 This script also creates `~/.extras.fish` and `~/.extras.bash` which are automatically sourced by `config.fish` and `.bashrc`. These files are not tracked by the repository. Thus, these files are perfect for storing API keys and other information which shouldn't be shown to Github.
 
 Furthermore, `mac_brew.txt` contains a list of programs which I like using on my personal Mac. To install these, use `cat mac_brew.txt | xargs brew install`.
