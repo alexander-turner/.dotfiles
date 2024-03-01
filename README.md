@@ -19,8 +19,9 @@ Also installs a cool `fish` theme, [`tide`](https://github.com/IlanCosman/tide):
 6. Installs `tmux` with the `tmux-restore` and `tmux-continuum` plugins. Basically, this means that your `tmux` sessions will be saved and restored automatically. No more losing your work when your computer crashes!
 7. Most importantly, the `goosesay` command. A variant on the classic `cowsay` (which renders text inside a cow's speech bubble), `goosesay` goosens up your terminal just the right amount. For example:
 ```fish
-echo "Never gonna give you up" | goosesay | lolcat
-
+echo "Never gonna give you up" | goosesay 
+```
+```
  _________________________ 
 < Never gonna give you up >
  ------------------------- 
