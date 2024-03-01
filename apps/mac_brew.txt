@@ -19,3 +19,4 @@ lolcat cowsay
 --cask superkey
 --cask mathpix-snipping-tool
 --cask quitter
+toilet
