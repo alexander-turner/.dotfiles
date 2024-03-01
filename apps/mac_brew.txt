@@ -18,3 +18,4 @@ lolcat cowsay
 --cask docker
 --cask superkey
 --cask mathpix-snipping-tool
+--cask quitter
