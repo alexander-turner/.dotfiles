@@ -2,6 +2,10 @@
 # No default greeting
 set fish_greeting ''
 
+function goosesay
+    cowsay -f ~/.dotfiles/apps/goose.cow $argv
+end
+
 # Check if the operating system is macOS and set IS_MAC flag
 set IS_MAC false
 if uname | grep -q Darwin

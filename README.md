@@ -17,8 +17,11 @@ Also installs a cool `fish` theme, [`tide`](https://github.com/IlanCosman/tide):
 4. Installs a bunch of nice shortcuts, including `git` aliases (e.g. `git add` -> `ga`). 
 5. Overrides `rm` in favor of the reversible `tp` (`trash-put`) command. No more accidentally permanently deleting crucial files!
 6. Installs `tmux` with the `tmux-restore` and `tmux-continuum` plugins. Basically, this means that your `tmux` sessions will be saved and restored automatically. No more losing your work when your computer crashes!
-
-
+7. Most importantly, the `goosesay` command. A variant on the classic `cowsay` (which renders text inside a cow's speech bubble), `goosesay` goosens up your terminal just the right amount. For example:
+```fish
+echo "Never gonna give you up" | goosesay | lolcat
+```
+![](https://i.imgur.com/QkY98Cz.png)
 This script also creates `~/.extras.fish` and `~/.extras.bash` which are automatically sourced by `config.fish` and `.bashrc`. These files are not tracked by the repository. Thus, these files are perfect for storing API keys and other information which shouldn't be shown to Github.
 
 Furthermore, `mac_brew.txt` contains a list of programs which I like using on my personal Mac. To install these, use `cat mac_brew.txt | xargs brew install`.
