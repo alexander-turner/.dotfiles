@@ -20,3 +20,4 @@ lolcat cowsay
 --cask mathpix-snipping-tool
 --cask quitter
 toilet
+--cask jettison
