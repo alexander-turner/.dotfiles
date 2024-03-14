@@ -41,7 +41,7 @@ python3 -m pip install --quiet trash-cli
 brew install --quiet autojump
 
 # Install wally-cli for keyboard flashing
-brew install --quiet go
+# brew install --quiet go
 go install github.com/zsa/wally-cli@latest
 
 # Clear trash which is over 30 days old, daily
