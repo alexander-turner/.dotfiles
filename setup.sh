@@ -72,9 +72,12 @@ git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm # Tmux plugin 
 tmux source ~/.tmux.conf
 ~/.tmux/plugins/tpm/bin/install_plugins
 
-# Sync iterm2 settings
-mv ~/.config/iterm2{,.bak}
-ln -s ~/.dotfiles/apps/iterm2 ~/.config/iterm2
+# Backup iTerm2 settings
+mv ~/Library/com.googlecode.iterm2.plist{,.bak}
+# Sync settings
+ln ~/.dotfiles/apps/com.googlecode.iterm2.plist ~/Library/com.googlecode.iterm2.plist
+# Set up shell integration for iterm2
+curl -L https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash
 
 # Create neovim settings which include current vimrc files
 # Backup existing configs
