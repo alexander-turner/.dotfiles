@@ -21,3 +21,4 @@ lolcat cowsay
 --cask quitter
 toilet
 --cask jettison
+--cask visual-studio-code
