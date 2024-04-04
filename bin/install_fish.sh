@@ -58,3 +58,5 @@ else
 	fish -c "tide configure"
 	ln -f "$DOTFILES_DIR"/.config.fish "$FISH_CONFIG_DIR"/config.fish
 fi
+
+fish install_fish_plugins.sh
