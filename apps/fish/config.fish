@@ -42,6 +42,11 @@ function e
     exit
 end
 
+# # PCRE is nicer
+# function sed
+#     perl -pe $argv
+# end
+#
 function findfile
     find / -type f 2>/dev/null | grep $argv
 end
@@ -73,6 +78,12 @@ function ssh
         command /usr/bin/ssh $argv
     else
         command ssh $argv
+    end
+end
+
+if $IS_MAC
+    function finder
+        open $argv
     end
 end
 
