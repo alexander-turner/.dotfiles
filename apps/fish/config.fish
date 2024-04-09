@@ -2,6 +2,10 @@
 # No default greeting
 set fish_greeting ''
 
+# These elements don't scale with font size
+set --universal tide_right_prompt_prefix ''
+set --universal tide_left_prompt_suffix ''
+
 function goosesay
     cowsay -f ~/.dotfiles/apps/goose.cow $argv
 end
@@ -62,10 +66,6 @@ end
 function crontab
     set -gx VISUAL nvim
     command crontab $argv
-end
-
-function blowitaway
-    command rm -rf $argv
 end
 
 function ls
@@ -184,10 +184,9 @@ function rm
     trash-put $argv
 end
 
-# # Setup AutoRaise 
-# if $IS_MAC
-#     ./AutoRaise
-# end
+function grep
+    command grep $argv --exclude="*~" --color=auto
+end
 
 # Path homebrew
 if $IS_MAC

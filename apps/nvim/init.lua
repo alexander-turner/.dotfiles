@@ -14,6 +14,9 @@ return {
       colorscheme = "catppuccin-latte",
     },
   },
-  -- { "neoclide/coc.nvim" },
-  -- { "cmp", name = "tab-completion" },
+  { "cmp", name = "tab-completion" },
+  -- override nvim-cmp and add cmp-emoji
+  {
+    "hrsh7th/nvim-cmp",
+  },
 }
