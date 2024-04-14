@@ -14,7 +14,7 @@ cmp.setup({
     },
   }),
   mapping = {
-    ["<tab>"] = cmp.mapping.confirm({ select = true }),
+    -- ["<tab>"] = cmp.mapping.confirm({ select = true }),
     ["<CR>"] = function(fallback)
       fallback()
     end,
