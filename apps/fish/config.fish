@@ -186,6 +186,9 @@ end
 function mv --description 'Move files using git mv if tracked and in the same repo as target, otherwise use normal mv'
     # Assume the last argument is the destination
     set -l target $argv[-1]
+    if not test -e $target
+        return 1
+    end
     set -l target_git_root (git -C (dirname $target) rev-parse --show-toplevel 2>/dev/null)
 
     # Loop through all arguments except the last one (which is the target)
