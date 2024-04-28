@@ -46,11 +46,6 @@ function e
     exit
 end
 
-# # PCRE is nicer
-# function sed
-#     perl -pe $argv
-# end
-#
 function findfile
     find / -type f 2>/dev/null | grep $argv
 end
@@ -183,38 +178,9 @@ function rm
     echo "rm is disabled; using the reversible 'trash-put' instead (aliased to 'tp'). To force rm, use 'command rm'."
     trash-put $argv
 end
-function mv --description 'Move files using git mv if tracked and in the same repo as target, otherwise use normal mv'
-    # Assume the last argument is the destination
-    set -l target $argv[-1]
-    if not test -e $target
-        return 1
-    end
-    set -l target_git_root (git -C (dirname $target) rev-parse --show-toplevel 2>/dev/null)
-
-    # Loop through all arguments except the last one (which is the target)
-    for source in $argv[1..-2] # This slices the array to exclude the last element
-        # Get git root of the source
-        set -l source_git_root (git -C (dirname $source) rev-parse --show-toplevel 2>/dev/null)
-
-        # Ensure source and target are in the same git repo and source is not empty
-        if test -n "$source_git_root" -a "$source_git_root" = "$target_git_root"
-            # Check if the file is tracked
-            if git -C $source_git_root ls-files --error-unmatch $source >/dev/null 2>&1
-                echo "Using git mv for $source"
-                git mv $source $target
-                continue
-            end
-        end
-        command mv $source $target
-    end
-end
 
 function grep
     command grep $argv --exclude="*~" --color=auto
-end
-
-function grp # Recursively grep
-    grep $argv ** 2>/dev/null
 end
 
 # Path homebrew
