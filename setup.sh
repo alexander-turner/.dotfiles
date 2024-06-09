@@ -33,6 +33,8 @@ fi
 # pipx ensurepath shell-gpt
 brew install --quiet git-credential-manager node
 
+brew install --quiet mosh # Lower-latency mobile shell
+
 # Install reversible trash option
 brew install --quiet python
 python3 -m pip install --quiet trash-cli

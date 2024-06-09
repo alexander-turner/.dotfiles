@@ -22,4 +22,3 @@ lolcat cowsay
 toilet
 --cask jettison
 --cask visual-studio-code
-mosh
