@@ -5,6 +5,20 @@ command_exists() {
 	command -v "$1" >/dev/null 2>&1
 }
 
+link_with_overwrite_check(filename) {
+    if [ -e "$HOME/$filename" ]; then
+        # Prompt the user to confirm overwriting the existing file
+        read -rp "$filename already exists. Overwrite? (y/N) " choice
+        case "$choice" in
+        y | Y) ln -f "$HOME/.dotfiles/$filename" "$HOME/$filename" ;;
+        *) echo "Skipping $filename" ;;
+        esac
+    else
+        ln -f "$HOME/.dotfiles/$filename" "$HOME/$filename"
+    fi
+}
+
+
 echo "Installing brew packages..."
 if [ "$(uname)" == "Darwin" ]; then
 	brew install --quiet neovim pyvim      # neovim
@@ -18,6 +32,14 @@ if [ "$(uname)" == "Darwin" ]; then
 	brew install --quiet autoraise
 	brew services restart autoraise
 
+	# Aerospace window manager setup
+	brew install --quiet aerospace
+	link_with_overwrite_check .aerospace.toml
+
+	# More obviously highlights focused window
+	brew tap --quiet FelixKratz/formulae
+	brew install --quiet borders
+
 	ln -f ~/.AutoRaise .AutoRaise
 else # Assume linux
 	if ! command_exists brew; then
@@ -30,6 +52,7 @@ else # Assume linux
 	# sudo apt-get update
 	sudo apt-get install python3-pynvim pipx
 fi
+
 # pipx ensurepath shell-gpt
 brew install --quiet git-credential-manager node
 
@@ -56,16 +79,7 @@ fi
 
 # Link .bashrc, .vimrc, and .gitconfig to the home directory, with warnings for existing files
 for file in .bashrc .vimrc .gitconfig .tmux.conf; do
-	if [ -e "$HOME/$file" ]; then
-		# Prompt the user to confirm overwriting the existing file
-		read -rp "$file already exists. Overwrite? (y/N) " choice
-		case "$choice" in
-		y | Y) ln -f "$HOME/.dotfiles/$file" "$HOME/$file" ;;
-		*) echo "Skipping $file" ;;
-		esac
-	else
-		ln -f "$HOME/.dotfiles/$file" "$HOME/$file"
-	fi
+	link_with_overwrite_check "$file"
 done
 
 # Tmux configuration
