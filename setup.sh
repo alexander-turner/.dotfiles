@@ -36,10 +36,6 @@ if [ "$(uname)" == "Darwin" ]; then
 	brew install --quiet aerospace
 	link_with_overwrite_check .aerospace.toml
 
-	# More obviously highlights focused window
-	brew tap --quiet FelixKratz/formulae
-	brew install --quiet borders
-
 	ln -f ~/.AutoRaise .AutoRaise
 else # Assume linux
 	if ! command_exists brew; then

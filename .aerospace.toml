@@ -63,6 +63,8 @@ PATH = '/opt/homebrew/bin:/opt/homebrew/sbin:${PATH}'
 # See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes
 # 'main' binding mode must be always presented
 [mode.main.binding]
+# Disable useless shortcut
+cmd-h = []
 
 # All possible keys:
 # - Letters.        a, b, c, ..., z
@@ -132,9 +134,7 @@ alt-t = 'workspace T'
 alt-u = 'workspace U'
 alt-v = 'workspace V'
 alt-w = 'workspace W'
-alt-x = 'workspace X'
 alt-y = 'workspace Y'
-alt-z = 'workspace Z'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#move-node-to-workspace
 alt-shift-1 = 'move-node-to-workspace 1'
@@ -170,7 +170,7 @@ alt-shift-y = 'move-node-to-workspace Y'
 alt-shift-z = 'move-node-to-workspace Z'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#workspace-back-and-forth
-alt-tab = 'workspace-back-and-forth'
+# alt-tab = 'workspace-back-and-forth'
 # See: https://nikitabobko.github.io/AeroSpace/commands#move-workspace-to-monitor
 alt-shift-tab = 'move-workspace-to-monitor --wrap-around next'
 
@@ -190,15 +190,4 @@ alt-shift-h = ['join-with left', 'mode main']
 alt-shift-j = ['join-with down', 'mode main']
 alt-shift-k = ['join-with up', 'mode main']
 alt-shift-l = ['join-with right', 'mode main']
-
-# Custom goodness for my workflow https://nikitabobko.github.io/AeroSpace/goodness
-defaults write -g NSWindowShouldDragOnGesture YES
-
-# Disable windows opening animations
-defaults write -g NSAutomaticWindowAnimationsEnabled -bool false
-
-# Disable useless shortcut
-[mode.main.binding]
-cmd-h = []
-
 
