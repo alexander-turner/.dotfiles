@@ -5,7 +5,7 @@ require("config.lazy")
 vim.cmd("source ~/.vimrc")
 
 require("catppuccin").setup({
-  flavour = "latte", -- latte, frappe, macchiato, mocha
+  flavour = "mocha", -- latte, frappe, macchiato, mocha
   background = { -- :h background
     light = "latte",
     dark = "mocha",
@@ -53,7 +53,7 @@ require("catppuccin").setup({
   },
 })
 -- setup must be called before loading
-vim.cmd.colorscheme("catppuccin-latte")
+vim.cmd.colorscheme("catppuccin-mocha")
 
 return {
 
