@@ -14,11 +14,15 @@ cmp.setup({
     },
   }),
   mapping = {
-    -- ["<tab>"] = cmp.mapping.confirm({ select = true }),
-    ["<CR>"] = function(fallback)
-      fallback()
-    end,
+    ["<tab>"] = cmp.mapping.confirm({ select = true }),
+    ["<CR>"] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+        cmp.confirm({ select = true })
+      else
+        fallback()
+      end
+    end, { "i", "c" }),
   },
 })
 
-return { "cmp-tab" }
+return {}
