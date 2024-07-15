@@ -131,3 +131,8 @@ set wrap
 set scrolloff=3
 
 set mouse=a
+
+" Maximize windows appropriately
+nnoremap <leader>f :MaximizerToggle<CR>
+vnoremap <leader>f :MaximizerToggle<CR>gv
+inoremap <leader>f <C-o>:MaximizerToggle<CR>
