@@ -55,6 +55,16 @@ require("catppuccin").setup({
 -- setup must be called before loading
 vim.cmd.colorscheme("catppuccin-mocha")
 
+require("conform").setup({
+  formatters_by_ft = {
+    fish = { "fish_indent" },
+  },
+  format_on_save = {
+    timeout_ms = 500,
+    lsp_format = "fallback",
+  },
+})
+
 return {
 
   { "catppuccin/nvim", name = "catppuccin", priority = 1000 },
