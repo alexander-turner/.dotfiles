@@ -49,7 +49,6 @@ else # Assume linux
 	sudo apt-get install python3-pynvim pipx
 fi
 
-# pipx ensurepath shell-gpt
 brew install --quiet git-credential-manager node
 
 brew install --quiet mosh # Lower-latency mobile shell
@@ -57,6 +56,9 @@ brew install --quiet mosh # Lower-latency mobile shell
 # Install reversible trash option
 brew install --quiet python
 python3 -m pip install --quiet trash-cli
+
+# Install AI coding assistant
+python3 -m pip install aider-chat
 
 # Jump to a previously visited directory via a substring of its path
 brew install --quiet autojump
