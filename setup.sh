@@ -56,6 +56,8 @@ brew install --quiet mosh # Lower-latency mobile shell
 # Install reversible trash option
 brew install --quiet python
 python3 -m pip install --quiet trash-cli
+# Prevent accidental deletion of files which should never be deleted
+brew install --quiet safe-rm 
 
 # Install AI coding assistant
 python3 -m pip install aider-chat
