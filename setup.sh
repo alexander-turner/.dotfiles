@@ -59,9 +59,6 @@ python3 -m pip install --quiet trash-cli
 # Prevent accidental deletion of files which should never be deleted
 brew install --quiet safe-rm 
 
-# Install AI coding assistant
-python3 -m pip install aider-chat
-
 # Jump to a previously visited directory via a substring of its path
 brew install --quiet autojump
 
@@ -116,3 +113,6 @@ touch "$HOME"/.hushlogin # Disable the "Last login" message
 # Install fish and configure
 SCRIPT_DIR="$(dirname "$0")"/bin # Get the directory of the current script
 "$SCRIPT_DIR"/install_fish.sh    # Execute install_fish.sh from that directory
+
+# Install AI integrations 
+fish bin/setup_llm.fish
