@@ -20,6 +20,12 @@ end
 # !! Contents within this block are managed by 'conda init' !!
 if test -f /opt/homebrew/anaconda3/bin/conda
     eval /opt/homebrew/anaconda3/bin/conda "shell.fish" hook $argv | source
+else
+    if test -f "/opt/homebrew/anaconda3/etc/fish/conf.d/conda.fish"
+        fish "/opt/homebrew/anaconda3/etc/fish/conf.d/conda.fish"
+    else
+        set -x PATH /opt/homebrew/anaconda3/bin $PATH
+    end
 end
 # <<< conda initialize <<<
 
@@ -37,6 +43,20 @@ else
     end
 end
 
+if $IS_MAC
+    if command -q cheatsheet
+        cheatsheet &
+    end
+
+    if command -q AeroSpace
+        # Custom goodness for my workflow https://nikitabobko.github.io/AeroSpace/goodness
+        defaults write -g NSWindowShouldDragOnGesture YES
+
+        # Disable windows opening animations
+        defaults write -g NSAutomaticWindowAnimationsEnabled -bool false
+    end
+end
+
 # Custom functions
 function compress # TODO pull compress
     ~/bin/media_upload/compress.sh
@@ -46,6 +66,11 @@ function e
     exit
 end
 
+# # PCRE is nicer
+# function sed
+#     perl -pe $argv
+# end
+#
 function findfile
     find / -type f 2>/dev/null | grep $argv
 end
@@ -64,12 +89,16 @@ function crontab
 end
 
 function ls
-    /opt/homebrew/opt/coreutils/libexec/gnubin/ls --color="always" --ignore-backups $argv
+    /opt/homebrew/opt/coreutils/libexec/gnubin/ls --color="always" --ignore-backups --hide="*.bak" $argv
 end
 
 
+set USE_MOSH true
 function ssh
-    if $IS_MAC
+    if $USE_MOSH and (type -q mosh)
+        echo "Using mosh instead. To disable, set \$USE_MOSH in shell config."
+        mosh $argv
+    else if $IS_MAC
         command /usr/bin/ssh $argv
     else
         command ssh $argv
@@ -141,6 +170,10 @@ function gco
     git checkout $argv
 end
 
+function uncommit
+    git reset --soft HEAD^
+end
+
 function gk
     gitk --all &
 end
@@ -155,6 +188,15 @@ end
 
 function get
     git $argv
+end
+
+# Merge changes onto main and push
+function merge_and_push
+    git switch main
+    git pull
+    git merge -
+    git push
+    git switch -
 end
 
 set -gx PATH $PATH ~/bin ~/.local/bin /usr/local/go/bin
@@ -180,7 +222,16 @@ function rm
 end
 
 function grep
-    command grep $argv --exclude="*~" --color=auto
+    command grep $argv --exclude="*~" --color=always | cut -c1-100
+end
+
+function grp # Recursively grep
+    grep $argv ** 2>/dev/null
+end
+
+# Printing helpers 
+function echo_color
+    echo (set_color $argv[1])$argv[2](set_color normal)
 end
 
 # Path homebrew
@@ -220,3 +271,5 @@ if status is-interactive
         tmux new-session -A -s main
     end
 end
+
+alias aider="aider --commit-prompt (cat ~/.config/prompts/commit-system-prompt.txt)"
