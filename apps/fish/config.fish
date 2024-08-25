@@ -6,9 +6,7 @@ set fish_greeting ''
 set --universal tide_right_prompt_prefix ''
 set --universal tide_left_prompt_suffix ''
 
-function goosesay
-    cowsay -f ~/.dotfiles/apps/goose.cow $argv
-end
+abbr -a goosesay 'cowsay -f ~/.dotfiles/apps/goose.cow'
 
 # Check if the operating system is macOS and set IS_MAC flag
 set IS_MAC false
@@ -62,26 +60,14 @@ function compress # TODO pull compress
     ~/bin/media_upload/compress.sh
 end
 
-function e
-    exit
-end
+abbr -a e exit
 
-# # PCRE is nicer
-# function sed
-#     perl -pe $argv
-# end
-#
 function findfile
     find / -type f 2>/dev/null | grep $argv
 end
 
-function editbashrc
-    nvim ~/.bashrc
-end
-
-function editfishrc
-    nvim ~/.config/fish/config.fish
-end
+abbr -a editbashrc 'nvim ~/.bashrc'
+abbr -a editfishrc 'nvim ~/.config/fish/config.fish'
 
 function crontab
     set -gx VISUAL nvim
@@ -141,53 +127,17 @@ function get_ps
 end
 
 # Git aliases
-function gac
-    git add :/
-    git commit -m $argv
-end
-
-function gs
-    git status $argv
-end
-
-function ga
-    git add $argv
-end
-
-function gb
-    git branch $argv
-end
-
-function gc
-    git commit $argv
-end
-
-function gd
-    git diff $argv
-end
-
-function gco
-    git checkout $argv
-end
-
-function uncommit
-    git reset --soft HEAD^
-end
+abbr -a gac 'git add -A && git commit -m'
+abbr -a gs 'git status'
+abbr -a ga 'git add'
+abbr -a gb 'git branch'
+abbr -a gc 'git commit'
+abbr -a gd 'git diff'
+abbr -a gco 'git checkout'
+abbr -a uncommit 'git reset --soft HEAD^'
 
 function gk
     gitk --all &
-end
-
-function gx
-    gitx --all
-end
-
-function got
-    git $argv
-end
-
-function get
-    git $argv
 end
 
 # Merge changes onto main and push
@@ -202,18 +152,11 @@ end
 set -gx PATH $PATH ~/bin ~/.local/bin /usr/local/go/bin
 set -gx EDITOR nvim
 
-function n
-    nvim $argv
-end
+abbr -a n 'nvim'
 
 # Trash-cli aliases 
-function tp
-    trash-put $argv
-end
-
-function tl
-    trash-list $argv
-end
+abbr -a tp 'trash-put'
+abbr -a tl 'trash-list'
 
 # No unsafe rm by default; to override use "\rm"
 function rm
@@ -256,9 +199,7 @@ function editfishextras
     nvim $CONFIG_PATH $argv
 end
 
-function fxtra
-    editfishextras $argv
-end
+abbr -a fxtra 'editfishextras'
 
 test -e {$HOME}/.iterm2_shell_integration.fish; and source {$HOME}/.iterm2_shell_integration.fish
 

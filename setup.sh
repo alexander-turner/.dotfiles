@@ -5,16 +5,18 @@ command_exists() {
 	command -v "$1" >/dev/null 2>&1
 }
 
-link_with_overwrite_check(filename) {
-    if [ -e "$HOME/$filename" ]; then
+link_with_overwrite_check() {
+    local source_file="$1"
+    local target_file="$2"
+    if [ -e "$target_file" ]; then
         # Prompt the user to confirm overwriting the existing file
-        read -rp "$filename already exists. Overwrite? (y/N) " choice
+        read -rp "$(basename "$target_file") already exists. Overwrite? (y/N) " choice
         case "$choice" in
-        y | Y) ln -f "$HOME/.dotfiles/$filename" "$HOME/$filename" ;;
-        *) echo "Skipping $filename" ;;
+        y | Y) ln -sf "$source_file" "$target_file" ;;
+        *) echo "Skipping $(basename "$target_file")" ;;
         esac
     else
-        ln -f "$HOME/.dotfiles/$filename" "$HOME/$filename"
+        ln -sf "$source_file" "$target_file"
     fi
 }
 
@@ -74,10 +76,11 @@ if ! crontab -l | grep -q "trash-empty"; then
 	) | crontab -
 fi
 
-# Link .bashrc, .vimrc, and .gitconfig to the home directory, with warnings for existing files
-for file in .bashrc .vimrc .gitconfig .tmux.conf; do
-	link_with_overwrite_check "$file"
-done
+# Link .bashrc, .vimrc, .gitconfig, and .tmux.conf to the home directory, with warnings for existing files
+link_with_overwrite_check "$HOME/.dotfiles/.bashrc" "$HOME/.bashrc"
+link_with_overwrite_check "$HOME/.dotfiles/.vimrc" "$HOME/.vimrc"
+link_with_overwrite_check "$HOME/.dotfiles/.gitconfig" "$HOME/.gitconfig"
+link_with_overwrite_check "$HOME/.dotfiles/.tmux.conf" "$HOME/.tmux.conf"
 
 # Tmux configuration
 mv ~/.tmux/plugins/{tpm,.tpm-backup}
@@ -113,6 +116,7 @@ touch "$HOME"/.hushlogin # Disable the "Last login" message
 # Install fish and configure
 SCRIPT_DIR="$(dirname "$0")"/bin # Get the directory of the current script
 "$SCRIPT_DIR"/install_fish.sh    # Execute install_fish.sh from that directory
+link_with_overwrite_check "$HOME/.dotfiles/apps/fish/config.fish" "$HOME/.config/fish/config.fish"
 
 # Install AI integrations 
 fish bin/setup_llm.fish

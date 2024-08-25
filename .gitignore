@@ -10,3 +10,4 @@ fish/(completions|functions)*
 *lazy-lock\.json
 apps/nvim/lazyvim.json
 *lazyvim.json
+.aider*
