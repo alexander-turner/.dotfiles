@@ -16,13 +16,15 @@ end
 
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
-if test -f /opt/homebrew/anaconda3/bin/conda
-    eval /opt/homebrew/anaconda3/bin/conda "shell.fish" hook $argv | source
-else
-    if test -f "/opt/homebrew/anaconda3/etc/fish/conf.d/conda.fish"
-        fish "/opt/homebrew/anaconda3/etc/fish/conf.d/conda.fish"
+if status is-interactive
+    if test -f /opt/homebrew/anaconda3/bin/conda
+        eval /opt/homebrew/anaconda3/bin/conda "shell.fish" hook $argv | source
     else
-        set -x PATH /opt/homebrew/anaconda3/bin $PATH
+        if test -f "/opt/homebrew/anaconda3/etc/fish/conf.d/conda.fish"
+            fish "/opt/homebrew/anaconda3/etc/fish/conf.d/conda.fish"
+        else
+            set -x PATH /opt/homebrew/anaconda3/bin $PATH
+        end
     end
 end
 # <<< conda initialize <<<
@@ -152,11 +154,11 @@ end
 set -gx PATH $PATH ~/bin ~/.local/bin /usr/local/go/bin
 set -gx EDITOR nvim
 
-abbr -a n 'nvim'
+abbr -a n nvim
 
 # Trash-cli aliases 
-abbr -a tp 'trash-put'
-abbr -a tl 'trash-list'
+abbr -a tp trash-put
+abbr -a tl trash-list
 
 # No unsafe rm by default; to override use "\rm"
 function rm
@@ -199,7 +201,7 @@ function editfishextras
     nvim $CONFIG_PATH $argv
 end
 
-abbr -a fxtra 'editfishextras'
+abbr -a fxtra editfishextras
 
 test -e {$HOME}/.iterm2_shell_integration.fish; and source {$HOME}/.iterm2_shell_integration.fish
 
