@@ -5,19 +5,20 @@ command_exists() {
 	command -v "$1" >/dev/null 2>&1
 }
 
-link_with_overwrite_check(filename) {
+
+link_with_overwrite_check() {
+    local filename="$1"  # Access the argument using $1, $2, etc.
     if [ -e "$HOME/$filename" ]; then
         # Prompt the user to confirm overwriting the existing file
         read -rp "$filename already exists. Overwrite? (y/N) " choice
         case "$choice" in
-        y | Y) ln -f "$HOME/.dotfiles/$filename" "$HOME/$filename" ;;
+        y | Y) ln -f "$HOME/.dotfiles/$filename" "$HOME/$filename" ;;  
         *) echo "Skipping $filename" ;;
         esac
     else
-        ln -f "$HOME/.dotfiles/$filename" "$HOME/$filename"
+        ln -f "$HOME/.dotfiles/$filename" "$HOME/$filename" 
     fi
 }
-
 
 echo "Installing brew packages..."
 if [ "$(uname)" == "Darwin" ]; then
@@ -88,7 +89,7 @@ tmux source ~/.tmux.conf
 # Backup iTerm2 settings
 mv ~/Library/com.googlecode.iterm2.plist{,.bak}
 # Sync settings
-ln ~/.dotfiles/apps/com.googlecode.iterm2.plist ~/Library/com.googlecode.iterm2.plist
+ln --force ~/.dotfiles/apps/com.googlecode.iterm2.plist ~/Library/com.googlecode.iterm2.plist
 # Set up shell integration for iterm2
 curl -L https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash
 

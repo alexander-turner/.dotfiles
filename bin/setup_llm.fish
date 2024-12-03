@@ -12,7 +12,7 @@ llm install llm-gemini # must run `llm keys set gemini` before use
 llm models default gemini-1.5-pro-latest
 
 mkdir -p $HOME/.config/prompts
-mv $BIN_DIR/.system-prompt.txt $HOME/.config/prompts/commit-system-prompt.txt
+mv $BIN_DIR/.system-prompt $HOME/.config/prompts/commit-system-prompt.txt
 
 mkdir -p $HOME/.git_hooks
 cp $BIN_DIR/.prepare-commit-msg $HOME/.git_hooks/prepare-commit-msg
