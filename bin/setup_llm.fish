@@ -19,3 +19,5 @@ cp $BIN_DIR/.prepare-commit-msg $HOME/.git_hooks/prepare-commit-msg
 
 chmod +x $HOME/.git_hooks/prepare-commit-msg
 git config --global core.hooksPath ~/.git_hooks
+
+pipx install wut # explains last output of shell command
