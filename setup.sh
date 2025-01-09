@@ -20,7 +20,6 @@ link_with_overwrite_check() {
     fi
 }
 
-
 echo "Installing brew packages..."
 if [ "$(uname)" == "Darwin" ]; then
 	brew install --quiet neovim pyvim      # neovim
@@ -91,7 +90,7 @@ tmux source ~/.tmux.conf
 # Backup iTerm2 settings
 mv ~/Library/com.googlecode.iterm2.plist{,.bak}
 # Sync settings
-ln ~/.dotfiles/apps/com.googlecode.iterm2.plist ~/Library/com.googlecode.iterm2.plist
+ln --force ~/.dotfiles/apps/com.googlecode.iterm2.plist ~/Library/com.googlecode.iterm2.plist
 # Set up shell integration for iterm2
 curl -L https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash
 
