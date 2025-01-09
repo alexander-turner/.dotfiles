@@ -103,17 +103,14 @@ function flash
     sh ~/bin/keyboard_flash.sh
 end
 
-# function python --description 'Alias for python3'
-#     python3 $argv
-# end
-
 function pytest
     python -m pytest $argv
 end
 
-# function pip
-#     python3 -m pip $argv
-# end
+# Ensure current python env's pip is used
+function pip
+    python -m pip $argv
+end
 
 # Clipboard function differs between macOS and others
 function yank # Copy to clipboard
@@ -151,6 +148,28 @@ function merge_and_push
     git switch -
 end
 
+# Run post-push hook after git push
+function push
+    # Store the original exit status after git push
+    git push $argv
+    set -l push_status $status
+
+    # Find git root directory
+    set -l git_root (git rev-parse --show-toplevel 2>/dev/null)
+    if test $status -eq 0
+        set -l post_push_hook "$git_root/.git/hooks/post-push"
+
+        # Check if post-push hook exists and is executable
+        if test -x "$post_push_hook"
+            echo "Running post-push hook..."
+            $post_push_hook
+        end
+    end
+
+    # Return the original push status
+    return $push_status
+end
+
 set -gx PATH $PATH ~/bin ~/.local/bin /usr/local/go/bin
 set -gx EDITOR nvim
 
@@ -169,6 +188,8 @@ end
 function grep
     command grep $argv --exclude="*~" --color=always | cut -c1-100
 end
+
+abbr pytest_diff 'pytest -vv --tb=short'
 
 function grp # Recursively grep
     grep $argv ** 2>/dev/null
@@ -215,4 +236,4 @@ if status is-interactive
     end
 end
 
-alias aider="aider --commit-prompt (cat ~/.config/prompts/commit-system-prompt.txt)"
+set -xg NODE_NO_WARNINGS 1
