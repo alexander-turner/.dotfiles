@@ -121,6 +121,10 @@ function yank # Copy to clipboard
     end
 end
 
+# Disable automatic paste bracketing in fish
+set fish_clipboard_copy_cmd pbcopy
+set fish_clipboard_paste_cmd pbpaste
+
 function get_ps
     echo (whoami)'@'(hostname)': '(pwd)
 end
@@ -142,10 +146,10 @@ end
 # Merge changes onto main and push
 function merge_and_push
     git switch main
-    git pull
-    git merge -
-    git push
-    git switch -
+    and git pull
+    and git merge -
+    and git push
+    and git switch -
 end
 
 # Run post-push hook after git push
