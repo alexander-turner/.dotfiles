@@ -32,12 +32,11 @@ if [ "$(uname)" == "Darwin" ]; then
 	brew tap dimentium/autoraise
 	brew install --quiet autoraise
 	brew services restart autoraise
+	link_with_overwrite_check .AutoRaise ~/.AutoRaise 
 
 	# Aerospace window manager setup
 	brew install --quiet aerospace
-	link_with_overwrite_check .aerospace.toml
-
-	ln -f ~/.AutoRaise .AutoRaise
+	link_with_overwrite_check .aerospace.toml ~/.aerospace.toml
 else # Assume linux
 	if ! command_exists brew; then
 		/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
