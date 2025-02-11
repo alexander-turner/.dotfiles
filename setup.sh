@@ -6,18 +6,18 @@ command_exists() {
 }
 
 link_with_overwrite_check() {
-    local source_file="$1"
-    local target_file="$2"
-    if [ -e "$target_file" ]; then
-        # Prompt the user to confirm overwriting the existing file
-        read -rp "$(basename "$target_file") already exists. Overwrite? (y/N) " choice
-        case "$choice" in
-        y | Y) ln -sf "$source_file" "$target_file" ;;
-        *) echo "Skipping $(basename "$target_file")" ;;
-        esac
-    else
-        ln -sf "$source_file" "$target_file"
-    fi
+	local source_file="$1"
+	local target_file="$2"
+	if [ -e "$target_file" ]; then
+		# Prompt the user to confirm overwriting the existing file
+		read -rp "$(basename "$target_file") already exists. Overwrite? (y/N) " choice
+		case "$choice" in
+		y | Y) ln -sf "$source_file" "$target_file" ;;
+		*) echo "Skipping $(basename "$target_file")" ;;
+		esac
+	else
+		ln -sf "$source_file" "$target_file"
+	fi
 }
 
 echo "Installing brew packages..."
@@ -58,13 +58,13 @@ brew install --quiet mosh # Lower-latency mobile shell
 brew install --quiet python
 python3 -m pip install --quiet trash-cli
 # Prevent accidental deletion of files which should never be deleted
-brew install --quiet safe-rm 
+brew install --quiet safe-rm
 
 # Jump to a previously visited directory via a substring of its path
 brew install --quiet autojump
 
 # Install wally-cli for keyboard flashing
-# brew install --quiet go
+brew install --quiet go
 go install github.com/zsa/wally-cli@latest
 
 # Clear trash which is over 30 days old, daily
@@ -117,5 +117,5 @@ SCRIPT_DIR="$(dirname "$0")"/bin # Get the directory of the current script
 "$SCRIPT_DIR"/install_fish.sh    # Execute install_fish.sh from that directory
 link_with_overwrite_check "$HOME/.dotfiles/apps/fish/config.fish" "$HOME/.config/fish/config.fish"
 
-# Install AI integrations 
+# Install AI integrations
 fish bin/setup_llm.fish
