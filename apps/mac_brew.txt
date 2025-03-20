@@ -24,3 +24,4 @@ toilet
 --cask visual-studio-code
 cheatsheet
 brave-browser
+nextdns
