@@ -25,3 +25,4 @@ toilet
 cheatsheet
 brave-browser
 nextdns
+shellcheck
