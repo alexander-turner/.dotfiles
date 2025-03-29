@@ -26,3 +26,4 @@ cheatsheet
 brave-browser
 nextdns
 shellcheck
+fish-lsp
