@@ -16,15 +16,13 @@ end
 
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
-if status is-interactive
-    if test -f /opt/homebrew/anaconda3/bin/conda
-        eval /opt/homebrew/anaconda3/bin/conda "shell.fish" hook $argv | source
+if test -f /opt/homebrew/anaconda3/bin/conda
+    . "/opt/homebrew/anaconda3/etc/fish/conf.d/conda.fish"
+else
+    if test -f "/opt/homebrew/anaconda3/etc/fish/conf.d/conda.fish"
+        . "/opt/homebrew/anaconda3/etc/fish/conf.d/conda.fish"
     else
-        if test -f "/opt/homebrew/anaconda3/etc/fish/conf.d/conda.fish"
-            fish "/opt/homebrew/anaconda3/etc/fish/conf.d/conda.fish"
-        else
-            set -x PATH /opt/homebrew/anaconda3/bin $PATH
-        end
+        set -x PATH /opt/homebrew/anaconda3/bin $PATH
     end
 end
 # <<< conda initialize <<<
@@ -79,7 +77,6 @@ end
 function ls
     /opt/homebrew/opt/coreutils/libexec/gnubin/ls --color="always" --ignore-backups --hide="*.bak" $argv
 end
-
 
 set USE_MOSH true
 function ssh
