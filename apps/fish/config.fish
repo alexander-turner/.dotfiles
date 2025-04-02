@@ -100,6 +100,10 @@ function flash
     sh ~/bin/keyboard_flash.sh
 end
 
+function python
+    python3 $argv
+end
+
 function pytest
     python -m pytest $argv
 end
