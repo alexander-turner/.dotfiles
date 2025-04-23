@@ -2,6 +2,7 @@ bitwarden
 gh
 git
 obsidian
+yakitrak/yakitrak/obsidian-cli
 tmux
 wget
 steam

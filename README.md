@@ -62,6 +62,6 @@ echo "Never gonna give you up" | goosesay
 
 This script creates `~/.extras.fish` and `~/.extras.bash`, which are automatically sourced by `config.fish` and `.bashrc`. These files are not tracked by the repository. Thus, these files are appropriate for storing API keys and other information which shouldn't be shown to Github.
 
-Furthermore, `mac_brew.txt` contains a list of programs which I like using on my personal Mac. To install these, use `cat mac_brew.txt | xargs brew install`.
+Furthermore, `mac_brew.txt` contains a list of programs which I like using on my personal Mac. To install these, use `fish bin/install_brew_apps.fish`.
 
 NOTE: To disable parenthesis matching in `nvim`, delete the `mini.pairs` plugin from `~/.local/share/nvim/lazy/LazyVim/lua/azyvim/plugins/coding.lua`.
