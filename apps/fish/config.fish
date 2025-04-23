@@ -100,10 +100,6 @@ function flash
     sh ~/bin/keyboard_flash.sh
 end
 
-function python
-    python3 $argv
-end
-
 function pytest
     python -m pytest $argv
 end
@@ -136,6 +132,9 @@ abbr -a gs 'git status'
 abbr -a ga 'git add'
 abbr -a gb 'git branch'
 abbr -a gc 'git commit'
+abbr -a gca 'git commit --amend --no-edit'
+abbr -a gr 'git restore'
+abbr -a grs 'git restore --staged'
 abbr -a gd 'git diff'
 abbr -a gco 'git checkout'
 abbr -a uncommit 'git reset --soft HEAD^'
