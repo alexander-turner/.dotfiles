@@ -37,6 +37,11 @@ if [ "$(uname)" == "Darwin" ]; then
     # Aerospace window manager setup
     brew install --quiet aerospace
     link_with_overwrite_check .aerospace.toml ~/.aerospace.toml
+
+    # mac-pinentry needed for --sudo
+    brew install mac-pinentry
+    # Update once a week (given in seconds)
+    brew autoupdate start 604800 --upgrade --cleanup --sudo
 else # Assume linux
     if ! command_exists brew; then
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
