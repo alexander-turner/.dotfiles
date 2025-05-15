@@ -190,7 +190,7 @@ function rm
 end
 
 function grep
-    command grep $argv --exclude="*~" --color=always | cut -c1-100
+    command grep $argv --exclude="*~" --color=always
 end
 
 abbr pytest_diff 'pytest -vv --tb=short'
