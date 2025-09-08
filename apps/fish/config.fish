@@ -243,4 +243,6 @@ end
 set -xg NODE_NO_WARNINGS 1
 
 # The next line updates PATH for the Google Cloud SDK.
-if [ -f '/private/tmp/google-cloud-sdk/path.fish.inc' ]; . '/private/tmp/google-cloud-sdk/path.fish.inc'; end
+if [ -f '/Users/turntrout/Downloads/google-cloud-sdk/path.fish.inc' ]
+    . '/Users/turntrout/Downloads/google-cloud-sdk/path.fish.inc'
+end
