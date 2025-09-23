@@ -14,7 +14,8 @@ anki
 --cask hiddenbar
 --cask zotero
 fortune
-lolcat cowsay
+lolcat 
+cowsay
 --cask anaconda
 --cask docker
 --cask superkey
@@ -22,9 +23,8 @@ lolcat cowsay
 --cask quitter
 toilet
 --cask jettison
---cask visual-studio-code
+--cask cursor
 cheatsheet
 brave-browser
-nextdns
 shellcheck
 fish-lsp
