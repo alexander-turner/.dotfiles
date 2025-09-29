@@ -11,7 +11,7 @@ docker run -d -p 3000:8080 --restart unless-stopped -v open-webui:/app/backend/d
 # https://harper.blog/2024/03/11/use-an-llm-to-automagically-generate-meaningful-git-commit-messages/
 pipx install --quiet llm
 llm install llm-gemini # must run `llm keys set gemini` before use
-llm models default gemini-2.5-pro-latest
+llm models default gemini-2.5-pro
 
 mkdir -p $HOME/.config/prompts
 cp $BIN_DIR/.system-prompt.txt $HOME/.config/prompts/commit-system-prompt.txt
