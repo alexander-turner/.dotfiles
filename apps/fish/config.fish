@@ -230,16 +230,6 @@ abbr -a fxtra editfishextras
 
 test -e {$HOME}/.iterm2_shell_integration.fish; and source {$HOME}/.iterm2_shell_integration.fish
 
-if status is-interactive
-    and not set -q TMUX
-    # Create session 'main' or attach to 'main' if already exists.
-    if $TERM_PROGRAM = "iTerm.app"
-        tmux -CC new-session -A -s main
-    else
-        tmux new-session -A -s main
-    end
-end
-
 set -xg NODE_NO_WARNINGS 1
 
 # The next line updates PATH for the Google Cloud SDK.
