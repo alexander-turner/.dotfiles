@@ -28,3 +28,4 @@ cheatsheet
 brave-browser
 shellcheck
 fish-lsp
+--cask protonvpn
