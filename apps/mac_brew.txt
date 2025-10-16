@@ -10,7 +10,6 @@ rectangle-pro
 --cask iterm2
 anki
 --cask contexts
---cask private-internet-access
 --cask hiddenbar
 --cask zotero
 fortune
@@ -29,3 +28,4 @@ brave-browser
 shellcheck
 fish-lsp
 --cask protonvpn
+--cask lookaway
