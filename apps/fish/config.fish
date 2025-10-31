@@ -236,3 +236,14 @@ set -xg NODE_NO_WARNINGS 1
 if [ -f '/Users/turntrout/Downloads/google-cloud-sdk/path.fish.inc' ]
     . '/Users/turntrout/Downloads/google-cloud-sdk/path.fish.inc'
 end
+
+# Set iTerm2 tab title to tmux session name or directory
+function fish_title
+    if set -q TMUX
+        # Get tmux session name
+        tmux display-message -p '#S'
+    else
+        # Use basename of pwd
+        prompt_pwd
+    end
+end

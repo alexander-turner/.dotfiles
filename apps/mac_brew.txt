@@ -29,3 +29,4 @@ shellcheck
 fish-lsp
 --cask protonvpn
 --cask lookaway
+--cask tor-browser
