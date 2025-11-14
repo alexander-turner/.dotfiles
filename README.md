@@ -26,7 +26,8 @@ Features (configurable by changing `setup.sh`):
 7. Installs `tmux` with the `tmux-restore` and `tmux-continuum` plugins. Basically, this means that your `tmux` sessions will be saved and restored automatically. No more losing your work when your computer crashes!
 8. Installs `AutoRaise`, which automatically focuses the window under the cursor (after a delay).
 9. Automatically uses `mosh` instead of `ssh`. `mosh` is a more robust version of `ssh` which can handle network changes and disconnections more gracefully. It generally presents a lower-latency user experience.
-10. Most importantly, the `goosesay` command. A variant on the classic `cowsay` (which renders text inside a cow's speech bubble), `goosesay` goosens up your terminal just the right amount. For example:
+10. Installs `envchain` for secure secret management via OS keychain. Store API keys and credentials hardware-encrypted instead of in plaintext config files. See detailed setup below.
+11. Most importantly, the `goosesay` command. A variant on the classic `cowsay` (which renders text inside a cow's speech bubble), `goosesay` goosens up your terminal just the right amount. For example:
 
 ```fish
 echo "Never gonna give you up" | goosesay
@@ -60,8 +61,24 @@ echo "Never gonna give you up" | goosesay
                             `.'´
 ```
 
-This script creates `~/.extras.fish` and `~/.extras.bash`, which are automatically sourced by `config.fish` and `.bashrc`. These files are not tracked by the repository. Thus, these files are appropriate for storing API keys and other information which shouldn't be shown to Github.
+This script creates `~/.extras.fish` and `~/.extras.bash`, which are automatically sourced by `config.fish` and `.bashrc`. These files are not tracked by version control --- include commands you only want for the current machine, but use `envchain` for secret management.
 
-Furthermore, `mac_brew.txt` contains a list of programs which I like using on my personal Mac. To install these, use `fish bin/install_apps.fish`.
+## Secure secret management with [`envchain`](https://github.com/sorah/envchain)
 
-NOTE: To disable parenthesis matching in `nvim`, delete the `mini.pairs` plugin from `~/.local/share/nvim/lazy/LazyVim/lua/azyvim/plugins/coding.lua`.
+- Hardware-encrypted via macOS Secure Enclave or Linux gnome-keyring
+- No plaintext secrets in config files or git repositories
+- Auto-unlocks with your OS (zero daily friction)
+
+```bash
+envchain --set ai OPENAI_API_KEY
+envchain --set ai ANTHROPIC_API_KEY
+envchain --set cloudflare CLOUDFLARE_API_TOKEN
+```
+
+# Reinstalling programs using `brew`
+
+`mac_brew.txt` contains a list of programs which I like using on my personal Mac. To install these, use `fish bin/install_apps.fish`.
+
+# Other notes
+
+- To disable parenthesis matching in `nvim`, delete the `mini.pairs` plugin from `~/.local/share/nvim/lazy/LazyVim/lua/azyvim/plugins/coding.lua`.

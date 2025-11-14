@@ -217,11 +217,21 @@ set CONFIG_PATH ~/.extras.fish
 touch $CONFIG_PATH
 source $CONFIG_PATH
 
+# Do NOT put API keys in here --- use envchain
 function editfishextras
     nvim $CONFIG_PATH $argv
 end
 
 abbr -a fxtra editfishextras
+
+# Load secrets from keychain via envchain
+if test -f ~/.config/fish/envchain_secrets.fish
+    source ~/.config/fish/envchain_secrets.fish
+
+    if status is-interactive
+        load_envchain_secrets
+    end
+end
 
 test -e {$HOME}/.iterm2_shell_integration.fish; and source {$HOME}/.iterm2_shell_integration.fish
 
