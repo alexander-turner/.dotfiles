@@ -55,11 +55,6 @@ if $IS_MAC
     end
 end
 
-# Custom functions
-function compress # TODO pull compress
-    ~/bin/media_upload/compress.sh
-end
-
 abbr -a e exit
 
 function findfile
@@ -67,7 +62,10 @@ function findfile
 end
 
 abbr -a editbashrc 'nvim ~/.bashrc'
-abbr -a editfishrc 'nvim ~/.config/fish/config.fish'
+abbr -a brc editbashrc
+
+abbr -a editfishconfig 'nvim ~/.config/fish/config.fish'
+abbr -a fconf editfishconfig
 
 function crontab
     set -gx VISUAL nvim
@@ -217,6 +215,7 @@ set CONFIG_PATH ~/.extras.fish
 touch $CONFIG_PATH
 source $CONFIG_PATH
 
+# Do NOT put API keys in here --- use envchain
 function editfishextras
     nvim $CONFIG_PATH $argv
 end

@@ -58,6 +58,9 @@ brew install --quiet git-credential-manager node
 
 brew install --quiet mosh # Lower-latency mobile shell
 
+# Install envchain for secure secret management via OS keychain
+brew install --quiet envchain
+
 # Install reversible trash option
 brew install --quiet python
 pipx install --quiet trash-cli
@@ -120,6 +123,11 @@ touch "$HOME"/.hushlogin # Disable the "Last login" message
 SCRIPT_DIR="$(dirname "$0")"/bin # Get the directory of the current script
 "$SCRIPT_DIR"/install_fish.sh    # Execute install_fish.sh from that directory
 link_with_overwrite_check "$HOME/.dotfiles/apps/fish/config.fish" "$HOME/.config/fish/config.fish"
+
+# Link envchain secrets integration for Fish
+if [ -f "$HOME/.dotfiles/apps/fish/envchain_secrets.fish" ]; then
+    link_with_overwrite_check "$HOME/.dotfiles/apps/fish/envchain_secrets.fish" "$HOME/.config/fish/envchain_secrets.fish"
+fi
 
 # Install AI integrations
 fish bin/setup_llm.fish
