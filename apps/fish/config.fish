@@ -212,11 +212,6 @@ else
     set -gx PATH /home/linuxbrew/.linuxbrew/sbin $PATH
 end
 
-# Google Cloud SDK path update
-if [ -f '~/Downloads/google-cloud-sdk/path.fish.inc' ]
-    . ~/Downloads/google-cloud-sdk/path.fish.inc
-end
-
 # Run extra commands
 set CONFIG_PATH ~/.extras.fish
 touch $CONFIG_PATH
@@ -231,11 +226,6 @@ abbr -a fxtra editfishextras
 test -e {$HOME}/.iterm2_shell_integration.fish; and source {$HOME}/.iterm2_shell_integration.fish
 
 set -xg NODE_NO_WARNINGS 1
-
-# The next line updates PATH for the Google Cloud SDK.
-if [ -f '/Users/turntrout/Downloads/google-cloud-sdk/path.fish.inc' ]
-    . '/Users/turntrout/Downloads/google-cloud-sdk/path.fish.inc'
-end
 
 # Set iTerm2 tab title to tmux session name or directory
 function fish_title
