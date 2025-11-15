@@ -26,7 +26,7 @@ Features (configurable by changing `setup.sh`):
 7. Installs `tmux` with the `tmux-restore` and `tmux-continuum` plugins. Basically, this means that your `tmux` sessions will be saved and restored automatically. No more losing your work when your computer crashes!
 8. Installs `AutoRaise`, which automatically focuses the window under the cursor (after a delay).
 9. Automatically uses `mosh` instead of `ssh`. `mosh` is a more robust version of `ssh` which can handle network changes and disconnections more gracefully. It generally presents a lower-latency user experience.
-10. Installs `envchain` for secure secret management via OS keychain. Store API keys and credentials hardware-encrypted instead of in plaintext config files. See detailed setup below.
+10. Installs `envchain` for secure secret management via OS keychain. Store API keys and credentials hardware-encrypted instead of in plaintext config files.
 11. Most importantly, the `goosesay` command. A variant on the classic `cowsay` (which renders text inside a cow's speech bubble), `goosesay` goosens up your terminal just the right amount. For example:
 
 ```fish

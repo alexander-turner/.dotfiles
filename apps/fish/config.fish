@@ -64,8 +64,8 @@ end
 abbr -a editbashrc 'nvim ~/.bashrc'
 abbr -a brc editbashrc
 
+abbr -a fconf 'nvim ~/.config/fish/config.fish'
 abbr -a editfishconfig 'nvim ~/.config/fish/config.fish'
-abbr -a fconf editfishconfig
 
 function crontab
     set -gx VISUAL nvim
@@ -221,6 +221,11 @@ function editfishextras
 end
 
 abbr -a fxtra editfishextras
+
+# Load secrets from keychain via envchain
+if test -f ~/.config/fish/envchain_secrets.fish
+    source ~/.config/fish/envchain_secrets.fish
+end
 
 test -e {$HOME}/.iterm2_shell_integration.fish; and source {$HOME}/.iterm2_shell_integration.fish
 
