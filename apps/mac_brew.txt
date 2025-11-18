@@ -23,7 +23,6 @@ cowsay
 toilet
 --cask jettison
 --cask cursor
-cheatsheet
 brave-browser
 shellcheck
 fish-lsp

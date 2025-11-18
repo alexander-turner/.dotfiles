@@ -17,10 +17,10 @@ end
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
 if test -f /opt/homebrew/anaconda3/bin/conda
-    . "/opt/homebrew/anaconda3/etc/fish/conf.d/conda.fish"
+    . "/opt/homebrew/anaconda3/etc/fish/conf.d/conda.fish" 2>/dev/null
 else
     if test -f "/opt/homebrew/anaconda3/etc/fish/conf.d/conda.fish"
-        . "/opt/homebrew/anaconda3/etc/fish/conf.d/conda.fish"
+        . "/opt/homebrew/anaconda3/etc/fish/conf.d/conda.fish" 2>/dev/null
     else
         set -x PATH /opt/homebrew/anaconda3/bin $PATH
     end
@@ -42,10 +42,6 @@ else
 end
 
 if $IS_MAC
-    if command -q cheatsheet
-        cheatsheet &
-    end
-
     if command -q AeroSpace
         # Custom goodness for my workflow https://nikitabobko.github.io/AeroSpace/goodness
         defaults write -g NSWindowShouldDragOnGesture YES
@@ -241,3 +237,5 @@ function fish_title
         prompt_pwd
     end
 end
+
+set -x OLLAMA_ORIGINS *
