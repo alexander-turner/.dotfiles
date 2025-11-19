@@ -34,11 +34,8 @@ Features (configurable by changing `setup.sh`):
     - `wut` command to explain shell output.
 12. Most importantly, the `goosesay` command. A variant on the classic `cowsay` (which renders text inside a cow's speech bubble), `goosesay` goosens up your terminal just the right amount. For example:
 
-```fish
-echo "Never gonna give you up" | goosesay
-```
-
 ```plaintext
+echo "Never gonna give you up" | goosesay
  _________________________
 < Never gonna give you up >
  -------------------------
