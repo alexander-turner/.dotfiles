@@ -88,6 +88,13 @@ link_with_overwrite_check "$HOME/.dotfiles/.vimrc" "$HOME/.vimrc"
 link_with_overwrite_check "$HOME/.dotfiles/.gitconfig" "$HOME/.gitconfig"
 link_with_overwrite_check "$HOME/.dotfiles/.tmux.conf" "$HOME/.tmux.conf"
 
+# Link aider config files
+for aider_file in "$HOME/.dotfiles"/.aider*; do
+    if [ -f "$aider_file" ]; then
+        link_with_overwrite_check "$aider_file" "$HOME/$(basename "$aider_file")"
+    fi
+done
+
 # Tmux configuration
 mv ~/.tmux/plugins/{tpm,.tpm-backup}
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm # Tmux plugin manager
