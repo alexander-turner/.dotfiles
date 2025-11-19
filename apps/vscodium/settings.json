@@ -1,32 +1,33 @@
 {
-    "workbench.colorTheme": "Visual Studio Light",
-    "extensions.experimental.affinity": {
-        "asvetliakov.vscode-neovim": 1
-    },
-    "editor.formatOnSave": true,
-    "editor.aiStats.enabled": true,
-    "editor.autoIndentOnPaste": true,
-    "editor.definitionLinkOpensInPeek": true,
-    "terminal.external.osxExec": "",
-    "terminal.integrated.enableImages": true,
-    "terminal.integrated.fontFamily": "MesloLGS NF",
-    "editor.fontFamily": "MesloLGS NF, Menlo, Monaco, 'Courier New', monospace",
-    "workbench.startupEditor": "none",
-    "roo-cline.allowedCommands": [
-        "git log",
-        "git diff",
-        "git show",
-        "ls",
-        "less",
-        "tail",
-        "cat",
-        "echo",
-        "stat",
-        "cd",
-        "git status",
-        "npm test",
-        "pytest",
-        "conda activate"
-    ],
-    "roo-cline.deniedCommands": []
+  "workbench.colorTheme": "Visual Studio Light",
+  "extensions.experimental.affinity": {
+    "asvetliakov.vscode-neovim": 1
+  },
+  "editor.formatOnSave": true,
+  "editor.aiStats.enabled": true,
+  "editor.autoIndentOnPaste": true,
+  "editor.definitionLinkOpensInPeek": true,
+  "terminal.external.osxExec": "",
+  "terminal.integrated.enableImages": true,
+  "terminal.integrated.fontFamily": "MesloLGS NF",
+  "editor.fontFamily": "MesloLGS NF, Menlo, Monaco, 'Courier New', monospace",
+  "workbench.startupEditor": "none",
+  "roo-cline.allowedCommands": [
+    "git log",
+    "git diff",
+    "git show",
+    "ls",
+    "less",
+    "tail",
+    "cat",
+    "echo",
+    "stat",
+    "cd",
+    "git status",
+    "npm test",
+    "pytest",
+    "conda activate"
+  ],
+  "roo-cline.deniedCommands": [],
+  "git.openRepositoryInParentFolders": "always"
 }
