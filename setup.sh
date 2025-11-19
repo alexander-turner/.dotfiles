@@ -39,7 +39,7 @@ if [ "$(uname)" == "Darwin" ]; then
     link_with_overwrite_check .aerospace.toml ~/.aerospace.toml
 
     # mac-pinentry needed for --sudo
-    brew install mac-pinentry
+    brew install pinentry-mac
     # Update once a week (given in seconds)
     brew autoupdate start 604800 --upgrade --cleanup --sudo
 else # Assume linux
@@ -96,8 +96,11 @@ for aider_file in "$HOME/.dotfiles"/.aider*; do
 done
 
 # Tmux configuration
-mv ~/.tmux/plugins/{tpm,.tpm-backup}
-git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm # Tmux plugin manager
+TPM_BACKUP_DIR=~/.tmux/plugins/.tpm-backup
+mkdir -p "$TPM_BACKUP_DIR"
+TPM_DIR=~/.tmux/plugins/tpm
+mv "$TPM_DIR" "$TPM_BACKUP_DIR"
+git clone https://github.com/tmux-plugins/tpm "$TPM_DIR" # Tmux plugin manager
 tmux source ~/.tmux.conf
 ~/.tmux/plugins/tpm/bin/install_plugins
 

@@ -254,10 +254,11 @@ end
 
 function aider_redpill
     set -l aider_bin (type -p aider)
+    set -l aider_flags --edit-format editor-diff
 
     # We export AIDER_MODEL with the 'openai/' prefix. 
     # This forces LiteLLM to use the OpenAI client for the Redpill endpoint.
-    envchain ai /bin/sh -c 'export OPENAI_API_KEY=$REDPILL_API_KEY; export OPENAI_API_BASE=https://api.redpill.ai/v1; export AIDER_MODEL=openai/phala/gpt-oss-120b; exec "$0" "$@"' "$aider_bin" $argv
+    envchain ai /bin/sh -c 'export OPENAI_API_KEY=$REDPILL_API_KEY; export OPENAI_API_BASE=https://api.redpill.ai/v1; export AIDER_MODEL=openai/anthropic/claude-sonnet-4.5; exec "$0" "$@"' "$aider_bin" $aider_flags $argv
 end
 
 set -x OLLAMA_ORIGINS *
