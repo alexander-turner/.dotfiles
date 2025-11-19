@@ -1,0 +1,15 @@
+asvetliakov.vscode-neovim
+chrischinchilla.vale-vscode
+davidanson.vscode-markdownlint
+dbaeumer.vscode-eslint
+esbenp.prettier-vscode
+ms-playwright.playwright
+ms-python.black-formatter
+ms-python.debugpy
+ms-python.mypy-type-checker
+ms-python.pylint
+ms-python.python
+ms-python.vscode-python-envs
+oderwat.indent-rainbow
+rooveterinaryinc.roo-cline
+stylelint.vscode-stylelint

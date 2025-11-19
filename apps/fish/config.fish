@@ -238,4 +238,26 @@ function fish_title
     end
 end
 
+# When you need to expose AI API keys
+# WARNING: Exposes the whole namespace, which may change in the future
+function ai_secrets_wrap
+    envchain ai -- $argv
+end
+
+function cloudflare_secrets_wrap
+    envchain cloudflare -- $argv
+end
+
+function services_secrets_wrap
+    envchain services -- $argv
+end
+
+function aider_redpill
+    set -l aider_bin (type -p aider)
+
+    # We export AIDER_MODEL with the 'openai/' prefix. 
+    # This forces LiteLLM to use the OpenAI client for the Redpill endpoint.
+    envchain ai /bin/sh -c 'export OPENAI_API_KEY=$REDPILL_API_KEY; export OPENAI_API_BASE=https://api.redpill.ai/v1; export AIDER_MODEL=openai/phala/gpt-oss-120b; exec "$0" "$@"' "$aider_bin" $argv
+end
+
 set -x OLLAMA_ORIGINS *

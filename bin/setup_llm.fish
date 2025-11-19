@@ -7,6 +7,33 @@ docker pull ghcr.io/open-webui/open-webui:main
 # Run on startup (unless-stopped)
 docker run -d -p 3000:8080 --restart unless-stopped -v open-webui:/app/backend/data --name open-webui ghcr.io/open-webui/open-webui:main
 
+# Set up aider
+brew install aider
+aider --analytics-disable
+
+# Set up vscodium + roo code
+brew install --cask vscodium
+
+set -l GIT_ROOT (git rev-parse --show-toplevel)
+cat $GIT_ROOT/apps/vscodium/extensions.txt | xargs -L 1 codium --install-extension
+
+set CODIUM_USER "$HOME/Library/Application Support/VSCodium/User"
+mkdir -p "$CODIUM_USER"
+
+set GIT_ROOT (git rev-parse --show-toplevel)
+
+# Force link settings.json and keybindings.json
+ln -sf "$GIT_ROOT/apps/vscodium/settings.json" "$CODIUM_USER/settings.json"
+ln -sf "$GIT_ROOT/apps/vscodium/keybindings.json" "$CODIUM_USER/keybindings.json"
+
+# Start local indexing for semantic search
+docker run -d \
+    --name qdrant \
+    --restart unless-stopped \
+    -p 6333:6333 \
+    -v qdrant_data:/qdrant/storage \
+    qdrant/qdrant
+
 # Automatic commit messages
 # https://harper.blog/2024/03/11/use-an-llm-to-automagically-generate-meaningful-git-commit-messages/
 pipx install --quiet llm
