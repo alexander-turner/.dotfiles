@@ -30,3 +30,4 @@ fish-lsp
 --cask lookaway
 --cask tor-browser
 --cask vscodium
+--cask duplicati
