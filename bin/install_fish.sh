@@ -1,29 +1,20 @@
 #!/bin/bash
 
 command_exists() {
-	command -v "$1" >/dev/null 2>&1
+    command -v "$1" >/dev/null 2>&1
 }
 
 if ! command_exists fish; then
-	brew install fish
+    brew install fish
 fi
 
 # Set the correct permissions for the Fish configuration directory
 chown -R "$USER" "$HOME/.config"
 
 # Set Fish as the default shell
-if [ "$(grep "fish" /etc/shells)" = "" ]; then
-	echo "/usr/bin/fish" >>/etc/shells
-	echo "/opt/homebrew/bin/fish" >>/etc/shells
-fi
-
-if [ "$(grep "fish" "$SHELL")" = "" ]; then
-	echo "Requesting sudo in order to make fish the default shell".
-	sudo chsh -s /usr/bin/fish
-	echo "Fish is now set as the default shell."
-else
-	echo "Fish is already the default shell."
-fi
+FISH_PATH=$(which fish)
+grep -qxF "$FISH_PATH" /etc/shells || echo "$FISH_PATH" >>/etc/shells
+chsh -s "$FISH_PATH"
 
 # Install themes using fish
 fish <<FISH_SCRIPT
@@ -50,15 +41,15 @@ echo 'Do you want to accept preset tide settings? (Y/n)'
 read answer
 
 if echo "$answer" | grep -iq "^y"; then
-	echo "You accepted the preset settings."
-	# Copy if the directory doesnt exist already
-	if [ ! -d "$FISH_CONFIG_DIR" ]; then
-		cp -r "$DOTFILES_DIR"/fish "$FISH_CONFIG_DIR"
-	fi
+    echo "You accepted the preset settings."
+    # Copy if the directory doesnt exist already
+    if [ ! -d "$FISH_CONFIG_DIR" ]; then
+        cp -r "$DOTFILES_DIR"/fish "$FISH_CONFIG_DIR"
+    fi
 else
-	echo "You declined preset settings."
-	fish -c "tide configure"
-	ln -sf "$DOTFILES_DIR"/apps/fish/config.fish "$FISH_CONFIG_DIR"/config.fish
+    echo "You declined preset settings."
+    fish -c "tide configure"
+    ln -sf "$DOTFILES_DIR"/apps/fish/config.fish "$FISH_CONFIG_DIR"/config.fish
 fi
 
 fish install_fish_plugins.sh
