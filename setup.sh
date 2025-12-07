@@ -7,7 +7,7 @@ command_exists() {
 
 # Function to install brew packages quietly, only showing stderr
 brew_quiet_install() {
-    brew install --quiet "$@" 2>&1 >/dev/null | grep -v "^$" || true
+    brew install --quiet "$@"
 }
 
 link_with_overwrite_check() {
@@ -78,7 +78,7 @@ brew_quiet_install autojump
 
 # Install wally-cli for keyboard flashing
 brew_quiet_install go
-go install github.com/zsa/wally-cli@latest
+go install github.com/zsa/wally-cli@latest >/dev/null
 
 # Clear trash which is over 30 days old, daily
 if ! crontab -l | grep -q "trash-empty"; then
@@ -106,23 +106,22 @@ TPM_BACKUP_DIR=~/.tmux/plugins/.tpm-backup
 mkdir -p "$TPM_BACKUP_DIR"
 TPM_DIR=~/.tmux/plugins/tpm
 mkdir -p "$TPM_DIR"
-mv "$TPM_DIR" "$TPM_BACKUP_DIR"
-git clone https://github.com/tmux-plugins/tpm "$TPM_DIR" # Tmux plugin manager
-tmux source ~/.tmux.conf
-~/.tmux/plugins/tpm/bin/install_plugins
+mv "$TPM_DIR" "$TPM_BACKUP_DIR" >/dev/null 2>&1 || true
+git clone https://github.com/tmux-plugins/tpm "$TPM_DIR" >/dev/null # Tmux plugin manager
+tmux source ~/.tmux.conf >/dev/null || true
+~/.tmux/plugins/tpm/bin/install_plugins >/dev/null
 
 # Backup iTerm2 settings
-mv ~/Library/com.googlecode.iterm2.plist{,.bak}
+mv ~/Library/com.googlecode.iterm2.plist{,.bak} >/dev/null 2>&1 || true
 # Sync settings
-ln --force ~/.dotfiles/apps/com.googlecode.iterm2.plist ~/Library/com.googlecode.iterm2.plist
+ln --force ~/.dotfiles/apps/com.googlecode.iterm2.plist ~/Library/com.googlecode.iterm2.plist >/dev/null 2>&1 || true
 # Set up shell integration for iterm2
-curl -L https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash
+curl -fsSL https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash >/dev/null
 
 # Create neovim settings which include current vimrc files
 # Backup existing configs
 for directory in ~/.config/nvim ~.local/{share,state}/nvim ~/cache/nvim; do
-    echo "Backing up $directory into $directory.bak."
-    cp "$directory"{,.bak} 2>/dev/null
+    cp "$directory"{,.bak} >/dev/null 2>&1 || true
 done
 
 # Remove directory if not a symlink

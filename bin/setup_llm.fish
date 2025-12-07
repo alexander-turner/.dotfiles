@@ -2,20 +2,20 @@
 set -l BIN_DIR (dirname (status -f))
 
 # Local models
-brew install ollama
-docker pull ghcr.io/open-webui/open-webui:main
+brew install --quiet ollama
+docker pull ghcr.io/open-webui/open-webui:main 1>/dev/null
 # Run on startup (unless-stopped)
-docker run -d -p 3000:8080 --restart unless-stopped -v open-webui:/app/backend/data --name open-webui ghcr.io/open-webui/open-webui:main
+docker run -d -p 3000:8080 --restart unless-stopped -v open-webui:/app/backend/data --name open-webui ghcr.io/open-webui/open-webui:main 1>/dev/null
 
 # Set up aider
-brew install aider
-aider --analytics-disable
+brew install --quiet aider
+aider --analytics-disable 1>/dev/null
 
 # Set up vscodium + roo code
-brew install --cask vscodium
+brew install --quiet --cask vscodium
 
 set -l GIT_ROOT (git rev-parse --show-toplevel)
-cat $GIT_ROOT/apps/vscodium/extensions.txt | xargs -L 1 codium --install-extension
+cat $GIT_ROOT/apps/vscodium/extensions.txt | xargs -L 1 codium --install-extension 1>/dev/null
 
 set CODIUM_USER "$HOME/Library/Application Support/VSCodium/User"
 mkdir -p "$CODIUM_USER"
@@ -32,13 +32,13 @@ docker run -d \
     --restart unless-stopped \
     -p 6333:6333 \
     -v qdrant_data:/qdrant/storage \
-    qdrant/qdrant
+    qdrant/qdrant 1>/dev/null
 
 # Automatic commit messages
 # https://harper.blog/2024/03/11/use-an-llm-to-automagically-generate-meaningful-git-commit-messages/
-pipx install --quiet llm
-llm install llm-gemini # must run `llm keys set gemini` before use
-llm models default gemini-2.5-pro
+pipx install --quiet llm 1>/dev/null
+llm install llm-gemini 1>/dev/null # must run `llm keys set gemini` before use
+llm models default gemini-2.5-pro 1>/dev/null
 
 mkdir -p $HOME/.config/prompts
 cp $BIN_DIR/.system-prompt.txt $HOME/.config/prompts/commit-system-prompt.txt
@@ -49,4 +49,4 @@ cp $BIN_DIR/.prepare-commit-msg $HOME/.git_hooks/prepare-commit-msg
 chmod +x $HOME/.git_hooks/prepare-commit-msg
 git config --global core.hooksPath ~/.git_hooks
 
-pipx install wut # explains last output of shell command
+pipx install --quiet wut 1>/dev/null # explains last output of shell command
