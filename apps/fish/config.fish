@@ -31,7 +31,11 @@ end
 # Custom settings
 fish_vi_key_bindings
 
-# Autojump alias
+# Autojump - source the fish integration if it exists
+if test -f ~/.autojump/share/autojump/autojump.fish
+    source ~/.autojump/share/autojump/autojump.fish
+end
+
 abbr -a j autojump
 
 if $IS_MAC
