@@ -52,4 +52,4 @@ else
     ln -sf "$DOTFILES_DIR"/apps/fish/config.fish "$FISH_CONFIG_DIR"/config.fish
 fi
 
-fish install_fish_plugins.sh
+fish "$DOTFILES_DIR"/bin/install_fish_plugins.sh
