@@ -31,12 +31,16 @@ end
 # Custom settings
 fish_vi_key_bindings
 
-# Autojump - source the fish integration if it exists
-if test -f ~/.autojump/share/autojump/autojump.fish
-    source ~/.autojump/share/autojump/autojump.fish
+# Autojump setup
+if $IS_MAC
+    [ -f /opt/homebrew/share/autojump/autojump.fish ]; and source /opt/homebrew/share/autojump/autojump.fish
+else
+    if test -f ~/.autojump/share/autojump/autojump.fish
+        . ~/.autojump/share/autojump/autojump.fish
+    else
+        . /usr/share/autojump/autojump.fish
+    end
 end
-
-abbr -a j autojump
 
 if $IS_MAC
     if command -q AeroSpace
@@ -225,20 +229,19 @@ if test -f ~/.config/fish/envchain_secrets.fish
     source ~/.config/fish/envchain_secrets.fish
 end
 
-test -e {$HOME}/.iterm2_shell_integration.fish; and source {$HOME}/.iterm2_shell_integration.fish
-
-set -xg NODE_NO_WARNINGS 1
-
-# Set iTerm2 tab title to tmux session name or directory
-function fish_title
+# Only load iTerm2 integration when already inside tmux, not during tmux startup
+echo "DEBUG: Checking iTerm2 integration, TMUX=$TMUX, file_exists="(test -e {$HOME}/.iterm2_shell_integration.fish; echo $status) >>/tmp/fish_debug.log
+if test -e {$HOME}/.iterm2_shell_integration.fish
+    # Only load if TMUX variable is already set (we're inside a running tmux session)
     if set -q TMUX
-        # Get tmux session name
-        tmux display-message -p '#S'
+        echo "DEBUG: Loading iTerm2 integration inside tmux" >>/tmp/fish_debug.log
+        source {$HOME}/.iterm2_shell_integration.fish
     else
-        # Use basename of pwd
-        prompt_pwd
+        echo "DEBUG: Skipping iTerm2 integration (not in tmux yet)" >>/tmp/fish_debug.log
     end
 end
+
+set -xg NODE_NO_WARNINGS 1
 
 # When you need to expose AI API keys
 # WARNING: Exposes the whole namespace, which may change in the future
@@ -268,6 +271,6 @@ set -x OLLAMA_ORIGINS *
 # pnpm
 set -gx PNPM_HOME "/root/.local/share/pnpm"
 if not string match -q -- $PNPM_HOME $PATH
-  set -gx PATH "$PNPM_HOME" $PATH
+    set -gx PATH "$PNPM_HOME" $PATH
 end
 # pnpm end
