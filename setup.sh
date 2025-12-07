@@ -25,7 +25,6 @@ link_with_overwrite_check() {
     fi
 }
 
-echo "Installing brew packages..."
 if ! command_exists brew; then
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >>$HOME/.profile
@@ -53,17 +52,21 @@ if [ "$(uname)" = "Darwin" ]; then
     brew_quiet_install pinentry-mac
     # Update once a week (given in seconds)
     brew autoupdate start 604800 --upgrade --cleanup --sudo
+    brew_quiet_install git-credential-manager
+
+    # Install wally-cli for keyboard flashing (macOS only due to dependencies)
+    brew_quiet_install go
+    go install github.com/zsa/wally-cli@latest >/dev/null
+
 else # Assume linux
     brew_quiet_install neovim
 
-    # Install python3-pynvim and pipx if apt-get is available
-    if command_exists apt-get && command_exists sudo; then
-        sudo apt-get update
-        sudo apt-get install -y python3-pynvim pipx
-    fi
+    # Install python3-pynvim, pipx, and cron
+    sudo apt-get update
+    sudo apt-get install -y python3-pynvim pipx cron
 fi
 
-brew_quiet_install git-credential-manager node
+brew_quiet_install node
 
 brew_quiet_install mosh # Lower-latency mobile shell
 
@@ -72,6 +75,9 @@ brew_quiet_install envchain
 
 # Install reversible trash option
 brew_quiet_install python
+if ! command_exists pipx; then
+    brew_quiet_install pipx
+fi
 pipx install --quiet trash-cli
 # Prevent accidental deletion of files which should never be deleted
 brew_quiet_install safe-rm
@@ -79,16 +85,14 @@ brew_quiet_install safe-rm
 # Jump to a previously visited directory via a substring of its path
 brew_quiet_install autojump
 
-# Install wally-cli for keyboard flashing
-brew_quiet_install go
-go install github.com/zsa/wally-cli@latest >/dev/null
-
 # Clear trash which is over 30 days old, daily
-if ! crontab -l | grep -q "trash-empty"; then
-    (
-        crontab -l
-        echo "@daily $(which trash-empty) 30"
-    ) | crontab -
+if command_exists crontab && command_exists trash-empty; then
+    if ! crontab -l 2>/dev/null | grep -q "trash-empty"; then
+        (
+            crontab -l 2>/dev/null
+            echo "@daily $(which trash-empty) 30"
+        ) | crontab -
+    fi
 fi
 
 # Link .bashrc, .vimrc, .gitconfig, and .tmux.conf to the home directory, with warnings for existing files
