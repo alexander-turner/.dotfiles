@@ -30,7 +30,7 @@ if ! command_exists brew; then
     echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >>$HOME/.profile
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 fi
-brew_quiet_install tmux
+brew_quiet_install tmux autojump
 if [ "$(uname)" = "Darwin" ]; then
     brew_quiet_install neovim pyvim      # neovim
     brew_quiet_install libusb pkg-config # wally-cli
