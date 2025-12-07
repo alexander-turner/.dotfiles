@@ -66,6 +66,7 @@ else # Assume linux
 fi
 
 brew_quiet_install node pnpm
+pnpm setup
 brew_quiet_install gcc
 
 brew_quiet_install mosh # Lower-latency mobile shell
