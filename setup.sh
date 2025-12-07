@@ -30,7 +30,6 @@ if ! command_exists brew; then
     echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >>$HOME/.profile
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 fi
-brew_quiet_install tmux autojump
 if [ "$(uname)" = "Darwin" ]; then
     brew_quiet_install neovim pyvim      # neovim
     brew_quiet_install libusb pkg-config # wally-cli
@@ -94,6 +93,8 @@ if command_exists crontab && command_exists trash-empty; then
         ) | crontab -
     fi
 fi
+
+brew_quiet_install tmux
 
 # Link .bashrc, .vimrc, .gitconfig, and .tmux.conf to the home directory, with warnings for existing files
 link_with_overwrite_check "$HOME/.dotfiles/.bashrc" "$HOME/.bashrc"

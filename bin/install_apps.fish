@@ -1,5 +1,7 @@
 #!/usr/bin/env fish
 
+brew install gcc
+
 if test (uname -s) != Darwin
     echo "Error: This script requires macOS." >&2
     exit 1
@@ -18,12 +20,8 @@ end
 # Tap necessary sources
 brew tap yakitrak/yakitrak
 
-# Install apps apps 
 set -l GIT_ROOT (git rev-parse --show-toplevel 2>/dev/null)
 cd $GIT_ROOT
 cat ./apps/mac_brew.txt | xargs brew install
-
-# Install pip apps
-pipx install gsutil # google cloud bucket backups
 
 exit 0
