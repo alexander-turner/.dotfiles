@@ -9,9 +9,10 @@ set --universal tide_left_prompt_suffix ''
 abbr -a goosesay 'cowsay -f ~/.dotfiles/apps/goose.cow'
 
 # Check if the operating system is macOS and set IS_MAC flag
-set IS_MAC false
-if uname | grep -q Darwin
+if test (uname) = Darwin
     set IS_MAC true
+else
+    set IS_MAC false
 end
 
 # >>> conda initialize >>>
