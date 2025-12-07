@@ -5,6 +5,11 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
+# Function to install brew packages quietly, only showing stderr
+brew_quiet_install() {
+    brew install --quiet "$@" 2>&1 >/dev/null | grep -v "^$" || true
+}
+
 link_with_overwrite_check() {
     local source_file="$1"
     local target_file="$2"
@@ -21,57 +26,58 @@ link_with_overwrite_check() {
 }
 
 echo "Installing brew packages..."
+if ! command_exists brew; then
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >>$HOME/.profile
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
+brew_quiet_install tmux
 if [ "$(uname)" == "Darwin" ]; then
-    brew install --quiet neovim pyvim      # neovim
-    brew install --quiet libusb pkg-config # wally-cli
-    brew install --quiet coreutils         # For aliasing ls to gls
-    brew install --quiet pipx              # In case can't use systemwide pip
-    brew install --quiet wget              # Download files
+    brew_quiet_install neovim pyvim      # neovim
+    brew_quiet_install libusb pkg-config # wally-cli
+    brew_quiet_install coreutils         # For aliasing ls to gls
+    brew_quiet_install pipx              # In case can't use systemwide pip
+    brew_quiet_install wget              # Download files
 
     # Automatically focus and raise windows under cursor
     brew tap dimentium/autoraise
-    brew install --quiet autoraise
+    brew_quiet_install autoraise
     brew services restart autoraise
     link_with_overwrite_check .AutoRaise ~/.AutoRaise
 
     # Aerospace window manager setup
-    brew install --quiet aerospace
+    brew_quiet_install aerospace
     link_with_overwrite_check .aerospace.toml ~/.aerospace.toml
 
     # mac-pinentry needed for --sudo
-    brew install pinentry-mac
+    brew_quiet_install pinentry-mac
     # Update once a week (given in seconds)
     brew autoupdate start 604800 --upgrade --cleanup --sudo
 else # Assume linux
-    if ! command_exists brew; then
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-        echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >>$HOME/.profile
-        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-    fi
-    brew install --quiet neovim
+    brew_quiet_install neovim
 
     # sudo apt-get update
     sudo apt-get install python3-pynvim pipx
 fi
 
-brew install --quiet git-credential-manager node
+brew_quiet_install git-credential-manager node
 
-brew install --quiet mosh # Lower-latency mobile shell
+brew_quiet_install mosh # Lower-latency mobile shell
 
 # Install envchain for secure secret management via OS keychain
-brew install --quiet envchain
+brew_quiet_install envchain
 
 # Install reversible trash option
-brew install --quiet python
+brew_quiet_install python
 pipx install --quiet trash-cli
 # Prevent accidental deletion of files which should never be deleted
-brew install --quiet safe-rm
+brew_quiet_install safe-rm
 
 # Jump to a previously visited directory via a substring of its path
-brew install --quiet autojump
+brew_quiet_install autojump
 
 # Install wally-cli for keyboard flashing
-brew install --quiet go
+brew_quiet_install go
 go install github.com/zsa/wally-cli@latest
 
 # Clear trash which is over 30 days old, daily
@@ -99,6 +105,7 @@ done
 TPM_BACKUP_DIR=~/.tmux/plugins/.tpm-backup
 mkdir -p "$TPM_BACKUP_DIR"
 TPM_DIR=~/.tmux/plugins/tpm
+mkdir -p "$TPM_DIR"
 mv "$TPM_DIR" "$TPM_BACKUP_DIR"
 git clone https://github.com/tmux-plugins/tpm "$TPM_DIR" # Tmux plugin manager
 tmux source ~/.tmux.conf

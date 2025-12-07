@@ -1,3 +1,4 @@
+asvetliakov.vscode-neovim
 chrischinchilla.vale-vscode
 davidanson.vscode-markdownlint
 dbaeumer.vscode-eslint
