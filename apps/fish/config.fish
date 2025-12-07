@@ -61,7 +61,11 @@ function crontab
 end
 
 function ls
-    /opt/homebrew/opt/coreutils/libexec/gnubin/ls --color="always" --ignore-backups --hide="*.bak" $argv
+    if $IS_MAC
+        /opt/homebrew/opt/coreutils/libexec/gnubin/ls --color="always" --ignore-backups --hide="*.bak" $argv
+    else
+        command ls --color="always" --ignore-backups --hide="*.bak" $argv
+    end
 end
 
 set USE_MOSH false
@@ -162,6 +166,7 @@ end
 
 set -gx PATH $PATH ~/bin ~/.local/bin /usr/local/go/bin
 set -gx EDITOR nvim
+set -gx SHELL (which fish)
 
 abbr -a n nvim
 
