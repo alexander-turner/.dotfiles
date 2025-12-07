@@ -1,15 +1,5 @@
 #!/bin/bash
 
-# Function to check if a command exists
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
-}
-
-# Function to install brew packages quietly, only showing stderr
-brew_quiet_install() {
-    brew install --quiet "$@"
-}
-
 link_with_overwrite_check() {
     local source_file="$1"
     local target_file="$2"
@@ -23,6 +13,49 @@ link_with_overwrite_check() {
     else
         ln -sf "$source_file" "$target_file"
     fi
+}
+
+# Link .bashrc, .vimrc, .gitconfig, and .tmux.conf to the home directory, with warnings for existing files
+link_with_overwrite_check "$HOME/.dotfiles/.bashrc" "$HOME/.bashrc"
+link_with_overwrite_check "$HOME/.dotfiles/.vimrc" "$HOME/.vimrc"
+link_with_overwrite_check "$HOME/.dotfiles/.gitconfig" "$HOME/.gitconfig"
+link_with_overwrite_check "$HOME/.dotfiles/.tmux.conf" "$HOME/.tmux.conf"
+
+# Ensure fish config directory exists
+mkdir -p "$HOME/.config/fish"
+link_with_overwrite_check "$HOME/.dotfiles/apps/fish/config.fish" "$HOME/.config/fish/config.fish"
+
+# Link aider config files
+for aider_file in "$HOME/.dotfiles"/.aider*; do
+    if [ -f "$aider_file" ]; then
+        link_with_overwrite_check "$aider_file" "$HOME/$(basename "$aider_file")"
+    fi
+done
+
+# Tmux configuration
+TPM_BACKUP_DIR=~/.tmux/plugins/.tpm-backup
+mkdir -p "$TPM_BACKUP_DIR"
+TPM_DIR=~/.tmux/plugins/tpm
+mkdir -p "$TPM_DIR"
+mv "$TPM_DIR" "$TPM_BACKUP_DIR" >/dev/null 2>&1 || true
+git clone https://github.com/tmux-plugins/tpm "$TPM_DIR" >/dev/null # Tmux plugin manager
+tmux source ~/.tmux.conf >/dev/null || true
+~/.tmux/plugins/tpm/bin/install_plugins >/dev/null
+
+# Use brace expansion to ensure the extras files exist in the home directory
+touch "$HOME"/.extras.{bashrc,fish}
+touch "$HOME"/.hushlogin # Disable the "Last login" message
+
+# Install fish and configure
+SCRIPT_DIR="$(dirname "$0")"/bin # Get the directory of the current script
+"$SCRIPT_DIR"/install_fish.sh    # Execute install_fish.sh from that directory
+
+brew_quiet_install() {
+    brew install --quiet "$@"
+}
+
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
 }
 
 if ! command_exists brew; then
@@ -65,10 +98,6 @@ else # Assume linux
     sudo apt-get install -y python3-pynvim pipx cron
 fi
 
-brew_quiet_install node pnpm
-pnpm setup
-brew_quiet_install gcc
-
 brew_quiet_install mosh # Lower-latency mobile shell
 
 # Install envchain for secure secret management via OS keychain
@@ -95,28 +124,9 @@ fi
 
 brew_quiet_install tmux
 
-# Link .bashrc, .vimrc, .gitconfig, and .tmux.conf to the home directory, with warnings for existing files
-link_with_overwrite_check "$HOME/.dotfiles/.bashrc" "$HOME/.bashrc"
-link_with_overwrite_check "$HOME/.dotfiles/.vimrc" "$HOME/.vimrc"
-link_with_overwrite_check "$HOME/.dotfiles/.gitconfig" "$HOME/.gitconfig"
-link_with_overwrite_check "$HOME/.dotfiles/.tmux.conf" "$HOME/.tmux.conf"
-
-# Link aider config files
-for aider_file in "$HOME/.dotfiles"/.aider*; do
-    if [ -f "$aider_file" ]; then
-        link_with_overwrite_check "$aider_file" "$HOME/$(basename "$aider_file")"
-    fi
-done
-
-# Tmux configuration
-TPM_BACKUP_DIR=~/.tmux/plugins/.tpm-backup
-mkdir -p "$TPM_BACKUP_DIR"
-TPM_DIR=~/.tmux/plugins/tpm
-mkdir -p "$TPM_DIR"
-mv "$TPM_DIR" "$TPM_BACKUP_DIR" >/dev/null 2>&1 || true
-git clone https://github.com/tmux-plugins/tpm "$TPM_DIR" >/dev/null # Tmux plugin manager
-tmux source ~/.tmux.conf >/dev/null || true
-~/.tmux/plugins/tpm/bin/install_plugins >/dev/null
+brew_quiet_install node pnpm
+pnpm setup
+brew_quiet_install gcc
 
 # Backup iTerm2 settings
 mv ~/Library/com.googlecode.iterm2.plist{,.bak} >/dev/null 2>&1 || true
@@ -137,18 +147,6 @@ if [ ! -L "$NEOVIM_CONFIG_DIR" ]; then
     rm -rf "$NEOVIM_CONFIG_DIR"
     ln -s "$HOME/.dotfiles/apps/nvim" "$NEOVIM_CONFIG_DIR" # symlink to this repo's nvim config folder
 fi
-
-# Use brace expansion to ensure the extras files exist in the home directory
-touch "$HOME"/.extras.{bashrc,fish}
-touch "$HOME"/.hushlogin # Disable the "Last login" message
-
-# Install fish and configure
-SCRIPT_DIR="$(dirname "$0")"/bin # Get the directory of the current script
-"$SCRIPT_DIR"/install_fish.sh    # Execute install_fish.sh from that directory
-
-# Ensure fish config directory exists
-mkdir -p "$HOME/.config/fish"
-link_with_overwrite_check "$HOME/.dotfiles/apps/fish/config.fish" "$HOME/.config/fish/config.fish"
 
 # Link envchain secrets integration for Fish
 if [ -f "$HOME/.dotfiles/apps/fish/envchain_secrets.fish" ]; then
