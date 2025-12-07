@@ -44,7 +44,7 @@ set _tide_parent_dirs \$_tide_parent_dirs
 PATH=\$(string escape \"\$PATH\") CMD_DURATION=\$CMD_DURATION fish_bind_mode=\$fish_bind_mode set $prompt_var (_tide_2_line_prompt)\" &
         builtin disown
 
-        command kill \$_tide_last_pid 2>/dev/null
+        builtin kill \$_tide_last_pid 2>/dev/null
         set -g _tide_last_pid \$last_pid
     end
 
