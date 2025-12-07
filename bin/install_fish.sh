@@ -42,8 +42,8 @@ bash "$DOTFILES_DIR"/bin/font_install.sh
 # Create Fish configuration directory if it doesn't exist
 FISH_CONFIG_DIR="$HOME/.config/fish"
 mkdir -p "$FISH_CONFIG_DIR/functions"
-ln -f "$DOTFILES_DIR"/apps/fish/config.fish "$FISH_CONFIG_DIR/config.fish"
-ln -f "$DOTFILES_DIR"/apps/fish/functions/fish_prompt.fish "$FISH_CONFIG_DIR/functions/fish_prompt.fish"
+ln -sf "$DOTFILES_DIR"/apps/fish/config.fish "$FISH_CONFIG_DIR/config.fish"
+ln -sf "$DOTFILES_DIR"/apps/fish/functions/fish_prompt.fish "$FISH_CONFIG_DIR/functions/fish_prompt.fish"
 
 # See if user wants preset settings
 echo 'Do you want to accept preset tide settings? (Y/n)'
@@ -58,7 +58,7 @@ if echo "$answer" | grep -iq "^y"; then
 else
 	echo "You declined preset settings."
 	fish -c "tide configure"
-	ln -f "$DOTFILES_DIR"/.config.fish "$FISH_CONFIG_DIR"/config.fish
+	ln -sf "$DOTFILES_DIR"/apps/fish/config.fish "$FISH_CONFIG_DIR"/config.fish
 fi
 
 fish install_fish_plugins.sh

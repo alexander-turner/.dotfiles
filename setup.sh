@@ -83,9 +83,6 @@ pipx install --quiet trash-cli
 # Prevent accidental deletion of files which should never be deleted
 brew_quiet_install safe-rm
 
-# Jump to a previously visited directory via a substring of its path
-brew_quiet_install autojump
-
 # Clear trash which is over 30 days old, daily
 if command_exists crontab && command_exists trash-empty; then
     if ! crontab -l 2>/dev/null | grep -q "trash-empty"; then
@@ -124,7 +121,7 @@ tmux source ~/.tmux.conf >/dev/null || true
 # Backup iTerm2 settings
 mv ~/Library/com.googlecode.iterm2.plist{,.bak} >/dev/null 2>&1 || true
 # Sync settings
-ln --force ~/.dotfiles/apps/com.googlecode.iterm2.plist ~/Library/com.googlecode.iterm2.plist >/dev/null 2>&1 || true
+ln -sf ~/.dotfiles/apps/com.googlecode.iterm2.plist ~/Library/com.googlecode.iterm2.plist >/dev/null 2>&1 || true
 # Set up shell integration for iterm2
 curl -fsSL https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash >/dev/null
 
@@ -148,6 +145,9 @@ touch "$HOME"/.hushlogin # Disable the "Last login" message
 # Install fish and configure
 SCRIPT_DIR="$(dirname "$0")"/bin # Get the directory of the current script
 "$SCRIPT_DIR"/install_fish.sh    # Execute install_fish.sh from that directory
+
+# Ensure fish config directory exists
+mkdir -p "$HOME/.config/fish"
 link_with_overwrite_check "$HOME/.dotfiles/apps/fish/config.fish" "$HOME/.config/fish/config.fish"
 
 # Link envchain secrets integration for Fish
