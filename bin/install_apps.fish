@@ -1,7 +1,5 @@
 #!/usr/bin/env fish
 
-brew install gcc
-
 if test (uname -s) != Darwin
     echo "Error: This script requires macOS." >&2
     exit 1

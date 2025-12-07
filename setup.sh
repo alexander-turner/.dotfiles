@@ -65,7 +65,8 @@ else # Assume linux
     sudo apt-get install -y python3-pynvim pipx cron
 fi
 
-brew_quiet_install node
+brew_quiet_install node pnpm
+brew_quiet_install gcc
 
 brew_quiet_install mosh # Lower-latency mobile shell
 
