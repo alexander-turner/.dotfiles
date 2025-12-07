@@ -32,7 +32,7 @@ if ! command_exists brew; then
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 fi
 brew_quiet_install tmux
-if [ "$(uname)" == "Darwin" ]; then
+if [ "$(uname)" = "Darwin" ]; then
     brew_quiet_install neovim pyvim      # neovim
     brew_quiet_install libusb pkg-config # wally-cli
     brew_quiet_install coreutils         # For aliasing ls to gls
@@ -56,8 +56,11 @@ if [ "$(uname)" == "Darwin" ]; then
 else # Assume linux
     brew_quiet_install neovim
 
-    # sudo apt-get update
-    sudo apt-get install python3-pynvim pipx
+    # Install python3-pynvim and pipx if apt-get is available
+    if command_exists apt-get && command_exists sudo; then
+        sudo apt-get update
+        sudo apt-get install -y python3-pynvim pipx
+    fi
 fi
 
 brew_quiet_install git-credential-manager node
