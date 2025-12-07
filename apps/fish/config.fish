@@ -166,6 +166,7 @@ end
 
 set -gx PATH $PATH ~/bin ~/.local/bin /usr/local/go/bin
 set -gx EDITOR nvim
+set -gx SHELL (which fish)
 
 abbr -a n nvim
 
