@@ -71,6 +71,7 @@ fi
 
 # Use brace expansion to ensure the extras files exist in the home directory
 touch "$HOME"/.extras.{bashrc,fish}
+touch "$HOME"/.vimextras
 
 # Install fish and configure
 SCRIPT_DIR="$(dirname "$0")"/bin # Get the directory of the current script
