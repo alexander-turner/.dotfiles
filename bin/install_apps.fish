@@ -4,15 +4,6 @@ set -l OS (uname -s)
 
 # Check for brew on macOS and install if missing
 if test $OS = Darwin
-    if not type -q brew
-        echo "Homebrew not found. Installing..."
-        set -l BREW_INSTALL_URL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh
-        /bin/bash -c "$(curl -fsSL $BREW_INSTALL_URL)" || exit 2
-        echo "Homebrew installation attempted. You might need to restart your shell or add brew to your PATH."
-    else
-        echo "Homebrew is already installed."
-    end
-
     # Tap necessary sources
     brew tap yakitrak/yakitrak
 

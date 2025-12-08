@@ -103,6 +103,8 @@ brew_quiet_install mosh # Lower-latency mobile shell
 # Install envchain for secure secret management via OS keychain
 brew_quiet_install envchain
 
+brew_quiet_install xclip
+
 # Install reversible trash option
 brew_quiet_install python
 if ! command_exists pipx; then
