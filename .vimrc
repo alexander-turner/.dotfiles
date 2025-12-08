@@ -32,6 +32,7 @@ if &t_Co > 2 || has("gui_running")
   set hlsearch
 endif
 
+
 " Put these in an autocmd group, so that we can delete them easily.
 augroup vimrcEx
   au!
@@ -54,7 +55,6 @@ endif
 set number
 set nocompatible
 set hidden
-set mouse=a
 set tabstop=4
 
 " Set up keybindings
@@ -122,13 +122,6 @@ set preserveindent
 autocmd FileType python setlocal shiftwidth=4 tabstop=4 expandtab
 autocmd FileType html setlocal shiftwidth=2 tabstop=2 expandtab
 
-" SPLIT MANAGEMENT
-" Easier split navigations
-" nnoremap <C-J> <C-W><C-J>
-" nnoremap <C-K> <C-W><C-K>
-" nnoremap <C-L> <C-W><C-L>
-" nnoremap <C-H> <C-W><C-H>
-
 " More natural split opening
 set splitbelow
 set splitright
@@ -137,4 +130,12 @@ set splitright
 set wrap 
 set scrolloff=3
 
+<<<<<<< HEAD
 source ~/.vimextras
+=======
+set mouse=a
+
+" Maximize windows appropriately
+nnoremap <leader>f :MaximizerToggle<CR>
+vnoremap <leader>f :MaximizerToggle<CR>gv
+>>>>>>> 18487c07b771d5fde28d462d5270dfa980c0f4bc

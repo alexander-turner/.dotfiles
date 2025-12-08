@@ -5,13 +5,28 @@
 # Determine if the current system is a Mac and cache the result
 IS_MAC=false
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  IS_MAC=true
+    IS_MAC=true
 fi
+
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+__conda_setup="$('/opt/homebrew/anaconda3/bin/conda' 'shell.bash' 'hook' 2>/dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__conda_setup"
+else
+    if [ -f "/home/turn/miniconda3/etc/profile.d/conda.sh" ]; then
+        . "/home/turn/miniconda3/etc/profile.d/conda.sh"
+    else
+        export PATH="/home/turn/miniconda3/bin:$PATH"
+    fi
+fi
+unset __conda_setup
+# <<< conda initialize <<<
 
 # If not running interactively, don't do anything
 case $- in
-    *i*) ;;
-      *) return;;
+*i*) ;;
+*) return ;;
 esac
 
 # don't put duplicate lines or lines starting with space in the history.
@@ -45,7 +60,7 @@ fi
 
 # set a fancy prompt (non-color, unless we know we "want" color)
 case "$TERM" in
-    xterm-color|*-256color) color_prompt=yes;;
+xterm-color | *-256color) color_prompt=yes ;;
 esac
 
 # uncomment for a colored prompt, if the terminal has the capability; turned
@@ -55,12 +70,12 @@ esac
 
 if [ -n "$force_color_prompt" ]; then
     if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
-	# We have color support; assume it's compliant with Ecma-48
-	# (ISO/IEC-6429). (Lack of such support is extremely rare, and such
-	# a case would tend to support setf rather than setaf.)
-	color_prompt=yes
+        # We have color support; assume it's compliant with Ecma-48
+        # (ISO/IEC-6429). (Lack of such support is extremely rare, and such
+        # a case would tend to support setf rather than setaf.)
+        color_prompt=yes
     else
-	color_prompt=
+        color_prompt=
     fi
 fi
 
@@ -73,11 +88,10 @@ unset color_prompt force_color_prompt
 
 # If this is an xterm set the title to user@host:dir
 case "$TERM" in
-xterm*|rxvt*)
+xterm* | rxvt*)
     PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
     ;;
-*)
-    ;;
+*) ;;
 esac
 
 # enable color support of ls and also add handy aliases
@@ -117,27 +131,12 @@ fi
 # this, if it's already enabled in /etc/bash.bashrc and /etc/profile
 # sources /etc/bash.bashrc).
 if ! shopt -oq posix; then
-  if [ -f /usr/share/bash-completion/bash_completion ]; then
-    . /usr/share/bash-completion/bash_completion
-  elif [ -f /etc/bash_completion ]; then
-    . /etc/bash_completion
-  fi
-fi
-
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/home/turn/miniconda3/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f "/home/turn/miniconda3/etc/profile.d/conda.sh" ]; then
-        . "/home/turn/miniconda3/etc/profile.d/conda.sh"
-    else
-        export PATH="/home/turn/miniconda3/bin:$PATH"
+    if [ -f /usr/share/bash-completion/bash_completion ]; then
+        . /usr/share/bash-completion/bash_completion
+    elif [ -f /etc/bash_completion ]; then
+        . /etc/bash_completion
     fi
 fi
-unset __conda_setup
-# <<< conda initialize <<<
 
 # Autojump
 [[ -s /home/turn/.autojump/etc/profile.d/autojump.sh ]] && source /home/turn/.autojump/etc/profile.d/autojump.sh
@@ -147,7 +146,7 @@ set -o vi
 
 # Disable flow control, but only if we have a terminal attached
 if [ -t 0 ]; then
-  stty -ixon
+    stty -ixon
 fi
 
 # Custom aliases
@@ -158,7 +157,7 @@ alias rm='rm -I --preserve-root=all'
 alias findfile='find / -type f 2> /dev/null | grep'
 alias editbashrc='nvim ~/.bashrc'
 alias crontab="export VISUAL=nvim; crontab"
-alias gac="git add :/; git commit -m" 
+alias gac="git add :/; git commit -m"
 alias blowitaway="rm -rf"
 alias ls='ls --color="always"'
 
@@ -176,7 +175,10 @@ alias got='git '
 alias get='git '
 
 # Functions
-function cdls() { cd $1; ls; }
+function cdls() {
+    cd $1
+    ls
+}
 
 # Add to PATH
 export PATH="$PATH:/home/turn/bin:/home/turn/.local/bin"
@@ -185,22 +187,26 @@ export EDITOR='nvim'
 # start fish shell
 WHICH_FISH="$(which fish)"
 if [[ "$-" =~ i && -x "${WHICH_FISH}" && ! "${SHELL}" -ef "${WHICH_FISH}" ]]; then
-  # Safeguard to only activate fish for interactive shells and only if fish
-  # shell is present and executable. Verify that this is a new session by
-  # checking if $SHELL is set to the path to fish. If it is not, we set
-  # $SHELL and start fish.
-  #
-  # If this is not a new session, the user probably typed 'bash' into their
-  # console and wants bash, so we skip this.
-  exec env SHELL="${WHICH_FISH}" "${WHICH_FISH}" -i
+    # Safeguard to only activate fish for interactive shells and only if fish
+    # shell is present and executable. Verify that this is a new session by
+    # checking if $SHELL is set to the path to fish. If it is not, we set
+    # $SHELL and start fish.
+    #
+    # If this is not a new session, the user probably typed 'bash' into their
+    # console and wants bash, so we skip this.
+    exec env SHELL="${WHICH_FISH}" "${WHICH_FISH}" -i
 fi
 
 # If mac, start homebrew
 if [[ "$IS_MAC" = true ]]; then
-  eval "$(/opt/homebrew/bin/brew shellenv)"
+    eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
 EXTRAS_PATH="~/.extras.bash"
 if [[ -f "$EXTRAS_PATH" ]]; then
-  source "$EXTRAS_PATH"
-fi 
+    source "$EXTRAS_PATH"
+fi
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                   # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion

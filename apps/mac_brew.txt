@@ -1,0 +1,33 @@
+bitwarden
+gh
+git
+obsidian
+yakitrak/yakitrak/obsidian-cli
+tmux
+wget
+steam
+rectangle-pro
+--cask iterm2
+anki
+--cask contexts
+--cask hiddenbar
+--cask zotero
+fortune
+lolcat 
+cowsay
+--cask anaconda
+--cask docker
+--cask superkey
+--cask mathpix-snipping-tool
+--cask quitter
+toilet
+--cask jettison
+--cask cursor
+brave-browser
+shellcheck
+fish-lsp
+--cask protonvpn
+--cask lookaway
+--cask tor-browser
+--cask vscodium
+--cask duplicati
