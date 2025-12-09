@@ -150,10 +150,16 @@ if [ ! -L "$NEOVIM_CONFIG_DIR" ]; then
     ln -s "$HOME/.dotfiles/apps/nvim" "$NEOVIM_CONFIG_DIR" # symlink to this repo's nvim config folder
 fi
 
+<<<<<<< HEAD
+# Use brace expansion to ensure the extras files exist in the home directory
+touch "$HOME"/.extras.{bashrc,fish}
+touch "$HOME"/.vimextras
+=======
 # Link envchain secrets integration for Fish
 if [ -f "$HOME/.dotfiles/apps/fish/envchain_secrets.fish" ]; then
     link_with_overwrite_check "$HOME/.dotfiles/apps/fish/envchain_secrets.fish" "$HOME/.config/fish/envchain_secrets.fish"
 fi
+>>>>>>> 18487c07b771d5fde28d462d5270dfa980c0f4bc
 
 # Install AI integrations
 fish bin/setup_llm.fish
