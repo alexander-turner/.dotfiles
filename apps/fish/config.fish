@@ -267,3 +267,5 @@ function aider_redpill
 end
 
 set -x OLLAMA_ORIGINS *
+
+set -x tide_jobs_number_threshold 0
