@@ -130,12 +130,9 @@ set splitright
 set wrap 
 set scrolloff=3
 
-<<<<<<< HEAD
 source ~/.vimextras
-=======
 set mouse=a
 
 " Maximize windows appropriately
 nnoremap <leader>f :MaximizerToggle<CR>
 vnoremap <leader>f :MaximizerToggle<CR>gv
->>>>>>> 18487c07b771d5fde28d462d5270dfa980c0f4bc
