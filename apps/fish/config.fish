@@ -217,17 +217,12 @@ set CONFIG_PATH ~/.extras.fish
 touch $CONFIG_PATH
 source $CONFIG_PATH
 
-# Do NOT put API keys in here --- use envchain
+# Do NOT put API keys in here 
 function editfishextras
     nvim $CONFIG_PATH $argv
 end
 
 abbr -a fxtra editfishextras
-
-# Load secrets from keychain via envchain
-if test -f ~/.config/fish/envchain_secrets.fish
-    source ~/.config/fish/envchain_secrets.fish
-end
 
 # Only load iTerm2 integration when already inside tmux, not during tmux startup
 echo "DEBUG: Checking iTerm2 integration, TMUX=$TMUX, file_exists="(test -e {$HOME}/.iterm2_shell_integration.fish; echo $status) >>/tmp/fish_debug.log

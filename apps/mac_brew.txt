@@ -27,7 +27,8 @@ brave-browser
 shellcheck
 fish-lsp
 --cask protonvpn
---cask lookaway
+--cask --no-quarantine stretchly
 --cask tor-browser
 --cask vscodium
 --cask duplicati
+--cask ente
