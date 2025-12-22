@@ -60,7 +60,12 @@
     "pnpm eslint",
     "pnpm playwright --version",
     "pnpm why",
-    "pnpm view"
+    "pnpm view",
+    "file",
+    "git submodule add",
+    "git config user.name",
+    "git config user.email",
+    "sort"
   ],
   "roo-cline.deniedCommands": [],
   "git.openRepositoryInParentFolders": "always",
@@ -69,5 +74,7 @@
   "terminal.integrated.inheritEnv": false,
   "security.workspace.trust.untrustedFiles": "open",
   "playwright.reuseBrowser": false,
-  "playwright.showTrace": false
+  "playwright.showTrace": false,
+  "playwright.runGlobalSetupOnEachRun": false,
+  "workbench.editor.enablePreview": false
 }
