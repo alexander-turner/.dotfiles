@@ -261,6 +261,6 @@ function aider_redpill
     envchain ai /bin/sh -c 'export OPENAI_API_KEY=$REDPILL_API_KEY; export OPENAI_API_BASE=https://api.redpill.ai/v1; export AIDER_MODEL=openai/anthropic/claude-sonnet-4.5; exec "$0" "$@"' "$aider_bin" $aider_flags $argv
 end
 
-set -x OLLAMA_ORIGINS *
+# set -x OLLAMA_ORIGINS *
 
 set -x tide_jobs_number_threshold 0
