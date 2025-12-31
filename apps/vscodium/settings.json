@@ -65,7 +65,10 @@
     "git submodule add",
     "git config user.name",
     "git config user.email",
-    "sort"
+    "sort",
+    "uv run pytest",
+    "magick",
+    "sed"
   ],
   "roo-cline.deniedCommands": [],
   "git.openRepositoryInParentFolders": "always",
