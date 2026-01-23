@@ -1,7 +1,7 @@
 {
   "workbench.colorTheme": "Visual Studio Light",
   "extensions.experimental.affinity": {
-    "asvetliakov.vscode-neovim": 1
+    "asvetliakov.vscode-neovim": 1,
   },
   "editor.formatOnSave": true,
   "editor.aiStats.enabled": true,
@@ -68,7 +68,30 @@
     "sort",
     "uv run pytest",
     "magick",
-    "sed"
+    "sed",
+    "pnpm -s test",
+    "true",
+    "git checkout",
+    "test",
+    "uv --version",
+    "git stash list",
+    "python3 scripts/run_push_checks.py",
+    "pnpm check",
+    "pnpm tsc",
+    "df",
+    "brew info",
+    "gh pr view",
+    "deepsource issues",
+    "deepsource",
+    "pnpm exec playwright",
+    "chmod +x",
+    "/opt/homebrew/anaconda3/envs/website/bin/ots",
+    "git add",
+    "git commit",
+    "readlink",
+    "rg",
+    "llm models",
+    "llm plugins"
   ],
   "roo-cline.deniedCommands": [],
   "git.openRepositoryInParentFolders": "always",
@@ -79,5 +102,6 @@
   "playwright.reuseBrowser": false,
   "playwright.showTrace": false,
   "playwright.runGlobalSetupOnEachRun": false,
-  "workbench.editor.enablePreview": false
+  "workbench.editor.enablePreview": false,
+  "roo-cline.debug": false,
 }
