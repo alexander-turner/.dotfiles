@@ -264,3 +264,4 @@ end
 # set -x OLLAMA_ORIGINS *
 
 set -x tide_jobs_number_threshold 0
+set -gx PATH $PATH $HOME/go/bin
