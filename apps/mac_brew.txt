@@ -30,3 +30,5 @@ fish-lsp
 --cask vscodium
 --cask duplicati
 --cask ente
+--cask lookaway
+scriberr

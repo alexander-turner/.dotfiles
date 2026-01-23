@@ -6,6 +6,7 @@ set -l OS (uname -s)
 if test $OS = Darwin
     # Tap necessary sources
     brew tap yakitrak/yakitrak
+    brew tap rishikanthc/scriberr
 
     set -l GIT_ROOT (git rev-parse --show-toplevel 2>/dev/null)
     cd $GIT_ROOT
