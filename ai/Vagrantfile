@@ -1,0 +1,47 @@
+vm_name = File.basename(Dir.getwd)
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "bento/ubuntu-24.04"
+
+  # Sync the current project folder to /agent-workspace
+  config.vm.synced_folder ".", "/agent-workspace", type: "virtualbox"
+
+  config.vm.provision "file", source: "~/.claude.json", destination: "/home/vagrant/.claude.json"
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = "4096"
+    vb.cpus = 2
+    vb.gui = false
+    vb.name = vm_name
+    # Fix for VirtualBox 7.2.4 CPU regression
+    vb.customize ["modifyvm", :id, "--audio", "none"]
+    vb.customize ["modifyvm", :id, "--usb", "off"]
+  end
+  
+  config.vm.provision "shell", inline: <<-SHELL
+    export DEBIAN_FRONTEND=noninteractive
+
+    # Install dependencies
+    apt-get update
+    apt-get install -y docker.io nodejs npm git unzip
+    
+    # Install Claude Code
+    npm install -g @anthropic-ai/claude-code --no-audit
+
+    # Docker permissions
+    usermod -aG docker vagrant
+    
+    # -----------------------------------------------------------
+    # NEW: Fix permissions for the injected credentials
+    # -----------------------------------------------------------
+    # Ensure the 'vagrant' user owns the config file we copied over
+    if [ -f /home/vagrant/.claude.json ]; then
+      chown vagrant:vagrant /home/vagrant/.claude.json
+      chmod 600 /home/vagrant/.claude.json
+    fi
+
+    # Fix workspace permissions
+    chown -R vagrant:vagrant /agent-workspace
+
+  SHELL
+end
