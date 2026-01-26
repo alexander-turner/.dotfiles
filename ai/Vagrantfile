@@ -9,6 +9,8 @@ Vagrant.configure("2") do |config|
   config.vm.provision "file", source: "~/.claude.json", destination: "/home/vagrant/.claude.json"
   config.vm.provision "file", source: "~/.ssh", destination: "/home/vagrant/.ssh"
   config.vm.provision "file", source: "~/.config/gh", destination: "/home/vagrant/.config/gh"
+  config.vm.provision "file", source: "~/.dotfiles/ai/prompting/skills", destination: "/home/vagrant/.claude/commands"
+  config.vm.provision "file", source: "~/.dotfiles/ai/prompting/CLAUDE.md", destination: "/home/vagrant/.claude/CLAUDE.md"
 
   config.vm.provider "virtualbox" do |vb|
     vb.memory = "4096"
@@ -50,60 +52,9 @@ Vagrant.configure("2") do |config|
 
   # User-level provisioning (runs as vagrant)
   config.vm.provision "shell", privileged: false, inline: <<-SHELL
-    # Clone dotfiles (use SSH for push access)
-    if [ ! -d "$HOME/.dotfiles" ]; then
-      git clone git@github.com:alexander-turner/.dotfiles.git "$HOME/.dotfiles"
-    else
-      cd "$HOME/.dotfiles" && git pull
-    fi
-
-    # Create symlinks (non-interactive, force overwrite)
-    ln -sf "$HOME/.dotfiles/.bashrc" "$HOME/.bashrc"
-    ln -sf "$HOME/.dotfiles/.vimrc" "$HOME/.vimrc"
-    ln -sf "$HOME/.dotfiles/.gitconfig" "$HOME/.gitconfig"
-    ln -sf "$HOME/.dotfiles/.tmux.conf" "$HOME/.tmux.conf"
-
-    # Fish config
-    mkdir -p "$HOME/.config/fish"
-    ln -sf "$HOME/.dotfiles/apps/fish/config.fish" "$HOME/.config/fish/config.fish"
-
-    # Neovim config
-    mkdir -p "$HOME/.config"
-    rm -rf "$HOME/.config/nvim"
-    ln -sf "$HOME/.dotfiles/apps/nvim" "$HOME/.config/nvim"
-
-    # Claude config
-    mkdir -p "$HOME/.claude"
-    rm -rf "$HOME/.claude/commands"
-    ln -sf "$HOME/.dotfiles/ai/prompting/skills" "$HOME/.claude/commands"
-    ln -sf "$HOME/.dotfiles/ai/prompting/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
-
-    # Fix Claude credentials permissions
-    if [ -f "$HOME/.claude.json" ]; then
-      chmod 600 "$HOME/.claude.json"
-    fi
-
-    # Fix SSH permissions
-    if [ -d "$HOME/.ssh" ]; then
-      chmod 700 "$HOME/.ssh"
-      chmod 600 "$HOME/.ssh/id_*" 2>/dev/null || true
-      chmod 644 "$HOME/.ssh/*.pub" 2>/dev/null || true
-      chmod 600 "$HOME/.ssh/config" 2>/dev/null || true
-    fi
-
-    # Fix gh CLI permissions
-    if [ -d "$HOME/.config/gh" ]; then
-      chmod 700 "$HOME/.config/gh"
-      chmod 600 "$HOME/.config/gh/"*.yml 2>/dev/null || true
-    fi
-
-    # Create extras files
-    touch "$HOME/.extras.bashrc" "$HOME/.extras.fish" "$HOME/.vimextras" "$HOME/.hushlogin"
-
-    # Clone TurnTrout.com and install dependencies (use SSH for push access)
-    if [ ! -d "$HOME/TurnTrout.com" ]; then
-      git clone git@github.com:alexander-turner/TurnTrout.com.git "$HOME/TurnTrout.com"
-      cd "$HOME/TurnTrout.com" && pnpm install
-    fi
+    # Fix permissions for copied credentials
+    chmod 600 "$HOME/.claude.json" 2>/dev/null || true
+    chmod 700 "$HOME/.ssh" && chmod 600 "$HOME/.ssh/id_*" 2>/dev/null || true
+    chmod 700 "$HOME/.config/gh" && chmod 600 "$HOME/.config/gh/"*.yml 2>/dev/null || true
   SHELL
 end
