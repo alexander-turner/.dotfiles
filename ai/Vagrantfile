@@ -42,17 +42,9 @@ Vagrant.configure("2") do |config|
     apt-get update
     apt-get install -y nodejs
 
-    # Install pnpm and Claude Code globally
-    npm install -g pnpm @anthropic-ai/claude-code --no-audit
-    npx @realmikekelly/claude-sneakpeek quick --name claudesp
-
-    # Docker permissions
+    # Install pnpm and Clawdbot globally
+    npm install -g pnpm clawdbot@latest --no-audit
     usermod -aG docker vagrant
-
-    # Set fish as default shell for vagrant user
-    chsh -s /usr/bin/fish vagrant
-
-    # Note: /agent-workspace is a VirtualBox synced folder, no chown needed
   SHELL
 
   # User-level provisioning (runs as vagrant)
