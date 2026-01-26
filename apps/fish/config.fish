@@ -267,8 +267,8 @@ end
 set -x tide_jobs_number_threshold 0
 set -gx PATH $PATH $HOME/go/bin
 
-# Vagrant configuration
-set -gx VAGRANT_VAGRANTFILE ~/.dotfiles/ai/Vagrantfile
+# Vagrant configuration (CWD sets the synced folder and working dir)
+set -gx VAGRANT_CWD ~/.dotfiles/ai
 
 # Vagrant helper for Claude sandboxed environment
 function vagrant_claude
