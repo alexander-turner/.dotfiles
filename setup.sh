@@ -161,9 +161,10 @@ fi
 
 # Claude Code configuration
 mkdir -p "$HOME/.claude"
-# Symlink skills directory
+# Symlink skills directory and CLAUDE.md
 rm -rf "$HOME/.claude/commands"
 ln -s "$HOME/.dotfiles/ai/prompting/skills" "$HOME/.claude/commands"
+ln -sf "$HOME/.dotfiles/ai/prompting/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
 
 # Vagrant templates
 mkdir -p "$HOME/.config/vagrant-templates"

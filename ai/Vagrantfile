@@ -8,6 +8,7 @@ Vagrant.configure("2") do |config|
 
   config.vm.provision "file", source: "~/.claude.json", destination: "/home/vagrant/.claude.json"
   config.vm.provision "file", source: "~/.dotfiles/ai/prompting/skills", destination: "/home/vagrant/.claude/commands"
+  config.vm.provision "file", source: "~/.dotfiles/ai/prompting/CLAUDE.md", destination: "/home/vagrant/.claude/CLAUDE.md"
 
   config.vm.provider "virtualbox" do |vb|
     vb.memory = "4096"
