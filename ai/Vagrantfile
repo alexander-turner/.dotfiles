@@ -4,7 +4,7 @@ Vagrant.configure("2") do |config|
   config.vm.box = "bento/ubuntu-24.04"
 
   # Sync Documents folder to /agent-workspace
-  config.vm.synced_folder "~/Documents", "/agent-workspace", type: "virtualbox"
+  config.vm.synced_folder "~/Documents/agent-workspace", "/agent-workspace", type: "virtualbox"
 
   config.vm.provision "file", source: "~/.claude.json", destination: "/home/vagrant/.claude.json"
   config.vm.provision "file", source: "~/.ssh", destination: "/home/vagrant/.ssh"
@@ -52,8 +52,7 @@ Vagrant.configure("2") do |config|
     # Set fish as default shell for vagrant user
     chsh -s /usr/bin/fish vagrant
 
-    # Fix workspace permissions (ignore errors from macOS protected directories)
-    chown -R vagrant:vagrant /agent-workspace 2>/dev/null || true
+    # Note: /agent-workspace is a VirtualBox synced folder, no chown needed
   SHELL
 
   # User-level provisioning (runs as vagrant)
