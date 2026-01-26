@@ -7,8 +7,6 @@ Vagrant.configure("2") do |config|
   config.vm.synced_folder ".", "/agent-workspace", type: "virtualbox"
 
   config.vm.provision "file", source: "~/.claude.json", destination: "/home/vagrant/.claude.json"
-  config.vm.provision "file", source: "~/.dotfiles/ai/prompting/skills", destination: "/home/vagrant/.claude/commands"
-  config.vm.provision "file", source: "~/.dotfiles/ai/prompting/CLAUDE.md", destination: "/home/vagrant/.claude/CLAUDE.md"
 
   config.vm.provider "virtualbox" do |vb|
     vb.memory = "4096"
@@ -19,13 +17,14 @@ Vagrant.configure("2") do |config|
     vb.customize ["modifyvm", :id, "--audio", "none"]
     vb.customize ["modifyvm", :id, "--usb", "off"]
   end
-  
+
+  # System-level provisioning (runs as root)
   config.vm.provision "shell", inline: <<-SHELL
     export DEBIAN_FRONTEND=noninteractive
 
     # Install dependencies
     apt-get update
-    apt-get install -y docker.io git unzip curl ca-certificates gnupg
+    apt-get install -y docker.io git unzip curl ca-certificates gnupg fish tmux neovim
 
     # Install Node.js 22 LTS via NodeSource (supports import attributes)
     mkdir -p /etc/apt/keyrings
@@ -34,26 +33,61 @@ Vagrant.configure("2") do |config|
     apt-get update
     apt-get install -y nodejs
 
-    # Install pnpm globally
-    npm install -g pnpm
-
-    # Install Claude Code
-    npm install -g @anthropic-ai/claude-code --no-audit
+    # Install pnpm and Claude Code globally
+    npm install -g pnpm @anthropic-ai/claude-code --no-audit
 
     # Docker permissions
     usermod -aG docker vagrant
-    
-    # -----------------------------------------------------------
-    # NEW: Fix permissions for the injected credentials
-    # -----------------------------------------------------------
-    # Ensure the 'vagrant' user owns the config file we copied over
-    if [ -f /home/vagrant/.claude.json ]; then
-      chown vagrant:vagrant /home/vagrant/.claude.json
-      chmod 600 /home/vagrant/.claude.json
-    fi
+
+    # Set fish as default shell for vagrant user
+    chsh -s /usr/bin/fish vagrant
 
     # Fix workspace permissions
     chown -R vagrant:vagrant /agent-workspace
+  SHELL
 
+  # User-level provisioning (runs as vagrant)
+  config.vm.provision "shell", privileged: false, inline: <<-SHELL
+    # Clone dotfiles
+    if [ ! -d "$HOME/.dotfiles" ]; then
+      git clone https://github.com/alexander-turner/.dotfiles.git "$HOME/.dotfiles"
+    else
+      cd "$HOME/.dotfiles" && git pull
+    fi
+
+    # Create symlinks (non-interactive, force overwrite)
+    ln -sf "$HOME/.dotfiles/.bashrc" "$HOME/.bashrc"
+    ln -sf "$HOME/.dotfiles/.vimrc" "$HOME/.vimrc"
+    ln -sf "$HOME/.dotfiles/.gitconfig" "$HOME/.gitconfig"
+    ln -sf "$HOME/.dotfiles/.tmux.conf" "$HOME/.tmux.conf"
+
+    # Fish config
+    mkdir -p "$HOME/.config/fish"
+    ln -sf "$HOME/.dotfiles/apps/fish/config.fish" "$HOME/.config/fish/config.fish"
+
+    # Neovim config
+    mkdir -p "$HOME/.config"
+    rm -rf "$HOME/.config/nvim"
+    ln -sf "$HOME/.dotfiles/apps/nvim" "$HOME/.config/nvim"
+
+    # Claude config
+    mkdir -p "$HOME/.claude"
+    rm -rf "$HOME/.claude/commands"
+    ln -sf "$HOME/.dotfiles/ai/prompting/skills" "$HOME/.claude/commands"
+    ln -sf "$HOME/.dotfiles/ai/prompting/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
+
+    # Fix Claude credentials permissions
+    if [ -f "$HOME/.claude.json" ]; then
+      chmod 600 "$HOME/.claude.json"
+    fi
+
+    # Create extras files
+    touch "$HOME/.extras.bashrc" "$HOME/.extras.fish" "$HOME/.vimextras" "$HOME/.hushlogin"
+
+    # Clone TurnTrout.com and install dependencies
+    if [ ! -d "$HOME/TurnTrout.com" ]; then
+      git clone https://github.com/alexander-turner/TurnTrout.com.git "$HOME/TurnTrout.com"
+      cd "$HOME/TurnTrout.com" && pnpm install
+    fi
   SHELL
 end
