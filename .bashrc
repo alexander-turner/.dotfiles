@@ -96,7 +96,7 @@ esac
 
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
-    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+    test -r ~/.dircolors && eval "$(dircolors -b $HOME/.dircolors)" || eval "$(dircolors -b)"
     alias ls='ls --color=auto'
     #alias dir='dir --color=auto'
     #alias vdir='vdir --color=auto'
@@ -150,12 +150,12 @@ if [ -t 0 ]; then
 fi
 
 # Custom aliases
-alias compress='~/bin/media_upload/compress.sh'
-alias obsidian='~/bin/obsidian-launch.sh'
+alias compress=~/'bin/media_upload/compress.sh'
+alias obsidian=~/'bin/obsidian-launch.sh'
 alias e='exit'
 alias rm='rm -I --preserve-root=all'
 alias findfile='find / -type f 2> /dev/null | grep'
-alias editbashrc='nvim ~/.bashrc'
+alias editbashrc='nvim $HOME/.bashrc'
 alias crontab="export VISUAL=nvim; crontab"
 alias gac="git add :/; git commit -m"
 alias blowitaway="rm -rf"
@@ -202,7 +202,7 @@ if [[ "$IS_MAC" = true ]]; then
     eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
-EXTRAS_PATH="~/.extras.bash"
+EXTRAS_PATH="$HOME/.extras.bash"
 if [[ -f "$EXTRAS_PATH" ]]; then
     source "$EXTRAS_PATH"
 fi
