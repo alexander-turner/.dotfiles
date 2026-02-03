@@ -38,7 +38,7 @@ ln -sf "$DOTFILES_DIR"/apps/fish/functions/fish_prompt.fish "$FISH_CONFIG_DIR/fu
 
 # See if user wants preset settings
 echo 'Do you want to accept preset tide settings? (Y/n)'
-read answer
+read -r answer
 
 if echo "$answer" | grep -iq "^y"; then
     echo "You accepted the preset settings."

@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 # Fira Code is the terminal font, has nice ligatures
 brew tap homebrew/cask-font

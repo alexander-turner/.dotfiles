@@ -1,0 +1,4 @@
+#!/bin/bash
+# Pre-push hook: runs linting checks before pushing
+
+"$(git rev-parse --show-toplevel)/bin/lint.sh"

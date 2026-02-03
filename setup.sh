@@ -60,7 +60,7 @@ command_exists() {
 
 if ! command_exists brew; then
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >>$HOME/.profile
+    echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >>"$HOME/.profile"
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 fi
 if [ "$(uname)" = "Darwin" ]; then
@@ -169,6 +169,9 @@ ln -sf "$HOME/.dotfiles/ai/prompting/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
 # Vagrant templates
 mkdir -p "$HOME/.config/vagrant-templates"
 ln -sf "$HOME/.dotfiles/ai/Vagrantfile" "$HOME/.config/vagrant-templates/Vagrantfile"
+
+# Install pre-push hook for this repo
+ln -sf "$HOME/.dotfiles/bin/pre-push" "$HOME/.dotfiles/.git/hooks/pre-push"
 
 # Install AI integrations
 fish bin/setup_llm.fish
