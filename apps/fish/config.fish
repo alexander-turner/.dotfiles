@@ -77,7 +77,7 @@ function ls
     end
 end
 
-set USE_MOSH false
+set USE_MOSH true
 function ssh
     if $USE_MOSH and (type -q mosh)
         echo "Using mosh instead. To disable, set \$USE_MOSH in shell config."
@@ -277,7 +277,7 @@ function vagrant_claude
     # Check if VM is already running
     set -l status_output (cd $vagrant_dir && vagrant status --machine-readable 2>/dev/null | grep ",state," | cut -d',' -f4)
 
-    if test "$status_output" = "running"
+    if test "$status_output" = running
         echo "Vagrant VM already running. SSHing in..."
         cd $vagrant_dir && vagrant ssh
     else
