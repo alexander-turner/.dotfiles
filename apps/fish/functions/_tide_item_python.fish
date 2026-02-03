@@ -1,6 +1,7 @@
 function _tide_item_python
     if test -n "$VIRTUAL_ENV"
-        python --version 2>/dev/null | string match -qr "(?<v>[\d.]+)"
+        set -l py_output (python --version 2>/dev/null)
+        string match -qr "(?<v>[\d.]+)" -- $py_output
 
         string match -qr "^.*/(?<dir>.*)/(?<base>.*)" $VIRTUAL_ENV
         # pipenv $VIRTUAL_ENV looks like /home/ilan/.local/share/virtualenvs/pipenv_project-EwRYuc3l
@@ -14,7 +15,8 @@ function _tide_item_python
             _tide_print_item python $tide_python_icon' ' "$v ($base)"
         end
     else if path is .python-version Pipfile __init__.py pyproject.toml requirements.txt setup.py
-        python --version 2>/dev/null | string match -qr "(?<v>[\d.]+)"
+        set -l py_output (python --version 2>/dev/null)
+        string match -qr "(?<v>[\d.]+)" -- $py_output
         _tide_print_item python $tide_python_icon' ' $v
     end
 end
