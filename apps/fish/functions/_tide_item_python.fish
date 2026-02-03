@@ -3,7 +3,9 @@ function _tide_item_python
     or path is .python-version Pipfile __init__.py pyproject.toml requirements.txt setup.py
     or return
 
-    string match -qr "(?<v>[\d.]+)" -- (python --version 2>/dev/null)
+    set -l py_cmd python
+    command -q python3 && set py_cmd python3
+    string match -qr "(?<v>[\d.]+)" -- ($py_cmd --version 2>/dev/null)
 
     if test -n "$VIRTUAL_ENV"
         string match -qr "^.*/(?<dir>.*)/(?<base>.*)" $VIRTUAL_ENV
