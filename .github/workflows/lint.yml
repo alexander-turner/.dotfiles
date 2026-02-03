@@ -15,8 +15,8 @@ jobs:
 
       - name: Run ShellCheck
         run: |
-          # Check executable scripts
-          shellcheck setup.sh bin/*.sh
+          # Check executable scripts (SC2016: single quotes intentional for deferred eval)
+          shellcheck -e SC2016 setup.sh bin/*.sh
           # Check sourced files (specify shell, skip shebang warning)
           shellcheck -s bash -e SC2148 .bashrc
 
@@ -43,12 +43,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install StyLua
+      - name: Run StyLua
         uses: JohnnyMorganz/stylua-action@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           version: latest
-          args: --check --glob '**/*.lua'
+          args: --check .
 
   validate-configs:
     name: Validate Configs
