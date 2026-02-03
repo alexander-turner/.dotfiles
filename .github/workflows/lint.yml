@@ -14,16 +14,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run ShellCheck
-        uses: ludeeus/action-shellcheck@master
-        with:
-          scandir: .
-          additional_files: setup.sh
-          ignore_paths: .bashrc  # Sourced file, not executable
-        env:
-          # SC1090: Can't follow non-constant source
-          # SC1091: Not following sourced file
-          # SC2016: Expressions don't expand in single quotes (often intentional)
-          SHELLCHECK_OPTS: -e SC1090 -e SC1091 -e SC2016
+        run: |
+          # Only check executable scripts, not sourced config files like .bashrc
+          shellcheck setup.sh bin/*.sh
 
   fish-syntax:
     name: Fish Syntax
