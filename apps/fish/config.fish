@@ -15,19 +15,6 @@ else
     set IS_MAC false
 end
 
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-if test -f /opt/homebrew/anaconda3/bin/conda
-    . "/opt/homebrew/anaconda3/etc/fish/conf.d/conda.fish" 2>/dev/null
-else
-    if test -f "/opt/homebrew/anaconda3/etc/fish/conf.d/conda.fish"
-        . "/opt/homebrew/anaconda3/etc/fish/conf.d/conda.fish" 2>/dev/null
-    else
-        set -x PATH /opt/homebrew/anaconda3/bin $PATH
-    end
-end
-# <<< conda initialize <<<
-
 # Custom settings
 fish_vi_key_bindings
 
