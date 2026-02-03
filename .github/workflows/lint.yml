@@ -7,24 +7,8 @@ on:
     branches: [main, master]
 
 jobs:
-  shellcheck:
-    name: Shellcheck
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Run ShellCheck
-        run: |
-          # Check executable scripts (SC2016: single quotes intentional for deferred eval)
-          shellcheck -e SC2016 setup.sh bin/*.sh
-          # Check sourced files with exclusions for:
-          # SC2148: no shebang (sourced files don't need one)
-          # SC1090/SC1091: can't follow dynamic/external sources
-          # SC2015: A && B || C pattern (intentional)
-          shellcheck -s bash -e SC2148 -e SC1090 -e SC1091 -e SC2015 .bashrc
-
-  fish-syntax:
-    name: Fish Syntax
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,43 +19,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y fish
 
-      - name: Check Fish syntax
+      - name: Install StyLua
         run: |
-          # Check all .fish files except vendored tide theme functions
-          find . -name '*.fish' -not -path './apps/fish/functions/_tide*' -exec fish --no-execute {} \;
+          curl -fsSL https://github.com/JohnnyMorganz/StyLua/releases/latest/download/stylua-linux-x86_64.zip -o stylua.zip
+          unzip stylua.zip
+          sudo mv stylua /usr/local/bin/
 
-  lua-format:
-    name: Lua Format
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+      - name: Install Python tools
+        run: pip install yamllint toml
 
-      - name: Run StyLua
-        uses: JohnnyMorganz/stylua-action@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          version: latest
-          args: --check .
-
-  validate-configs:
-    name: Validate Configs
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install validators
-        run: |
-          pip install yamllint toml
-
-      - name: Validate YAML files
-        run: |
-          find . -name '*.yml' -o -name '*.yaml' | grep -v '.github/' | xargs -r yamllint -d "{extends: relaxed, rules: {line-length: disable}}"
-
-      - name: Validate TOML files
-        run: |
-          find . -name '*.toml' -exec python -c "import sys; import toml; toml.load(sys.argv[1])" {} \;
+      - name: Run lint checks
+        run: ./bin/lint.sh --ci
