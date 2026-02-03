@@ -20,9 +20,10 @@ When `fish_prompt` kills the previous background prompt process (`builtin kill $
 Use command substitution so Python completes before output is consumed:
 
 ```fish
-set -l py_output (python3 --version 2>/dev/null)
-string match -qr "(?<v>[\d.]+)" -- $py_output
+string match -qr "(?<v>[\d.]+)" -- (python3 --version 2>/dev/null)
 ```
+
+Also restructured to avoid duplicating the version check.
 
 ## Related
 
