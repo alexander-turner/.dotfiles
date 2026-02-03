@@ -1,5 +1,3 @@
-# BrokenPipeError when pressing Enter rapidly with virtualenv active
-
 Pressing Enter quickly (~5 times in rapid succession) with a Python virtualenv active prints:
 
 ```
@@ -22,14 +20,14 @@ When `fish_prompt` kills the previous background prompt process (`builtin kill $
 Use command substitution so Python completes before output is consumed:
 
 ```fish
-set -l py_cmd python
-command -q python3 && set py_cmd python3
-set -l py_output ($py_cmd --version 2>/dev/null)
+set -l py_output (python3 --version 2>/dev/null)
 string match -qr "(?<v>[\d.]+)" -- $py_output
 ```
 
-Happy to open a PR if this approach looks good.
-
 ## Related
 
-This may resolve #143, #355, #409, #554 — the underlying cause is the pipe race condition, not conda specifically.
+May resolve:
+- https://github.com/IlanCosman/tide/issues/143
+- https://github.com/IlanCosman/tide/issues/355
+- https://github.com/IlanCosman/tide/issues/409
+- https://github.com/IlanCosman/tide/issues/554
