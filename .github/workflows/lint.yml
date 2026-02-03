@@ -18,8 +18,12 @@ jobs:
         with:
           scandir: .
           additional_files: setup.sh
+          ignore_paths: .bashrc  # Sourced file, not executable
         env:
-          SHELLCHECK_OPTS: -e SC1091 -e SC2034
+          # SC1090: Can't follow non-constant source
+          # SC1091: Not following sourced file
+          # SC2016: Expressions don't expand in single quotes (often intentional)
+          SHELLCHECK_OPTS: -e SC1090 -e SC1091 -e SC2016
 
   fish-syntax:
     name: Fish Syntax
