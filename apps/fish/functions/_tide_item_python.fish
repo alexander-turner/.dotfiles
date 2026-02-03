@@ -1,7 +1,5 @@
 function _tide_item_python
     if test -n "$VIRTUAL_ENV"
-        # Use command substitution instead of pipe to avoid BrokenPipeError
-        # when the prompt background process is killed during rapid input
         set -l py_output (python --version 2>/dev/null)
         string match -qr "(?<v>[\d.]+)" -- $py_output
 
@@ -17,7 +15,6 @@ function _tide_item_python
             _tide_print_item python $tide_python_icon' ' "$v ($base)"
         end
     else if path is .python-version Pipfile __init__.py pyproject.toml requirements.txt setup.py
-        # Use command substitution instead of pipe to avoid BrokenPipeError
         set -l py_output (python --version 2>/dev/null)
         string match -qr "(?<v>[\d.]+)" -- $py_output
         _tide_print_item python $tide_python_icon' ' $v
