@@ -34,11 +34,8 @@ jobs:
 
       - name: Check Fish syntax
         run: |
-          # Check user's fish scripts (not vendored tide functions)
-          fish --no-execute apps/fish/config.fish
-          fish --no-execute bin/setup_llm.fish
-          fish --no-execute bin/install_apps.fish
-          fish --no-execute bin/install_fish_plugins.fish
+          # Check all .fish files except vendored tide theme functions
+          find . -name '*.fish' -not -path './apps/fish/functions/_tide*' -exec fish --no-execute {} \;
 
   lua-format:
     name: Lua Format
@@ -51,7 +48,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           version: latest
-          args: --check apps/nvim/
+          args: --check --glob '**/*.lua'
 
   validate-configs:
     name: Validate Configs
@@ -70,11 +67,8 @@ jobs:
 
       - name: Validate YAML files
         run: |
-          yamllint -d "{extends: relaxed, rules: {line-length: disable}}" \
-            .aider.conf.yml \
-            .aider.model.settings.yml
+          find . -name '*.yml' -o -name '*.yaml' | grep -v '.github/' | xargs -r yamllint -d "{extends: relaxed, rules: {line-length: disable}}"
 
       - name: Validate TOML files
         run: |
-          python -c "import toml; toml.load('.aerospace.toml')"
-          python -c "import toml; toml.load('apps/nvim/stylua.toml')"
+          find . -name '*.toml' -exec python -c "import sys; import toml; toml.load(sys.argv[1])" {} \;
