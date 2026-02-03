@@ -15,8 +15,10 @@ jobs:
 
       - name: Run ShellCheck
         run: |
-          # Only check executable scripts, not sourced config files like .bashrc
+          # Check executable scripts
           shellcheck setup.sh bin/*.sh
+          # Check sourced files (specify shell, skip shebang warning)
+          shellcheck -s bash -e SC2148 .bashrc
 
   fish-syntax:
     name: Fish Syntax
