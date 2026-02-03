@@ -161,7 +161,7 @@ alias get='git '
 
 # Functions
 function cdls() {
-    cd $1
+    cd "$1" || return
     ls
 }
 
@@ -187,7 +187,7 @@ if [[ "$IS_MAC" = true ]]; then
     eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
-EXTRAS_PATH="~/.extras.bash"
+EXTRAS_PATH="$HOME/.extras.bash"
 if [[ -f "$EXTRAS_PATH" ]]; then
     source "$EXTRAS_PATH"
 fi

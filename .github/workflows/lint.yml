@@ -17,8 +17,11 @@ jobs:
         run: |
           # Check executable scripts (SC2016: single quotes intentional for deferred eval)
           shellcheck -e SC2016 setup.sh bin/*.sh
-          # Check sourced files (specify shell, skip shebang warning)
-          shellcheck -s bash -e SC2148 .bashrc
+          # Check sourced files with exclusions for:
+          # SC2148: no shebang (sourced files don't need one)
+          # SC1090/SC1091: can't follow dynamic/external sources
+          # SC2015: A && B || C pattern (intentional)
+          shellcheck -s bash -e SC2148 -e SC1090 -e SC1091 -e SC2015 .bashrc
 
   fish-syntax:
     name: Fish Syntax
