@@ -1,0 +1,81 @@
+name: Lint
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  shellcheck:
+    name: Shellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: .
+          additional_files: setup.sh
+        env:
+          SHELLCHECK_OPTS: -e SC1091 -e SC2034
+
+  fish-syntax:
+    name: Fish Syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Fish
+        run: |
+          sudo apt-add-repository -y ppa:fish-shell/release-3
+          sudo apt-get update
+          sudo apt-get install -y fish
+
+      - name: Check Fish syntax
+        run: |
+          # Check user's fish scripts (not vendored tide functions)
+          fish --no-execute apps/fish/config.fish
+          fish --no-execute bin/setup_llm.fish
+          fish --no-execute bin/install_apps.fish
+          fish --no-execute bin/install_fish_plugins.fish
+
+  lua-format:
+    name: Lua Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install StyLua
+        uses: JohnnyMorganz/stylua-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: latest
+          args: --check apps/nvim/
+
+  validate-configs:
+    name: Validate Configs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install validators
+        run: |
+          pip install yamllint toml
+
+      - name: Validate YAML files
+        run: |
+          yamllint -d "{extends: relaxed, rules: {line-length: disable}}" \
+            .aider.conf.yml \
+            .aider.model.settings.yml
+
+      - name: Validate TOML files
+        run: |
+          python -c "import toml; toml.load('.aerospace.toml')"
+          python -c "import toml; toml.load('apps/nvim/stylua.toml')"
