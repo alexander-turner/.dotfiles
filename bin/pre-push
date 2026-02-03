@@ -1,9 +1,4 @@
 #!/bin/bash
 # Pre-push hook: runs linting checks before pushing
 
-REPO_ROOT="$(git rev-parse --show-toplevel)"
-
-if ! "$REPO_ROOT/bin/lint.sh"; then
-    echo "Fix the issues above or use --no-verify to skip (not recommended)."
-    exit 1
-fi
+"$(git rev-parse --show-toplevel)/bin/lint.sh"

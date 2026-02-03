@@ -103,12 +103,10 @@ check_toml() {
         fi
     fi
     echo -n "TOML validation: "
-    for f in $(find . -name '*.toml'); do
-        if ! python3 -c "import toml; toml.load('$f')" 2>/dev/null; then
-            echo -e "${RED}failed${NC} ($f)"
-            return 1
-        fi
-    done
+    if ! find . -name '*.toml' -exec python3 -c "import sys; import toml; toml.load(sys.argv[1])" {} \;; then
+        echo -e "${RED}failed${NC}"
+        return 1
+    fi
     echo -e "${GREEN}passed${NC}"
 }
 
