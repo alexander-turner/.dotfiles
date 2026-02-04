@@ -170,8 +170,9 @@ ln -sf "$HOME/.dotfiles/ai/prompting/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
 mkdir -p "$HOME/.config/vagrant-templates"
 ln -sf "$HOME/.dotfiles/ai/Vagrantfile" "$HOME/.config/vagrant-templates/Vagrantfile"
 
-# Install pre-push hook for this repo
+# Install git hooks for this repo
 ln -sf "$HOME/.dotfiles/bin/pre-push" "$HOME/.dotfiles/.git/hooks/pre-push"
+ln -sf "$HOME/.dotfiles/bin/.prepare-commit-msg" "$HOME/.dotfiles/.git/hooks/prepare-commit-msg"
 
 # Install AI integrations
 fish bin/setup_llm.fish
