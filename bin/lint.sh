@@ -28,6 +28,7 @@ require_or_skip() {
     if ! command -v "$cmd" &> /dev/null; then
         if [[ "$CI_MODE" == true ]]; then
             echo -e "${RED}$name: missing (required in CI)${NC}"
+            FAILED=1
             return 1
         else
             echo -e "$name: ${YELLOW}skipped ($cmd not installed)${NC}"

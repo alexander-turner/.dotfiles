@@ -55,7 +55,7 @@ for aider_file in "$DOTFILES_DIR"/.aider*; do
 done
 
 # Use brace expansion to ensure the extras files exist in the home directory
-touch "$HOME"/.extras.{bashrc,fish}
+touch "$HOME"/.extras.{bash,fish}
 touch "$HOME"/.hushlogin # Disable the "Last login" message
 
 # Install fish and configure (brew is now available)
@@ -71,11 +71,11 @@ if [ "$(uname)" = "Darwin" ]; then
     brew tap dimentium/autoraise
     brew_quiet_install autoraise
     brew services restart autoraise
-    link_with_overwrite_check .AutoRaise ~/.AutoRaise
+    link_with_overwrite_check "$DOTFILES_DIR/.AutoRaise" ~/.AutoRaise
 
     # Aerospace window manager setup
     brew_quiet_install aerospace
-    link_with_overwrite_check .aerospace.toml ~/.aerospace.toml
+    link_with_overwrite_check "$DOTFILES_DIR/.aerospace.toml" ~/.aerospace.toml
 
     # mac-pinentry needed for --sudo
     brew_quiet_install pinentry-mac
@@ -150,7 +150,7 @@ curl -fsSL https://iterm2.com/shell_integration/install_shell_integration_and_ut
 
 # Create neovim settings which include current vimrc files
 # Backup existing configs
-for directory in ~/.config/nvim ~.local/{share,state}/nvim ~/cache/nvim; do
+for directory in ~/.config/nvim ~/.local/{share,state}/nvim ~/.cache/nvim; do
     cp "$directory"{,.bak} >/dev/null 2>&1 || true
 done
 
@@ -162,7 +162,7 @@ if [ ! -L "$NEOVIM_CONFIG_DIR" ]; then
 fi
 
 # Use brace expansion to ensure the extras files exist in the home directory
-touch "$HOME"/.extras.{bashrc,fish}
+touch "$HOME"/.extras.{bash,fish}
 touch "$HOME"/.vimextras
 
 # Link envchain secrets integration for Fish
@@ -182,8 +182,9 @@ mkdir -p "$HOME/.config/vagrant-templates"
 ln -sf "$DOTFILES_DIR/ai/Vagrantfile" "$HOME/.config/vagrant-templates/Vagrantfile"
 
 # Install git hooks for this repo
-ln -sf "$DOTFILES_DIR/bin/pre-push" "$DOTFILES_DIR/.git/hooks/pre-push"
-ln -sf "$DOTFILES_DIR/bin/.prepare-commit-msg" "$DOTFILES_DIR/.git/hooks/prepare-commit-msg"
+# NOTE: When core.hooksPath is set (e.g. to .hooks/), .git/hooks/ is ignored.
+# Link pre-push into .hooks/ so it fires regardless of hooksPath setting.
+ln -sf "$DOTFILES_DIR/bin/pre-push" "$DOTFILES_DIR/.hooks/pre-push"
 
 # Install AI integrations
 fish "$DOTFILES_DIR/bin/setup_llm.fish"

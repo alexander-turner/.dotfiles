@@ -61,10 +61,8 @@ read -r answer
 
 if [ -z "$answer" ] || echo "$answer" | grep -iq "^y"; then
     echo "You accepted the preset settings."
-    # Copy if the directory doesnt exist already
-    if [ ! -d "$FISH_CONFIG_DIR" ]; then
-        cp -r "$DOTFILES_DIR"/fish "$FISH_CONFIG_DIR"
-    fi
+    # Copy preset config files into existing fish config directory
+    cp -r "$DOTFILES_DIR"/apps/fish/* "$FISH_CONFIG_DIR/"
 else
     echo "You declined preset settings."
     fish -c "tide configure"

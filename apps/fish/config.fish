@@ -83,7 +83,7 @@ if $IS_MAC
 end
 
 function flash
-    sh ~/bin/keyboard_flash.sh
+    sh ~/.dotfiles/bin/keyboard_flash.sh
 end
 
 function pytest
@@ -105,8 +105,13 @@ function yank # Copy to clipboard
 end
 
 # Disable automatic paste bracketing in fish
-set fish_clipboard_copy_cmd pbcopy
-set fish_clipboard_paste_cmd pbpaste
+if $IS_MAC
+    set fish_clipboard_copy_cmd pbcopy
+    set fish_clipboard_paste_cmd pbpaste
+else
+    set fish_clipboard_copy_cmd 'xclip -selection clipboard'
+    set fish_clipboard_paste_cmd 'xclip -selection clipboard -o'
+end
 
 function get_ps
     echo (whoami)'@'(hostname)': '(pwd)
@@ -213,14 +218,10 @@ end
 abbr -a fxtra editfishextras
 
 # Only load iTerm2 integration when already inside tmux, not during tmux startup
-echo "DEBUG: Checking iTerm2 integration, TMUX=$TMUX, file_exists="(test -e {$HOME}/.iterm2_shell_integration.fish; echo $status) >>/tmp/fish_debug.log
 if test -e {$HOME}/.iterm2_shell_integration.fish
     # Only load if TMUX variable is already set (we're inside a running tmux session)
     if set -q TMUX
-        echo "DEBUG: Loading iTerm2 integration inside tmux" >>/tmp/fish_debug.log
         source {$HOME}/.iterm2_shell_integration.fish
-    else
-        echo "DEBUG: Skipping iTerm2 integration (not in tmux yet)" >>/tmp/fish_debug.log
     end
 end
 
