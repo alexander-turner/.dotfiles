@@ -19,6 +19,9 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
+# Resolve dotfiles directory from this script's location
+DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
+
 # Install Homebrew first -- many subsequent steps depend on it
 if ! command_exists brew; then
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -35,17 +38,17 @@ brew_quiet_install() {
 }
 
 # Link .bashrc, .vimrc, .gitconfig, and .tmux.conf to the home directory, with warnings for existing files
-link_with_overwrite_check "$HOME/.dotfiles/.bashrc" "$HOME/.bashrc"
-link_with_overwrite_check "$HOME/.dotfiles/.vimrc" "$HOME/.vimrc"
-link_with_overwrite_check "$HOME/.dotfiles/.gitconfig" "$HOME/.gitconfig"
-link_with_overwrite_check "$HOME/.dotfiles/.tmux.conf" "$HOME/.tmux.conf"
+link_with_overwrite_check "$DOTFILES_DIR/.bashrc" "$HOME/.bashrc"
+link_with_overwrite_check "$DOTFILES_DIR/.vimrc" "$HOME/.vimrc"
+link_with_overwrite_check "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"
+link_with_overwrite_check "$DOTFILES_DIR/.tmux.conf" "$HOME/.tmux.conf"
 
 # Ensure fish config directory exists
 mkdir -p "$HOME/.config/fish"
-link_with_overwrite_check "$HOME/.dotfiles/apps/fish/config.fish" "$HOME/.config/fish/config.fish"
+link_with_overwrite_check "$DOTFILES_DIR/apps/fish/config.fish" "$HOME/.config/fish/config.fish"
 
 # Link aider config files
-for aider_file in "$HOME/.dotfiles"/.aider*; do
+for aider_file in "$DOTFILES_DIR"/.aider*; do
     if [ -f "$aider_file" ]; then
         link_with_overwrite_check "$aider_file" "$HOME/$(basename "$aider_file")"
     fi
@@ -56,8 +59,7 @@ touch "$HOME"/.extras.{bashrc,fish}
 touch "$HOME"/.hushlogin # Disable the "Last login" message
 
 # Install fish and configure (brew is now available)
-SCRIPT_DIR="$(dirname "$0")"/bin # Get the directory of the current script
-"$SCRIPT_DIR"/install_fish.sh    # Execute install_fish.sh from that directory
+"$DOTFILES_DIR"/bin/install_fish.sh
 if [ "$(uname)" = "Darwin" ]; then
     brew_quiet_install neovim pyvim      # neovim
     brew_quiet_install libusb pkg-config # wally-cli
@@ -139,7 +141,7 @@ brew_quiet_install gcc
 # Backup iTerm2 settings
 mv ~/Library/com.googlecode.iterm2.plist{,.bak} >/dev/null 2>&1 || true
 # Sync settings
-ln -sf ~/.dotfiles/apps/com.googlecode.iterm2.plist ~/Library/com.googlecode.iterm2.plist >/dev/null 2>&1 || true
+ln -sf "$DOTFILES_DIR/apps/com.googlecode.iterm2.plist" ~/Library/com.googlecode.iterm2.plist >/dev/null 2>&1 || true
 # Set up shell integration for iterm2
 curl -fsSL https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash >/dev/null
 
@@ -153,7 +155,7 @@ done
 NEOVIM_CONFIG_DIR="$HOME/.config/nvim"
 if [ ! -L "$NEOVIM_CONFIG_DIR" ]; then
     rm -rf "$NEOVIM_CONFIG_DIR"
-    ln -s "$HOME/.dotfiles/apps/nvim" "$NEOVIM_CONFIG_DIR" # symlink to this repo's nvim config folder
+    ln -s "$DOTFILES_DIR/apps/nvim" "$NEOVIM_CONFIG_DIR" # symlink to this repo's nvim config folder
 fi
 
 # Use brace expansion to ensure the extras files exist in the home directory
@@ -161,24 +163,24 @@ touch "$HOME"/.extras.{bashrc,fish}
 touch "$HOME"/.vimextras
 
 # Link envchain secrets integration for Fish
-if [ -f "$HOME/.dotfiles/apps/fish/envchain_secrets.fish" ]; then
-    link_with_overwrite_check "$HOME/.dotfiles/apps/fish/envchain_secrets.fish" "$HOME/.config/fish/envchain_secrets.fish"
+if [ -f "$DOTFILES_DIR/apps/fish/envchain_secrets.fish" ]; then
+    link_with_overwrite_check "$DOTFILES_DIR/apps/fish/envchain_secrets.fish" "$HOME/.config/fish/envchain_secrets.fish"
 fi
 
 # Claude Code configuration
 mkdir -p "$HOME/.claude"
 # Symlink skills directory and CLAUDE.md
 rm -rf "$HOME/.claude/commands"
-ln -s "$HOME/.dotfiles/ai/prompting/skills" "$HOME/.claude/commands"
-ln -sf "$HOME/.dotfiles/ai/prompting/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
+ln -s "$DOTFILES_DIR/ai/prompting/skills" "$HOME/.claude/commands"
+ln -sf "$DOTFILES_DIR/ai/prompting/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
 
 # Vagrant templates
 mkdir -p "$HOME/.config/vagrant-templates"
-ln -sf "$HOME/.dotfiles/ai/Vagrantfile" "$HOME/.config/vagrant-templates/Vagrantfile"
+ln -sf "$DOTFILES_DIR/ai/Vagrantfile" "$HOME/.config/vagrant-templates/Vagrantfile"
 
 # Install git hooks for this repo
-ln -sf "$HOME/.dotfiles/bin/pre-push" "$HOME/.dotfiles/.git/hooks/pre-push"
-ln -sf "$HOME/.dotfiles/bin/.prepare-commit-msg" "$HOME/.dotfiles/.git/hooks/prepare-commit-msg"
+ln -sf "$DOTFILES_DIR/bin/pre-push" "$DOTFILES_DIR/.git/hooks/pre-push"
+ln -sf "$DOTFILES_DIR/bin/.prepare-commit-msg" "$DOTFILES_DIR/.git/hooks/prepare-commit-msg"
 
 # Install AI integrations
-fish bin/setup_llm.fish
+fish "$DOTFILES_DIR/bin/setup_llm.fish"
