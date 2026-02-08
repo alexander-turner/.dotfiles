@@ -45,7 +45,8 @@ fish <<FISH_SCRIPT
 # Configure the theme if not already configured
 FISH_SCRIPT
 
-DOTFILES_DIR="$HOME/.dotfiles"
+# Resolve DOTFILES_DIR from this script's location (bin/ is one level down)
+DOTFILES_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 bash "$DOTFILES_DIR"/bin/font_install.sh
 
 # Create Fish configuration directory if it doesn't exist
