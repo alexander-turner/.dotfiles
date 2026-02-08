@@ -8,6 +8,21 @@ if ! command_exists fish; then
     brew install fish
 fi
 
+# Ensure fish is in PATH (brew may install to /opt/homebrew/bin on Apple Silicon)
+if ! command_exists fish; then
+    for brew_prefix in /opt/homebrew /usr/local /home/linuxbrew/.linuxbrew; do
+        if [ -x "$brew_prefix/bin/fish" ]; then
+            export PATH="$brew_prefix/bin:$PATH"
+            break
+        fi
+    done
+fi
+
+if ! command_exists fish; then
+    echo "Error: fish shell not found after installation." >&2
+    exit 1
+fi
+
 # Set the correct permissions for the Fish configuration directory
 chown -R "$USER" "$HOME/.config"
 
@@ -15,6 +30,9 @@ chown -R "$USER" "$HOME/.config"
 FISH_PATH=$(which fish)
 grep -qxF "$FISH_PATH" /etc/shells || echo "$FISH_PATH" | sudo tee -a /etc/shells >/dev/null
 chsh -s "$FISH_PATH"
+
+# Remove conflicting fish_prompt.fish before tide install (tide provides its own)
+rm -f "$HOME/.config/fish/functions/fish_prompt.fish"
 
 # Install themes using fish
 fish <<FISH_SCRIPT
@@ -40,7 +58,7 @@ ln -sf "$DOTFILES_DIR"/apps/fish/functions/fish_prompt.fish "$FISH_CONFIG_DIR/fu
 echo 'Do you want to accept preset tide settings? (Y/n)'
 read -r answer
 
-if echo "$answer" | grep -iq "^y"; then
+if [ -z "$answer" ] || echo "$answer" | grep -iq "^y"; then
     echo "You accepted the preset settings."
     # Copy if the directory doesnt exist already
     if [ ! -d "$FISH_CONFIG_DIR" ]; then
@@ -52,4 +70,4 @@ else
     ln -sf "$DOTFILES_DIR"/apps/fish/config.fish "$FISH_CONFIG_DIR"/config.fish
 fi
 
-fish "$DOTFILES_DIR"/bin/install_fish_plugins.sh
+fish "$DOTFILES_DIR"/bin/install_fish_plugins.fish
