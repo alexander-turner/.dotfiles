@@ -15,6 +15,25 @@ link_with_overwrite_check() {
     fi
 }
 
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Install Homebrew first -- many subsequent steps depend on it
+if ! command_exists brew; then
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    if [ "$(uname)" = "Darwin" ]; then
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    else
+        echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >>"$HOME/.profile"
+        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+    fi
+fi
+
+brew_quiet_install() {
+    brew install --quiet "$@"
+}
+
 # Link .bashrc, .vimrc, .gitconfig, and .tmux.conf to the home directory, with warnings for existing files
 link_with_overwrite_check "$HOME/.dotfiles/.bashrc" "$HOME/.bashrc"
 link_with_overwrite_check "$HOME/.dotfiles/.vimrc" "$HOME/.vimrc"
@@ -32,37 +51,13 @@ for aider_file in "$HOME/.dotfiles"/.aider*; do
     fi
 done
 
-# Tmux configuration
-TPM_BACKUP_DIR=~/.tmux/plugins/.tpm-backup
-mkdir -p "$TPM_BACKUP_DIR"
-TPM_DIR=~/.tmux/plugins/tpm
-mkdir -p "$TPM_DIR"
-mv "$TPM_DIR" "$TPM_BACKUP_DIR" >/dev/null 2>&1 || true
-git clone https://github.com/tmux-plugins/tpm "$TPM_DIR" >/dev/null # Tmux plugin manager
-tmux source ~/.tmux.conf >/dev/null || true
-~/.tmux/plugins/tpm/bin/install_plugins >/dev/null
-
 # Use brace expansion to ensure the extras files exist in the home directory
 touch "$HOME"/.extras.{bashrc,fish}
 touch "$HOME"/.hushlogin # Disable the "Last login" message
 
-# Install fish and configure
+# Install fish and configure (brew is now available)
 SCRIPT_DIR="$(dirname "$0")"/bin # Get the directory of the current script
 "$SCRIPT_DIR"/install_fish.sh    # Execute install_fish.sh from that directory
-
-brew_quiet_install() {
-    brew install --quiet "$@"
-}
-
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
-}
-
-if ! command_exists brew; then
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >>"$HOME/.profile"
-    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-fi
 if [ "$(uname)" = "Darwin" ]; then
     brew_quiet_install neovim pyvim      # neovim
     brew_quiet_install libusb pkg-config # wally-cli
@@ -125,6 +120,16 @@ if command_exists crontab && command_exists trash-empty; then
 fi
 
 brew_quiet_install tmux
+
+# Tmux plugin manager setup (must come after tmux is installed)
+TPM_BACKUP_DIR=~/.tmux/plugins/.tpm-backup
+mkdir -p "$TPM_BACKUP_DIR"
+TPM_DIR=~/.tmux/plugins/tpm
+mkdir -p "$TPM_DIR"
+mv "$TPM_DIR" "$TPM_BACKUP_DIR" >/dev/null 2>&1 || true
+git clone https://github.com/tmux-plugins/tpm "$TPM_DIR" >/dev/null # Tmux plugin manager
+tmux source ~/.tmux.conf >/dev/null 2>&1 || true
+~/.tmux/plugins/tpm/bin/install_plugins >/dev/null
 
 brew_quiet_install node pnpm
 pnpm setup
