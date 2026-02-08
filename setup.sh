@@ -84,6 +84,9 @@ if [ "$(uname)" = "Darwin" ]; then
     brew autoupdate start 604800 --upgrade --cleanup --sudo
     brew_quiet_install git-credential-manager
 
+    # OrbStack: lightweight Docker alternative for macOS
+    brew install --cask orbstack
+
     # Install wally-cli for keyboard flashing (macOS only due to dependencies)
     brew_quiet_install go
     go install github.com/zsa/wally-cli@latest >/dev/null

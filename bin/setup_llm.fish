@@ -3,9 +3,13 @@ set -l BIN_DIR (dirname (status -f))
 
 # Local models
 brew install --quiet ollama
-docker pull ghcr.io/open-webui/open-webui:main 1>/dev/null
-# Run on startup (unless-stopped)
-docker run -d -p 3000:8080 --restart unless-stopped -v open-webui:/app/backend/data --name open-webui ghcr.io/open-webui/open-webui:main 1>/dev/null
+if command -q docker
+    docker pull ghcr.io/open-webui/open-webui:main 1>/dev/null
+    # Run on startup (unless-stopped)
+    docker run -d -p 3000:8080 --restart unless-stopped -v open-webui:/app/backend/data --name open-webui ghcr.io/open-webui/open-webui:main 1>/dev/null
+else
+    echo "Warning: docker not found, skipping open-webui setup. Install OrbStack or Docker first."
+end
 
 # Set up aider
 brew install --quiet aider
@@ -27,12 +31,14 @@ ln -sf "$GIT_ROOT/apps/vscodium/settings.json" "$CODIUM_USER/settings.json"
 ln -sf "$GIT_ROOT/apps/vscodium/keybindings.json" "$CODIUM_USER/keybindings.json"
 
 # Start local indexing for semantic search
-docker run -d \
-    --name qdrant \
-    --restart unless-stopped \
-    -p 6333:6333 \
-    -v qdrant_data:/qdrant/storage \
-    qdrant/qdrant 1>/dev/null
+if command -q docker
+    docker run -d \
+        --name qdrant \
+        --restart unless-stopped \
+        -p 6333:6333 \
+        -v qdrant_data:/qdrant/storage \
+        qdrant/qdrant 1>/dev/null
+end
 
 # Automatic commit messages
 # https://harper.blog/2024/03/11/use-an-llm-to-automagically-generate-meaningful-git-commit-messages/
