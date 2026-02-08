@@ -13,7 +13,7 @@ end
 
 # Set up aider
 brew install --quiet aider
-aider --analytics-disable 1>/dev/null
+aider --analytics-disable --yes --exit 2>/dev/null; or true
 
 # Set up vscodium + roo code
 brew install --quiet --cask vscodium
