@@ -13,7 +13,7 @@ chown -R "$USER" "$HOME/.config"
 
 # Set Fish as the default shell
 FISH_PATH=$(which fish)
-grep -qxF "$FISH_PATH" /etc/shells || echo "$FISH_PATH" >>/etc/shells
+grep -qxF "$FISH_PATH" /etc/shells || echo "$FISH_PATH" | sudo tee -a /etc/shells >/dev/null
 chsh -s "$FISH_PATH"
 
 # Install themes using fish
