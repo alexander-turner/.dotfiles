@@ -13,3 +13,4 @@ apps/nvim/lazyvim.json
 .aider*/
 .aider.input*
 .aider.chat*
+.aider*

@@ -255,23 +255,9 @@ end
 set -x tide_jobs_number_threshold 0
 set -gx PATH $PATH $HOME/go/bin
 
-# Vagrant configuration (CWD sets the synced folder and working dir)
-set -gx VAGRANT_CWD ~/.dotfiles/ai
-
-# Vagrant helper for Claude sandboxed environment
-function vagrant_claude
-    set -l vagrant_dir ~/.dotfiles/ai
-
-    # Check if VM is already running
-    set -l status_output (cd $vagrant_dir && vagrant status --machine-readable 2>/dev/null | grep ",state," | cut -d',' -f4)
-
-    if test "$status_output" = running
-        echo "Vagrant VM already running. SSHing in..."
-        cd $vagrant_dir && vagrant ssh
-    else
-        echo "Starting Vagrant VM..."
-        cd $vagrant_dir && vagrant up && vagrant ssh
-    end
+# pnpm
+set -gx PNPM_HOME "/Users/server/Library/pnpm"
+if not string match -q -- $PNPM_HOME $PATH
+  set -gx PATH "$PNPM_HOME" $PATH
 end
-
-abbr -a vc vagrant_claude
+# pnpm end

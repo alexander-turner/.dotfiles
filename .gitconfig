@@ -9,7 +9,7 @@
 [core]
 	autocrlf = input
 	safecrlf = true
-	hooksPath = /Users/alexmturner/.git_hooks
+	hooksPath = ~/.git_hooks
 [alias]
 	co = checkout
 	ci = commit
