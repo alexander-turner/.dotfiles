@@ -37,8 +37,11 @@ docker run -d \
 # Automatic commit messages
 # https://harper.blog/2024/03/11/use-an-llm-to-automagically-generate-meaningful-git-commit-messages/
 pipx install --quiet llm 1>/dev/null
-llm install llm-gemini 1>/dev/null # must run `llm keys set gemini` before use
-llm models default gemini-2.5-pro 1>/dev/null
+# Configure Redpill API with Sonnet for commit messages
+set -l LLM_DIR (dirname (llm logs path))
+mkdir -p "$LLM_DIR"
+printf '- model_id: redpill-sonnet\n  model_name: anthropic/claude-sonnet-4.5\n  api_base: "https://api.redpill.ai/v1"\n' > "$LLM_DIR/extra-openai-models.yaml"
+llm models default redpill-sonnet 1>/dev/null
 
 mkdir -p $HOME/.config/prompts
 cp $BIN_DIR/.system-prompt.txt $HOME/.config/prompts/commit-system-prompt.txt
