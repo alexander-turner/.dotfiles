@@ -50,7 +50,7 @@ printf '- model_id: redpill-sonnet\n  model_name: anthropic/claude-sonnet-4.5\n 
 llm models default redpill-sonnet 1>/dev/null
 
 mkdir -p $HOME/.config/prompts
-cp $BIN_DIR/.system-prompt.txt $HOME/.config/prompts/commit-system-prompt.txt
+cp $BIN_DIR/.system-prompt $HOME/.config/prompts/commit-system-prompt.txt
 
 mkdir -p $HOME/.git_hooks
 cp $BIN_DIR/.prepare-commit-msg $HOME/.git_hooks/prepare-commit-msg

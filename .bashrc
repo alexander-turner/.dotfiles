@@ -124,7 +124,7 @@ if ! shopt -oq posix; then
 fi
 
 # Autojump
-[[ -s /home/turn/.autojump/etc/profile.d/autojump.sh ]] && source /home/turn/.autojump/etc/profile.d/autojump.sh
+[[ -s "$HOME/.autojump/etc/profile.d/autojump.sh" ]] && source "$HOME/.autojump/etc/profile.d/autojump.sh"
 
 # Custom settings
 set -o vi
@@ -166,7 +166,7 @@ function cdls() {
 }
 
 # Add to PATH
-export PATH="$PATH:/home/turn/bin:/home/turn/.local/bin"
+export PATH="$PATH:$HOME/bin:$HOME/.local/bin"
 export EDITOR='nvim'
 
 # start fish shell
