@@ -78,6 +78,7 @@ if [ "$(uname)" = "Darwin" ]; then
     # mac-pinentry needed for --sudo
     brew_quiet_install pinentry-mac
     # Update once a week (given in seconds)
+    brew tap homebrew/autoupdate 2>/dev/null || true
     brew autoupdate start 604800 --upgrade --cleanup --sudo
     brew_quiet_install git-credential-manager
 
