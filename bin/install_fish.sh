@@ -26,10 +26,12 @@ fi
 # Set the correct permissions for the Fish configuration directory
 chown -R "$USER" "$HOME/.config"
 
-# Set Fish as the default shell
+# Set Fish as the default shell (skip if already set)
 FISH_PATH=$(which fish)
 grep -qxF "$FISH_PATH" /etc/shells || echo "$FISH_PATH" | sudo tee -a /etc/shells >/dev/null
-chsh -s "$FISH_PATH"
+if [ "$SHELL" != "$FISH_PATH" ]; then
+    chsh -s "$FISH_PATH"
+fi
 
 # Remove conflicting fish_prompt.fish before tide install (tide provides its own)
 rm -f "$HOME/.config/fish/functions/fish_prompt.fish"
@@ -54,6 +56,7 @@ FISH_CONFIG_DIR="$HOME/.config/fish"
 mkdir -p "$FISH_CONFIG_DIR/functions"
 ln -sf "$DOTFILES_DIR"/apps/fish/config.fish "$FISH_CONFIG_DIR/config.fish"
 ln -sf "$DOTFILES_DIR"/apps/fish/functions/fish_prompt.fish "$FISH_CONFIG_DIR/functions/fish_prompt.fish"
+ln -sf "$DOTFILES_DIR"/apps/fish/functions/_tide_item_jobs.fish "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish"
 
 # See if user wants preset settings
 echo 'Do you want to accept preset tide settings? (Y/n)'

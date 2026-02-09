@@ -1,7 +1,5 @@
 function _tide_item_jobs
-    if set -q _tide_jobs
-        if test -n "$_tide_jobs" -a "$_tide_jobs" -ge 0 2>/dev/null
-            _tide_print_item jobs $tide_jobs_icon
-        end
-    end
+    set -q _tide_jobs || return
+    test "$_tide_jobs" -ge "$tide_jobs_number_threshold" 2>/dev/null
+    and _tide_print_item jobs $tide_jobs_icon
 end
