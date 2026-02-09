@@ -1,6 +1,6 @@
 [user] 
 	name = Alex Turner
-	email = turneral1@grinnell.edu
+	email = alex@turntrout.com
 [filter "lfs"]
 	clean = git-lfs clean -- %f
 	smudge = git-lfs smudge -- %f
@@ -21,9 +21,6 @@
 [diff]
 	tool = vscode
 [credential]
-	helper = 
-	helper = /usr/local/bin/git-credential-manager
-[credential "https://dev.azure.com"]
-	useHttpPath = true
+	helper = store
 [init]
 	defaultBranch = main
