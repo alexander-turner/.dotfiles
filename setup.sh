@@ -89,9 +89,10 @@ if [ "$(uname)" = "Darwin" ]; then
 
     # Tailscale VPN daemon (runs as a LaunchDaemon on macOS)
     brew_quiet_install tailscale
-    TAILSCALE_PLIST="$DOTFILES_DIR/launchagents/com.turntrout.tailscaled.plist"
-    sudo cp "$TAILSCALE_PLIST" /Library/LaunchDaemons/com.turntrout.tailscaled.plist
-    sudo launchctl load /Library/LaunchDaemons/com.turntrout.tailscaled.plist 2>/dev/null || true
+    TAILSCALE_PLIST_DEST="/Library/LaunchDaemons/com.$USER.tailscaled.plist"
+    sed "s/__USERNAME__/$USER/g" "$DOTFILES_DIR/launchagents/com.tailscaled.plist.template" \
+        | sudo tee "$TAILSCALE_PLIST_DEST" >/dev/null
+    sudo launchctl load "$TAILSCALE_PLIST_DEST"
 
     # Install wally-cli for keyboard flashing (macOS only due to dependencies)
     brew_quiet_install go

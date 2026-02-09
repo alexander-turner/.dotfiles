@@ -26,10 +26,12 @@ fi
 # Set the correct permissions for the Fish configuration directory
 chown -R "$USER" "$HOME/.config"
 
-# Set Fish as the default shell
+# Set Fish as the default shell (skip if already set)
 FISH_PATH=$(which fish)
 grep -qxF "$FISH_PATH" /etc/shells || echo "$FISH_PATH" | sudo tee -a /etc/shells >/dev/null
-chsh -s "$FISH_PATH"
+if [ "$SHELL" != "$FISH_PATH" ]; then
+    chsh -s "$FISH_PATH"
+fi
 
 # Remove conflicting fish_prompt.fish before tide install (tide provides its own)
 rm -f "$HOME/.config/fish/functions/fish_prompt.fish"
