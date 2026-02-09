@@ -24,7 +24,9 @@ if ! command_exists fish; then
 fi
 
 # Set the correct permissions for the Fish configuration directory
-chown -R "$USER" "$HOME/.config"
+# Use SUDO_USER when running under sudo so we don't chown everything to root
+REAL_USER="${SUDO_USER:-$USER}"
+chown -R "$REAL_USER" "$HOME/.config"
 
 # Set Fish as the default shell (skip if already set)
 FISH_PATH=$(which fish)
@@ -54,9 +56,6 @@ bash "$DOTFILES_DIR"/bin/font_install.sh
 # Create Fish configuration directory if it doesn't exist
 FISH_CONFIG_DIR="$HOME/.config/fish"
 mkdir -p "$FISH_CONFIG_DIR/functions"
-ln -sf "$DOTFILES_DIR"/apps/fish/config.fish "$FISH_CONFIG_DIR/config.fish"
-ln -sf "$DOTFILES_DIR"/apps/fish/functions/fish_prompt.fish "$FISH_CONFIG_DIR/functions/fish_prompt.fish"
-ln -sf "$DOTFILES_DIR"/apps/fish/functions/_tide_item_jobs.fish "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish"
 
 # See if user wants preset settings
 echo 'Do you want to accept preset tide settings? (Y/n)'
@@ -65,11 +64,17 @@ read -r answer
 if [ -z "$answer" ] || echo "$answer" | grep -iq "^y"; then
     echo "You accepted the preset settings."
     # Copy preset config files into existing fish config directory
-    cp -r "$DOTFILES_DIR"/apps/fish/* "$FISH_CONFIG_DIR/"
+    # Use -f to remove destination files that can't be opened (e.g. root-owned from prior sudo runs)
+    cp -rf "$DOTFILES_DIR"/apps/fish/* "$FISH_CONFIG_DIR/"
 else
     echo "You declined preset settings."
     fish -c "tide configure"
-    ln -sf "$DOTFILES_DIR"/apps/fish/config.fish "$FISH_CONFIG_DIR"/config.fish
 fi
+
+# Always symlink key config files so changes in dotfiles repo are reflected.
+# Done after the copy so cp doesn't try to write through symlinks back to the source.
+ln -sf "$DOTFILES_DIR"/apps/fish/config.fish "$FISH_CONFIG_DIR/config.fish"
+ln -sf "$DOTFILES_DIR"/apps/fish/functions/fish_prompt.fish "$FISH_CONFIG_DIR/functions/fish_prompt.fish"
+ln -sf "$DOTFILES_DIR"/apps/fish/functions/_tide_item_jobs.fish "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish"
 
 fish "$DOTFILES_DIR"/bin/install_fish_plugins.fish
