@@ -87,6 +87,13 @@ if [ "$(uname)" = "Darwin" ]; then
     # OrbStack: lightweight Docker alternative for macOS
     brew install --cask orbstack
 
+    # Tailscale VPN daemon (runs as a LaunchDaemon on macOS)
+    brew_quiet_install tailscale
+    TAILSCALE_PLIST_DEST="/Library/LaunchDaemons/com.$USER.tailscaled.plist"
+    sed "s/__USERNAME__/$USER/g" "$DOTFILES_DIR/launchagents/com.tailscaled.plist.template" \
+        | sudo tee "$TAILSCALE_PLIST_DEST" >/dev/null
+    sudo launchctl load "$TAILSCALE_PLIST_DEST"
+
     # Install wally-cli for keyboard flashing (macOS only due to dependencies)
     brew_quiet_install go
     go install github.com/zsa/wally-cli@latest >/dev/null
