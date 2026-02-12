@@ -10,28 +10,27 @@ PROJECT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 # Helpers
 #######################################
 
-warn() { echo "Warning: $1" >&2; }
-die() {
-  echo "ERROR: $1" >&2
-  exit 1
+SETUP_WARNINGS=0
+warn() {
+	echo "WARNING: $1" >&2
+	SETUP_WARNINGS=$((SETUP_WARNINGS + 1))
 }
 is_root() { [ "$(id -u)" = "0" ]; }
 
-# Install a command via pip if missing
-pip_install_if_missing() {
-  local cmd="$1" pkg="${2:-$1}"
-  if ! command -v "$cmd" &>/dev/null; then
-    pip3 install --quiet "$pkg" || warn "Failed to install $pkg"
-  fi
+# Install a command via uv if missing
+uv_install_if_missing() {
+	local cmd="$1" pkg="${2:-$1}"
+	if ! command -v "$cmd" &>/dev/null; then
+		uv tool install --quiet "$pkg" || warn "Failed to install $pkg"
+	fi
 }
 
 # Install a command via webi if missing
 webi_install_if_missing() {
-  local cmd="$1"
-  if ! command -v "$cmd" &>/dev/null; then
-    echo "Installing $cmd..."
-    curl -sS "https://webi.sh/$cmd" | sh >/dev/null 2>&1 || warn "Failed to install $cmd"
-  fi
+	local cmd="$1"
+	if ! command -v "$cmd" &>/dev/null; then
+		curl -sS "https://webi.sh/$cmd" | sh >/dev/null 2>&1 || warn "Failed to install $cmd"
+	fi
 }
 
 #######################################
@@ -40,30 +39,29 @@ webi_install_if_missing() {
 
 export PATH="$HOME/.local/bin:$PATH"
 if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
-  echo "export PATH=\"\$HOME/.local/bin:\$PATH\"" >>"$CLAUDE_ENV_FILE"
+	echo "export PATH=\"\$HOME/.local/bin:\$PATH\"" >>"$CLAUDE_ENV_FILE"
 fi
 
 #######################################
 # Tool installation (optional - warn on failure)
 #######################################
 
-echo "Installing tools..."
-
-# Install shfmt for shell script formatting
+# Install tools quietly — only warn on failure
 webi_install_if_missing shfmt
-
-# Install GitHub CLI for PR workflows
 webi_install_if_missing gh
-
-# Install jq for JSON processing (used by hooks)
 webi_install_if_missing jq
-
-# Install shellcheck for shell script linting (requires root)
 if ! command -v shellcheck &>/dev/null && is_root; then
-  if ! { apt-get update -qq && apt-get install -y -qq shellcheck; } 2>/dev/null; then
-    warn "Failed to install shellcheck"
-  fi
+	{ apt-get update -qq && apt-get install -y -qq shellcheck; } || warn "Failed to install shellcheck"
 fi
+
+#######################################
+# Clean up stale state from previous sessions
+#######################################
+
+# Remove stop-hook retry counter for THIS project so a new session starts fresh
+# (keyed on project dir hash, matching verify_ci.py's _retry_file)
+PROJ_HASH=$(printf '%s' "$PROJECT_DIR" | sha256sum | cut -c1-16)
+rm -f "/tmp/claude-stop-attempts-${PROJ_HASH}"
 
 #######################################
 # Git setup
@@ -76,28 +74,61 @@ git config core.hooksPath .hooks
 # GitHub CLI auth
 #######################################
 
-if [ -n "${GH_TOKEN:-}" ] && command -v gh &>/dev/null; then
-  echo "Configuring GitHub authentication..."
-  echo "$GH_TOKEN" | gh auth login --with-token 2>&1 || warn "Failed to authenticate with GitHub"
+if ! command -v gh &>/dev/null; then
+	warn "gh CLI not found"
+elif [ -z "${GH_TOKEN:-}" ]; then
+	warn "GH_TOKEN is not set — GitHub CLI requires authentication"
+fi
+
+#######################################
+# GitHub repo detection for proxy environments
+#######################################
+
+# In Claude Code web sessions, git remotes use a local proxy URL like:
+#   http://local_proxy@127.0.0.1:18393/git/owner/repo
+# The gh CLI can't detect the GitHub repo from this, so we extract
+# owner/repo and export GH_REPO to make all gh commands work.
+
+if [ -z "${GH_REPO:-}" ]; then
+	remote_url=$(git -C "$PROJECT_DIR" remote get-url origin 2>/dev/null || true)
+	if [[ "$remote_url" =~ /git/([^/]+/[^/]+)$ ]]; then
+		GH_REPO="${BASH_REMATCH[1]}"
+		GH_REPO="${GH_REPO%.git}"
+		export GH_REPO
+		if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
+			echo "export GH_REPO=\"$GH_REPO\"" >>"$CLAUDE_ENV_FILE"
+		fi
+	fi
+fi
+
+# Set gh's default repo so commands like `gh pr create` work even when
+# the git remote is a local proxy URL that gh can't resolve.
+if [ -n "${GH_REPO:-}" ] && command -v gh &>/dev/null; then
+	gh repo set-default "$GH_REPO" || warn "Failed to set default repo for gh"
 fi
 
 #######################################
 # Project dependencies
 #######################################
 
-# Install Node dependencies if package.json exists and node_modules is missing
-if [ -f "$PROJECT_DIR/package.json" ] && [ ! -d "$PROJECT_DIR/node_modules" ]; then
-  echo "Installing Node dependencies..."
-  if command -v pnpm &>/dev/null; then
-    pnpm install --silent || warn "Failed to install Node dependencies"
-  elif command -v npm &>/dev/null; then
-    npm install --silent || warn "Failed to install Node dependencies"
-  fi
+if [ -f "$PROJECT_DIR/package.json" ]; then
+	if command -v pnpm &>/dev/null; then
+		pnpm install --silent || warn "Failed to install Node dependencies"
+	elif command -v npm &>/dev/null; then
+		npm install --silent || warn "Failed to install Node dependencies"
+	fi
 fi
 
-# Install Python dependencies if uv.lock exists
 if [ -f "$PROJECT_DIR/uv.lock" ] && command -v uv &>/dev/null; then
-  uv sync --quiet 2>/dev/null || warn "Failed to sync Python dependencies"
+	uv sync --quiet || warn "Failed to sync Python dependencies"
+	if [ -d "$PROJECT_DIR/.venv/bin" ]; then
+		export PATH="$PROJECT_DIR/.venv/bin:$PATH"
+		if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
+			echo "export PATH=\"$PROJECT_DIR/.venv/bin:\$PATH\"" >>"$CLAUDE_ENV_FILE"
+		fi
+	fi
 fi
 
-echo "Session setup complete"
+if [ "$SETUP_WARNINGS" -gt 0 ]; then
+	echo "Setup done with $SETUP_WARNINGS warning(s) — see above" >&2
+fi
