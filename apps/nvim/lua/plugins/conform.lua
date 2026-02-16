@@ -4,7 +4,7 @@ return {
     formatters_by_ft = {
       fish = { "fish_indent" },
       lua = { "stylua" },
-      python = { "ruff_format" },
+      python = { "black" },
       javascript = { "prettier" },
       javascriptreact = { "prettier" },
       typescript = { "prettier" },
