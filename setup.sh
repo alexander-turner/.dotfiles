@@ -74,9 +74,9 @@ if [ "$(uname)" = "Darwin" ]; then
     brew_quiet_install wget              # Download files
 
     # Automatically focus and raise windows under cursor
-    brew tap dimentium/autoraise >/dev/null 2>&1
+    brew tap dimentium/autoraise >/dev/null
     brew_quiet_install autoraise
-    brew services restart autoraise >/dev/null 2>&1
+    brew services restart autoraise >/dev/null
     link_with_overwrite_check "$DOTFILES_DIR/.AutoRaise" ~/.AutoRaise
 
     # Aerospace window manager setup
@@ -102,7 +102,7 @@ if [ "$(uname)" = "Darwin" ]; then
 
     # Install wally-cli for keyboard flashing (macOS only due to dependencies)
     brew_quiet_install go
-    go install github.com/zsa/wally-cli@latest >/dev/null 2>&1
+    go install github.com/zsa/wally-cli@latest >/dev/null
 
 else # Assume linux
     status_msg "Installing Linux packages..."
@@ -146,13 +146,13 @@ brew_quiet_install tmux
 TPM_DIR=~/.tmux/plugins/tpm
 if [ ! -d "$TPM_DIR/.git" ]; then
     rm -rf "$TPM_DIR"
-    git clone --quiet https://github.com/tmux-plugins/tpm "$TPM_DIR" >/dev/null 2>&1 # Tmux plugin manager
+    git clone --quiet https://github.com/tmux-plugins/tpm "$TPM_DIR" >/dev/null # Tmux plugin manager
 fi
 tmux source ~/.tmux.conf >/dev/null 2>&1 || true
 ~/.tmux/plugins/tpm/bin/install_plugins >/dev/null
 
 brew_quiet_install node pnpm
-pnpm setup >/dev/null 2>&1
+pnpm setup >/dev/null
 brew_quiet_install gcc
 
 # Backup iTerm2 settings
@@ -160,7 +160,7 @@ mv ~/Library/com.googlecode.iterm2.plist{,.bak} >/dev/null 2>&1 || true
 # Sync settings
 ln -sf "$DOTFILES_DIR/apps/com.googlecode.iterm2.plist" ~/Library/com.googlecode.iterm2.plist >/dev/null 2>&1 || true
 # Set up shell integration for iterm2
-curl -fsSL https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash >/dev/null 2>&1
+curl -fsSL https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash >/dev/null
 
 status_msg "Configuring neovim..."
 # Create neovim settings which include current vimrc files

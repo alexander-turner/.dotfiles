@@ -4,10 +4,10 @@ set -l BIN_DIR (dirname (status -f))
 # Local models
 brew install --quiet ollama
 if command -q docker
-    docker pull ghcr.io/open-webui/open-webui:main 1>/dev/null 2>&1
+    docker pull ghcr.io/open-webui/open-webui:main 1>/dev/null
     # Run on startup (unless-stopped) -- skip if container already exists
     if not docker ps -a --format '{{.Names}}' | string match -q 'open-webui'
-        docker run -d -p 3000:8080 --restart unless-stopped -v open-webui:/app/backend/data --name open-webui ghcr.io/open-webui/open-webui:main 1>/dev/null 2>&1
+        docker run -d -p 3000:8080 --restart unless-stopped -v open-webui:/app/backend/data --name open-webui ghcr.io/open-webui/open-webui:main 1>/dev/null
     end
 else
     echo "Warning: docker not found, skipping open-webui setup."
@@ -55,7 +55,7 @@ end
 
 # Automatic commit messages
 # https://harper.blog/2024/03/11/use-an-llm-to-automagically-generate-meaningful-git-commit-messages/
-pipx install --quiet llm 1>/dev/null 2>&1
+pipx install --quiet llm 1>/dev/null
 # Configure Redpill API with Sonnet for commit messages
 set -l LLM_DIR (dirname (llm logs path))
 mkdir -p "$LLM_DIR"
@@ -71,4 +71,4 @@ cp $BIN_DIR/.prepare-commit-msg $HOME/.git_hooks/prepare-commit-msg
 chmod +x $HOME/.git_hooks/prepare-commit-msg
 git config --global core.hooksPath ~/.git_hooks
 
-pipx install --quiet wut 1>/dev/null 2>&1 # explains last output of shell command
+pipx install --quiet wut 1>/dev/null # explains last output of shell command

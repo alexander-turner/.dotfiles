@@ -41,10 +41,10 @@ rm -f "$HOME/.config/fish/functions/fish_prompt.fish"
 
 echo ":: Installing fish plugins..."
 fish <<FISH_SCRIPT
-  curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source
-  fisher install jorgebucaran/fisher 2>&1 | grep -i 'error\|fail' || true
+  curl -fsL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source
+  fisher install jorgebucaran/fisher >/dev/null
 
-  fisher install IlanCosman/tide@v6 2>&1 | grep -i 'error\|fail' || true
+  fisher install IlanCosman/tide@v6 >/dev/null
 FISH_SCRIPT
 
 # Resolve DOTFILES_DIR from this script's location (bin/ is one level down)
@@ -72,4 +72,4 @@ ln -sf "$DOTFILES_DIR"/apps/fish/config.fish "$FISH_CONFIG_DIR/config.fish"
 ln -sf "$DOTFILES_DIR"/apps/fish/functions/fish_prompt.fish "$FISH_CONFIG_DIR/functions/fish_prompt.fish"
 ln -sf "$DOTFILES_DIR"/apps/fish/functions/_tide_item_jobs.fish "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish"
 
-fish "$DOTFILES_DIR"/bin/install_fish_plugins.fish 2>&1 | grep -i 'error\|fail' || true
+fish "$DOTFILES_DIR"/bin/install_fish_plugins.fish >/dev/null

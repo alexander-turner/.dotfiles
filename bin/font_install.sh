@@ -3,7 +3,7 @@
 echo ":: Installing fonts..."
 
 # Fira Code is the terminal font, has nice ligatures
-brew tap homebrew/cask-font >/dev/null 2>&1
+brew tap homebrew/cask-font >/dev/null
 brew install --quiet --cask font-fira-code
 
 # Download Meslo Nerd Font for non-ASCII Tide theme characters
@@ -21,7 +21,9 @@ mkdir -p "$FONT_DIR"
 
 for font in "${fonts[@]}"; do
 	url="$PREFIX$font$SUFFIX"
-	wget -q "$url" -O "$FONT_DIR/$font.ttf"
+	if ! wget -q "$url" -O "$FONT_DIR/$font.ttf"; then
+		echo "Warning: failed to download $font font" >&2
+	fi
 done
 
 echo -e "\033[1;31m Be sure to install the fira-code and Meslo fonts for your terminal of choice!\033[0m"

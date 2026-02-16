@@ -6,12 +6,12 @@ set -l OS (uname -s)
 if test $OS = Darwin
     echo ":: Installing macOS apps..."
     # Tap necessary sources
-    brew tap yakitrak/yakitrak >/dev/null 2>&1
-    brew tap rishikanthc/scriberr >/dev/null 2>&1
+    brew tap yakitrak/yakitrak >/dev/null
+    brew tap rishikanthc/scriberr >/dev/null
 
     set -l GIT_ROOT (git rev-parse --show-toplevel 2>/dev/null)
     cd $GIT_ROOT
-    cat ./apps/mac_brew.txt | xargs brew install --quiet 2>&1 | grep -i 'error\|fail' ; or true
+    cat ./apps/mac_brew.txt | xargs brew install --quiet
 end
 
 # Install autojump manually for both Linux and macOS
