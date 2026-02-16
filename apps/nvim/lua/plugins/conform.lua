@@ -12,7 +12,7 @@ return {
       html = { "prettier" },
       css = { "prettier" },
       json = { "prettier" },
-      -- jsonc: skip prettier (can't parse comments/trailing commas); falls back to LSP
+      jsonc = { "prettier" },
       yaml = { "prettier" },
       markdown = { "prettier" },
       xml = { "xmllint" },
