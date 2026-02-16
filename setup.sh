@@ -29,7 +29,7 @@ DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
 # Install Homebrew first -- many subsequent steps depend on it
 if ! command_exists brew; then
     status_msg "Installing Homebrew..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" >/dev/null
+    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" >/dev/null
     if [ "$(uname)" = "Darwin" ]; then
         eval "$(/opt/homebrew/bin/brew shellenv)"
     else

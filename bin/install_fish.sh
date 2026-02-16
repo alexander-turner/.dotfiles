@@ -41,7 +41,7 @@ rm -f "$HOME/.config/fish/functions/fish_prompt.fish"
 
 echo ":: Installing fish plugins..."
 fish <<FISH_SCRIPT
-  curl -fsL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source
+  curl -fsSL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source
   fisher install jorgebucaran/fisher >/dev/null
 
   fisher install IlanCosman/tide@v6 >/dev/null
