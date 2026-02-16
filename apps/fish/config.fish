@@ -97,7 +97,11 @@ end
 
 # Clipboard function differs between macOS and others
 function yank # Copy to clipboard
-    if $IS_MAC
+    if set -q SSH_TTY
+        # OSC 52 escape sequence for clipboard passthrough over SSH/mosh
+        set -l data (cat | base64 | tr -d '\n')
+        printf '\033]52;c;%s\a' $data
+    else if $IS_MAC
         pbcopy
     else
         xclip -sel c

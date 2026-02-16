@@ -135,12 +135,11 @@ fi
 brew_quiet_install tmux
 
 # Tmux plugin manager setup (must come after tmux is installed)
-TPM_BACKUP_DIR=~/.tmux/plugins/.tpm-backup
-mkdir -p "$TPM_BACKUP_DIR"
 TPM_DIR=~/.tmux/plugins/tpm
-mkdir -p "$TPM_DIR"
-mv "$TPM_DIR" "$TPM_BACKUP_DIR" >/dev/null 2>&1 || true
-git clone https://github.com/tmux-plugins/tpm "$TPM_DIR" >/dev/null # Tmux plugin manager
+if [ ! -d "$TPM_DIR/.git" ]; then
+    rm -rf "$TPM_DIR"
+    git clone https://github.com/tmux-plugins/tpm "$TPM_DIR" >/dev/null # Tmux plugin manager
+fi
 tmux source ~/.tmux.conf >/dev/null 2>&1 || true
 ~/.tmux/plugins/tpm/bin/install_plugins >/dev/null
 
