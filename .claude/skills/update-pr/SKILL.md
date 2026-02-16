@@ -19,6 +19,8 @@ Activate when the user says:
 - "Push these changes to the PR"
 - "Update the PR description"
 
+Also activate **automatically** after any `git push` to a branch that has an open PR — update the PR description to reflect the new changes.
+
 Do **NOT** use for:
 
 - Creating a new PR (use `pr-creation` skill)
