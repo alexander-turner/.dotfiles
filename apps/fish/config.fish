@@ -260,7 +260,11 @@ set -x tide_jobs_number_threshold 0
 set -gx PATH $PATH $HOME/go/bin
 
 # pnpm
-set -gx PNPM_HOME "$HOME/Library/pnpm"
+if $IS_MAC
+    set -gx PNPM_HOME "$HOME/Library/pnpm"
+else
+    set -gx PNPM_HOME "$HOME/.local/share/pnpm"
+end
 if not string match -q -- $PNPM_HOME $PATH
   set -gx PATH "$PNPM_HOME" $PATH
 end

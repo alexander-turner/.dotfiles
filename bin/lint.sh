@@ -113,6 +113,7 @@ check_toml() {
 
 # JSON validation
 check_json() {
+    require_or_skip python3 "JSON validation" || return 0
     echo -n "JSON validation: "
     # Exclude JSONC files (VSCode/VSCodium settings allow trailing commas)
     JSON_FILES=$(find . -name '*.json' -not -path './node_modules/*' -not -path './.git/*' -not -path './apps/vscodium/*' || true)
