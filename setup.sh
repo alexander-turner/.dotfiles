@@ -19,12 +19,17 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
+status_msg() {
+    echo ":: $1"
+}
+
 # Resolve dotfiles directory from this script's location
 DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # Install Homebrew first -- many subsequent steps depend on it
 if ! command_exists brew; then
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    status_msg "Installing Homebrew..."
+    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" >/dev/null
     if [ "$(uname)" = "Darwin" ]; then
         eval "$(/opt/homebrew/bin/brew shellenv)"
     else
@@ -37,7 +42,7 @@ brew_quiet_install() {
     brew install --quiet "$@"
 }
 
-# Link .bashrc, .vimrc, .gitconfig, and .tmux.conf to the home directory, with warnings for existing files
+status_msg "Linking dotfiles..."
 link_with_overwrite_check "$DOTFILES_DIR/.bashrc" "$HOME/.bashrc"
 link_with_overwrite_check "$DOTFILES_DIR/.vimrc" "$HOME/.vimrc"
 link_with_overwrite_check "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"
@@ -61,6 +66,7 @@ touch "$HOME"/.hushlogin # Disable the "Last login" message
 # Install fish and configure (brew is now available)
 "$DOTFILES_DIR"/bin/install_fish.sh
 if [ "$(uname)" = "Darwin" ]; then
+    status_msg "Installing macOS packages..."
     brew_quiet_install neovim pyvim      # neovim
     brew_quiet_install libusb pkg-config # wally-cli
     brew_quiet_install coreutils         # For aliasing ls to gls
@@ -68,9 +74,9 @@ if [ "$(uname)" = "Darwin" ]; then
     brew_quiet_install wget              # Download files
 
     # Automatically focus and raise windows under cursor
-    brew tap dimentium/autoraise
+    brew tap dimentium/autoraise >/dev/null
     brew_quiet_install autoraise
-    brew services restart autoraise
+    brew services restart autoraise >/dev/null
     link_with_overwrite_check "$DOTFILES_DIR/.AutoRaise" ~/.AutoRaise
 
     # Aerospace window manager setup
@@ -81,29 +87,30 @@ if [ "$(uname)" = "Darwin" ]; then
     brew_quiet_install pinentry-mac
     # Update once a week (given in seconds)
     brew tap homebrew/autoupdate 2>/dev/null || true
-    brew autoupdate start 604800 --upgrade --cleanup --sudo
+    brew autoupdate start 604800 --upgrade --cleanup --sudo >/dev/null 2>&1 || true
     brew_quiet_install git-credential-manager
 
     # OrbStack: lightweight Docker alternative for macOS
-    brew install --cask orbstack
+    brew_quiet_install --cask orbstack
 
     # Tailscale VPN daemon (runs as a LaunchDaemon on macOS)
     brew_quiet_install tailscale
     TAILSCALE_PLIST_DEST="/Library/LaunchDaemons/com.$USER.tailscaled.plist"
     sed "s/__USERNAME__/$USER/g" "$DOTFILES_DIR/launchagents/com.tailscaled.plist.template" \
         | sudo tee "$TAILSCALE_PLIST_DEST" >/dev/null
-    sudo launchctl load "$TAILSCALE_PLIST_DEST"
+    sudo launchctl load "$TAILSCALE_PLIST_DEST" 2>/dev/null || true
 
     # Install wally-cli for keyboard flashing (macOS only due to dependencies)
     brew_quiet_install go
     go install github.com/zsa/wally-cli@latest >/dev/null
 
 else # Assume linux
+    status_msg "Installing Linux packages..."
     brew_quiet_install neovim
 
     # Install python3-pynvim, pipx, and cron
-    sudo apt-get update
-    sudo apt-get install -y python3-pynvim pipx cron
+    sudo apt-get update -qq
+    sudo apt-get install -y -qq python3-pynvim pipx cron
 fi
 
 brew_quiet_install mosh # Lower-latency mobile shell
@@ -132,19 +139,20 @@ if command_exists crontab && command_exists trash-empty; then
     fi
 fi
 
+status_msg "Setting up tmux..."
 brew_quiet_install tmux
 
 # Tmux plugin manager setup (must come after tmux is installed)
 TPM_DIR=~/.tmux/plugins/tpm
 if [ ! -d "$TPM_DIR/.git" ]; then
     rm -rf "$TPM_DIR"
-    git clone https://github.com/tmux-plugins/tpm "$TPM_DIR" >/dev/null # Tmux plugin manager
+    git clone --quiet https://github.com/tmux-plugins/tpm "$TPM_DIR" >/dev/null # Tmux plugin manager
 fi
 tmux source ~/.tmux.conf >/dev/null 2>&1 || true
 ~/.tmux/plugins/tpm/bin/install_plugins >/dev/null
 
 brew_quiet_install node pnpm
-pnpm setup
+pnpm setup >/dev/null
 brew_quiet_install gcc
 
 # Install autoformatters for neovim (conform.nvim)
@@ -168,6 +176,7 @@ if [ "$(uname)" = "Darwin" ]; then
     curl -fsSL https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash >/dev/null
 fi
 
+status_msg "Configuring neovim..."
 # Create neovim settings which include current vimrc files
 # Backup existing configs
 for directory in ~/.config/nvim ~/.local/{share,state}/nvim ~/.cache/nvim; do
@@ -190,6 +199,7 @@ if [ -f "$DOTFILES_DIR/apps/fish/envchain_secrets.fish" ]; then
     link_with_overwrite_check "$DOTFILES_DIR/apps/fish/envchain_secrets.fish" "$HOME/.config/fish/envchain_secrets.fish"
 fi
 
+status_msg "Configuring Claude Code..."
 # Claude Code configuration
 mkdir -p "$HOME/.claude"
 # Symlink skills directory and CLAUDE.md
@@ -206,5 +216,7 @@ ln -sf "$DOTFILES_DIR/ai/Vagrantfile" "$HOME/.config/vagrant-templates/Vagrantfi
 # Link pre-push into .hooks/ so it fires regardless of hooksPath setting.
 ln -sf "$DOTFILES_DIR/bin/pre-push" "$DOTFILES_DIR/.hooks/pre-push"
 
-# Install AI integrations
+status_msg "Setting up AI integrations..."
 fish "$DOTFILES_DIR/bin/setup_llm.fish"
+
+status_msg "Setup complete."

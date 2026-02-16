@@ -5,7 +5,8 @@ command_exists() {
 }
 
 if ! command_exists fish; then
-    brew install fish
+    echo ":: Installing fish shell..."
+    brew install --quiet fish
 fi
 
 # Ensure fish is in PATH (brew may install to /opt/homebrew/bin on Apple Silicon)
@@ -38,15 +39,12 @@ fi
 # Remove conflicting fish_prompt.fish before tide install (tide provides its own)
 rm -f "$HOME/.config/fish/functions/fish_prompt.fish"
 
-# Install themes using fish
+echo ":: Installing fish plugins..."
 fish <<FISH_SCRIPT
-  curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source
-  fisher install jorgebucaran/fisher
+  curl -fsSL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source
+  fisher install jorgebucaran/fisher >/dev/null
 
-  # Install the tide theme
-  fisher install IlanCosman/tide@v6
-
-# Configure the theme if not already configured
+  fisher install IlanCosman/tide@v6 >/dev/null
 FISH_SCRIPT
 
 # Resolve DOTFILES_DIR from this script's location (bin/ is one level down)
@@ -58,16 +56,13 @@ FISH_CONFIG_DIR="$HOME/.config/fish"
 mkdir -p "$FISH_CONFIG_DIR/functions"
 
 # See if user wants preset settings
-echo 'Do you want to accept preset tide settings? (Y/n)'
-read -r answer
+read -rp "Accept preset tide settings? (Y/n) " answer
 
 if [ -z "$answer" ] || echo "$answer" | grep -iq "^y"; then
-    echo "You accepted the preset settings."
     # Copy preset config files into existing fish config directory
     # Use -f to remove destination files that can't be opened (e.g. root-owned from prior sudo runs)
     cp -rf "$DOTFILES_DIR"/apps/fish/* "$FISH_CONFIG_DIR/"
 else
-    echo "You declined preset settings."
     fish -c "tide configure"
 fi
 
@@ -77,4 +72,4 @@ ln -sf "$DOTFILES_DIR"/apps/fish/config.fish "$FISH_CONFIG_DIR/config.fish"
 ln -sf "$DOTFILES_DIR"/apps/fish/functions/fish_prompt.fish "$FISH_CONFIG_DIR/functions/fish_prompt.fish"
 ln -sf "$DOTFILES_DIR"/apps/fish/functions/_tide_item_jobs.fish "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish"
 
-fish "$DOTFILES_DIR"/bin/install_fish_plugins.fish
+fish "$DOTFILES_DIR"/bin/install_fish_plugins.fish >/dev/null

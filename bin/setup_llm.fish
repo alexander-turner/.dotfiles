@@ -10,7 +10,7 @@ if command -q docker
         docker run -d -p 3000:8080 --restart unless-stopped -v open-webui:/app/backend/data --name open-webui ghcr.io/open-webui/open-webui:main 1>/dev/null
     end
 else
-    echo "Warning: docker not found, skipping open-webui setup. Install OrbStack or Docker first."
+    echo "Warning: docker not found, skipping open-webui setup."
 end
 
 # Set up aider
