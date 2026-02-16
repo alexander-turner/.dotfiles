@@ -20,6 +20,9 @@ aider --analytics-disable --yes --exit 2>/dev/null; or true
 # Set up vscodium + roo code
 brew install --quiet --cask vscodium
 
+# Refresh PATH so the newly installed codium binary is visible
+source ~/.config/fish/config.fish 2>/dev/null
+
 set -l GIT_ROOT (git rev-parse --show-toplevel)
 if command -q codium
     while read -l ext
