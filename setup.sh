@@ -147,17 +147,31 @@ brew_quiet_install node pnpm
 pnpm setup
 brew_quiet_install gcc
 
-# Backup iTerm2 settings
-mv ~/Library/com.googlecode.iterm2.plist{,.bak} >/dev/null 2>&1 || true
-# Sync settings
-ln -sf "$DOTFILES_DIR/apps/com.googlecode.iterm2.plist" ~/Library/com.googlecode.iterm2.plist >/dev/null 2>&1 || true
-# Set up shell integration for iterm2
-curl -fsSL https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash >/dev/null
+# Install autoformatters for neovim (conform.nvim)
+brew_quiet_install stylua        # Lua formatter
+brew_quiet_install ruff          # Python linter & formatter
+pnpm install -g prettier         # JS/TS/HTML/CSS/JSON/YAML/Markdown formatter
+if [ "$(uname)" = "Darwin" ]; then
+    # xmllint (libxml2) is built into macOS
+    :
+else
+    sudo apt-get install -y libxml2-utils  # Provides xmllint for XML/plist formatting
+fi
+
+# iTerm2 setup (macOS only)
+if [ "$(uname)" = "Darwin" ]; then
+    # Backup iTerm2 settings
+    mv ~/Library/com.googlecode.iterm2.plist{,.bak} >/dev/null 2>&1 || true
+    # Sync settings
+    ln -sf "$DOTFILES_DIR/apps/com.googlecode.iterm2.plist" ~/Library/com.googlecode.iterm2.plist >/dev/null 2>&1 || true
+    # Set up shell integration for iterm2
+    curl -fsSL https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash >/dev/null
+fi
 
 # Create neovim settings which include current vimrc files
 # Backup existing configs
 for directory in ~/.config/nvim ~/.local/{share,state}/nvim ~/.cache/nvim; do
-    cp "$directory"{,.bak} >/dev/null 2>&1 || true
+    cp -r "$directory"{,.bak} >/dev/null 2>&1 || true
 done
 
 # Remove directory if not a symlink

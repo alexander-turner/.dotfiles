@@ -111,6 +111,29 @@ check_toml() {
     echo -e "${GREEN}passed${NC}"
 }
 
+# JSON validation
+check_json() {
+    echo -n "JSON validation: "
+    # Exclude JSONC files (VSCode/VSCodium settings allow trailing commas)
+    JSON_FILES=$(find . -name '*.json' -not -path './node_modules/*' -not -path './.git/*' -not -path './apps/vscodium/*' || true)
+    if [ -z "$JSON_FILES" ]; then
+        echo -e "${GREEN}no files${NC}"
+        return 0
+    fi
+    local json_failed=0
+    for f in $JSON_FILES; do
+        if ! python3 -c "import json, sys; json.load(open(sys.argv[1]))" "$f" 2>/dev/null; then
+            echo -e "\n  ${RED}Invalid: $f${NC}"
+            json_failed=1
+        fi
+    done
+    if [ $json_failed -ne 0 ]; then
+        echo -e "${RED}failed${NC}"
+        return 1
+    fi
+    echo -e "${GREEN}passed${NC}"
+}
+
 # Run all checks
 echo "Running lint checks..."
 check_shellcheck || FAILED=1
@@ -118,6 +141,7 @@ check_fish || FAILED=1
 check_stylua || FAILED=1
 check_yaml || FAILED=1
 check_toml || FAILED=1
+check_json || FAILED=1
 
 if [ $FAILED -ne 0 ]; then
     echo -e "\n${RED}Lint checks failed.${NC}"
