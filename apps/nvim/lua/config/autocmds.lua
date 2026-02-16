@@ -5,6 +5,8 @@
 vim.api.nvim_create_augroup("AutoReloadConfig", { clear = true })
 vim.api.nvim_create_autocmd("BufWritePost", {
   group = "AutoReloadConfig",
-  pattern = "../plugins/cmp.lua",
-  command = "source ../plugins/cmp.lua",
+  pattern = "*/plugins/cmp.lua",
+  callback = function(args)
+    dofile(args.match)
+  end,
 })

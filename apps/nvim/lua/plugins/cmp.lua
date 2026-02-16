@@ -1,15 +1,17 @@
-local cmp = require("cmp")
-
-cmp.setup({
-  -- You can set other general options here
-  -- Configure sources and other settings
-  sources = cmp.config.sources({
-    { name = "nvim_lsp" },
-  }),
-  mapping = {
-    ["<tab>"] = cmp.mapping.confirm({ select = true }),
-    -- ["<CR>"] = cmp.mapping.abort(),
+return {
+  "hrsh7th/nvim-cmp",
+  dependencies = {
+    "hrsh7th/cmp-nvim-lsp",
   },
-})
-
-return {}
+  config = function()
+    local cmp = require("cmp")
+    cmp.setup({
+      sources = cmp.config.sources({
+        { name = "nvim_lsp" },
+      }),
+      mapping = {
+        ["<Tab>"] = cmp.mapping.confirm({ select = true }),
+      },
+    })
+  end,
+}

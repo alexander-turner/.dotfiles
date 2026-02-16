@@ -5,8 +5,10 @@ set -l BIN_DIR (dirname (status -f))
 brew install --quiet ollama
 if command -q docker
     docker pull ghcr.io/open-webui/open-webui:main 1>/dev/null
-    # Run on startup (unless-stopped)
-    docker run -d -p 3000:8080 --restart unless-stopped -v open-webui:/app/backend/data --name open-webui ghcr.io/open-webui/open-webui:main 1>/dev/null
+    # Run on startup (unless-stopped) -- skip if container already exists
+    if not docker ps -a --format '{{.Names}}' | string match -q 'open-webui'
+        docker run -d -p 3000:8080 --restart unless-stopped -v open-webui:/app/backend/data --name open-webui ghcr.io/open-webui/open-webui:main 1>/dev/null
+    end
 else
     echo "Warning: docker not found, skipping open-webui setup. Install OrbStack or Docker first."
 end
@@ -19,7 +21,13 @@ aider --analytics-disable --yes --exit 2>/dev/null; or true
 brew install --quiet --cask vscodium
 
 set -l GIT_ROOT (git rev-parse --show-toplevel)
-cat $GIT_ROOT/apps/vscodium/extensions.txt | xargs -L 1 codium --install-extension 1>/dev/null
+if command -q codium
+    while read -l ext
+        codium --install-extension $ext 1>/dev/null 2>&1
+    end < $GIT_ROOT/apps/vscodium/extensions.txt
+else
+    echo "Warning: codium not found on PATH, skipping extension install"
+end
 
 set CODIUM_USER "$HOME/Library/Application Support/VSCodium/User"
 mkdir -p "$CODIUM_USER"
@@ -32,12 +40,14 @@ ln -sf "$GIT_ROOT/apps/vscodium/keybindings.json" "$CODIUM_USER/keybindings.json
 
 # Start local indexing for semantic search
 if command -q docker
-    docker run -d \
-        --name qdrant \
-        --restart unless-stopped \
-        -p 6333:6333 \
-        -v qdrant_data:/qdrant/storage \
-        qdrant/qdrant 1>/dev/null
+    if not docker ps -a --format '{{.Names}}' | string match -q 'qdrant'
+        docker run -d \
+            --name qdrant \
+            --restart unless-stopped \
+            -p 6333:6333 \
+            -v qdrant_data:/qdrant/storage \
+            qdrant/qdrant 1>/dev/null
+    end
 end
 
 # Automatic commit messages
