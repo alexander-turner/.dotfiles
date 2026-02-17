@@ -65,6 +65,10 @@ touch "$HOME"/.hushlogin # Disable the "Last login" message
 
 # Install fish and configure (brew is now available)
 "$DOTFILES_DIR"/bin/install_fish.sh
+
+# Install envchain early -- brew autoupdate on macOS depends on it
+brew_quiet_install envchain
+
 if [ "$(uname)" = "Darwin" ]; then
     status_msg "Installing macOS packages..."
     brew_quiet_install neovim pyvim      # neovim
@@ -86,7 +90,10 @@ if [ "$(uname)" = "Darwin" ]; then
     # Brew autoupdate: update once a week (604800 seconds) with --sudo.
     # Uses envchain + SUDO_ASKPASS so the background job can sudo without
     # a GUI password dialog.
-    # One-time manual step: envchain --set brew-sudo SUDO_PASSWORD
+    if ! envchain brew-sudo printenv SUDO_PASSWORD >/dev/null 2>&1; then
+        status_msg "Setting up envchain for brew autoupdate sudo access..."
+        envchain --set brew-sudo SUDO_PASSWORD
+    fi
     mkdir -p "$HOME/bin"
     ln -sf "$DOTFILES_DIR/bin/.brew-askpass.sh" "$HOME/bin/.brew-askpass.sh"
     brew tap homebrew/autoupdate 2>/dev/null || true
@@ -125,17 +132,6 @@ else # Assume linux
 fi
 
 brew_quiet_install mosh # Lower-latency mobile shell
-
-# Install envchain for secure secret management via OS keychain
-brew_quiet_install envchain
-
-# Store sudo password in envchain for brew autoupdate --sudo (macOS only)
-if [ "$(uname)" = "Darwin" ]; then
-    if ! envchain brew-sudo printenv SUDO_PASSWORD >/dev/null 2>&1; then
-        status_msg "Setting up envchain for brew autoupdate sudo access..."
-        envchain --set brew-sudo SUDO_PASSWORD
-    fi
-fi
 
 brew_quiet_install xclip
 
