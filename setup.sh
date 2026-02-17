@@ -65,6 +65,10 @@ touch "$HOME"/.hushlogin # Disable the "Last login" message
 
 # Install fish and configure (brew is now available)
 "$DOTFILES_DIR"/bin/install_fish.sh
+
+# Install envchain early -- brew autoupdate on macOS depends on it
+brew_quiet_install envchain
+
 if [ "$(uname)" = "Darwin" ]; then
     status_msg "Installing macOS packages..."
     brew_quiet_install neovim pyvim      # neovim
@@ -83,11 +87,25 @@ if [ "$(uname)" = "Darwin" ]; then
     brew_quiet_install aerospace
     link_with_overwrite_check "$DOTFILES_DIR/.aerospace.toml" ~/.aerospace.toml
 
-    # mac-pinentry needed for --sudo
-    brew_quiet_install pinentry-mac
-    # Update once a week (given in seconds)
+    # Brew autoupdate: update once a week (604800 seconds) with --sudo.
+    # Uses envchain + SUDO_ASKPASS so the background job can sudo without
+    # a GUI password dialog.
+    if ! envchain brew-sudo printenv SUDO_PASSWORD >/dev/null 2>&1; then
+        status_msg "Setting up envchain for brew autoupdate sudo access..."
+        envchain --set brew-sudo SUDO_PASSWORD
+    fi
+    mkdir -p "$HOME/bin"
+    ln -sf "$DOTFILES_DIR/bin/.brew-askpass.sh" "$HOME/bin/.brew-askpass.sh"
     brew tap homebrew/autoupdate 2>/dev/null || true
     brew autoupdate start 604800 --upgrade --cleanup --sudo >/dev/null 2>&1 || true
+    # Inject SUDO_ASKPASS into the launchd plist so background runs can sudo
+    AUTOUPDATE_PLIST="$HOME/Library/LaunchAgents/com.github.domt4.homebrew-autoupdate"
+    if [ -f "${AUTOUPDATE_PLIST}.plist" ]; then
+        defaults write "$AUTOUPDATE_PLIST" EnvironmentVariables \
+            -dict SUDO_ASKPASS "$HOME/bin/.brew-askpass.sh"
+        launchctl unload "${AUTOUPDATE_PLIST}.plist" 2>/dev/null || true
+        launchctl load "${AUTOUPDATE_PLIST}.plist" 2>/dev/null || true
+    fi
     brew_quiet_install git-credential-manager
 
     # OrbStack: lightweight Docker alternative for macOS
@@ -114,9 +132,6 @@ else # Assume linux
 fi
 
 brew_quiet_install mosh # Lower-latency mobile shell
-
-# Install envchain for secure secret management via OS keychain
-brew_quiet_install envchain
 
 brew_quiet_install xclip
 
