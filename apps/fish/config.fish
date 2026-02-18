@@ -1,4 +1,9 @@
 #!/usr/bin/env fish
+
+if set -q ANTIGRAVITY_AGENT
+  exec bash -c "$argv"
+end
+
 # No default greeting
 set fish_greeting ''
 
@@ -104,7 +109,7 @@ function yank # Copy to clipboard
     else if $IS_MAC
         pbcopy
     else
-        xclip -sel c
+        clip
     end
 end
 
