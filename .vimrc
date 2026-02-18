@@ -53,9 +53,7 @@ if has('syntax') && has('eval')
 endif
 
 set number
-set nocompatible
 set hidden
-set tabstop=4
 
 " Set up keybindings
 nnoremap <F9> :!%:p<Enter>

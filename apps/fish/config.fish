@@ -20,19 +20,6 @@ else
     set IS_MAC false
 end
 
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-if test -f /opt/homebrew/anaconda3/bin/conda
-    . "/opt/homebrew/anaconda3/etc/fish/conf.d/conda.fish" 2>/dev/null
-else
-    if test -f "/opt/homebrew/anaconda3/etc/fish/conf.d/conda.fish"
-        . "/opt/homebrew/anaconda3/etc/fish/conf.d/conda.fish" 2>/dev/null
-    else
-        set -x PATH /opt/homebrew/anaconda3/bin $PATH
-    end
-end
-# <<< conda initialize <<<
-
 # Custom settings
 fish_vi_key_bindings
 
@@ -82,7 +69,7 @@ function ls
     end
 end
 
-set USE_MOSH false
+set USE_MOSH true
 function ssh
     if $USE_MOSH and (type -q mosh)
         echo "Using mosh instead. To disable, set \$USE_MOSH in shell config."
@@ -101,7 +88,7 @@ if $IS_MAC
 end
 
 function flash
-    sh ~/bin/keyboard_flash.sh
+    sh ~/.dotfiles/bin/keyboard_flash.sh
 end
 
 function pytest
@@ -115,7 +102,11 @@ end
 
 # Clipboard function differs between macOS and others
 function yank # Copy to clipboard
-    if $IS_MAC
+    if set -q SSH_TTY
+        # OSC 52 escape sequence for clipboard passthrough over SSH/mosh
+        set -l data (cat | base64 | tr -d '\n')
+        printf '\033]52;c;%s\a' $data
+    else if $IS_MAC
         pbcopy
     else
         clip
@@ -123,8 +114,13 @@ function yank # Copy to clipboard
 end
 
 # Disable automatic paste bracketing in fish
-set fish_clipboard_copy_cmd pbcopy
-set fish_clipboard_paste_cmd pbpaste
+if $IS_MAC
+    set fish_clipboard_copy_cmd pbcopy
+    set fish_clipboard_paste_cmd pbpaste
+else
+    set fish_clipboard_copy_cmd 'xclip -selection clipboard'
+    set fish_clipboard_paste_cmd 'xclip -selection clipboard -o'
+end
 
 function get_ps
     echo (whoami)'@'(hostname)': '(pwd)
@@ -231,14 +227,10 @@ end
 abbr -a fxtra editfishextras
 
 # Only load iTerm2 integration when already inside tmux, not during tmux startup
-echo "DEBUG: Checking iTerm2 integration, TMUX=$TMUX, file_exists="(test -e {$HOME}/.iterm2_shell_integration.fish; echo $status) >>/tmp/fish_debug.log
 if test -e {$HOME}/.iterm2_shell_integration.fish
     # Only load if TMUX variable is already set (we're inside a running tmux session)
     if set -q TMUX
-        echo "DEBUG: Loading iTerm2 integration inside tmux" >>/tmp/fish_debug.log
         source {$HOME}/.iterm2_shell_integration.fish
-    else
-        echo "DEBUG: Skipping iTerm2 integration (not in tmux yet)" >>/tmp/fish_debug.log
     end
 end
 
@@ -272,23 +264,13 @@ end
 set -x tide_jobs_number_threshold 0
 set -gx PATH $PATH $HOME/go/bin
 
-# Vagrant configuration (CWD sets the synced folder and working dir)
-set -gx VAGRANT_CWD ~/.dotfiles/ai
-
-# Vagrant helper for Claude sandboxed environment
-function vagrant_claude
-    set -l vagrant_dir ~/.dotfiles/ai
-
-    # Check if VM is already running
-    set -l status_output (cd $vagrant_dir && vagrant status --machine-readable 2>/dev/null | grep ",state," | cut -d',' -f4)
-
-    if test "$status_output" = "running"
-        echo "Vagrant VM already running. SSHing in..."
-        cd $vagrant_dir && vagrant ssh
-    else
-        echo "Starting Vagrant VM..."
-        cd $vagrant_dir && vagrant up && vagrant ssh
-    end
+# pnpm
+if $IS_MAC
+    set -gx PNPM_HOME "$HOME/Library/pnpm"
+else
+    set -gx PNPM_HOME "$HOME/.local/share/pnpm"
 end
-
-abbr -a vc vagrant_claude
+if not string match -q -- $PNPM_HOME $PATH
+  set -gx PATH "$PNPM_HOME" $PATH
+end
+# pnpm end

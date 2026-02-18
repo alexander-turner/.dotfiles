@@ -16,7 +16,7 @@ fortune
 lolcat 
 cowsay
 colima docker docker-compose
---cask anaconda
+uv
 --cask superkey
 --cask quitter
 toilet

@@ -15,55 +15,62 @@ link_with_overwrite_check() {
     fi
 }
 
-# Link .bashrc, .vimrc, .gitconfig, and .tmux.conf to the home directory, with warnings for existing files
-link_with_overwrite_check "$HOME/.dotfiles/.bashrc" "$HOME/.bashrc"
-link_with_overwrite_check "$HOME/.dotfiles/.vimrc" "$HOME/.vimrc"
-link_with_overwrite_check "$HOME/.dotfiles/.gitconfig" "$HOME/.gitconfig"
-link_with_overwrite_check "$HOME/.dotfiles/.tmux.conf" "$HOME/.tmux.conf"
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
 
-# Ensure fish config directory exists
-mkdir -p "$HOME/.config/fish"
-link_with_overwrite_check "$HOME/.dotfiles/apps/fish/config.fish" "$HOME/.config/fish/config.fish"
+status_msg() {
+    echo ":: $1"
+}
 
-# Link aider config files
-for aider_file in "$HOME/.dotfiles"/.aider*; do
-    if [ -f "$aider_file" ]; then
-        link_with_overwrite_check "$aider_file" "$HOME/$(basename "$aider_file")"
+# Resolve dotfiles directory from this script's location
+DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Install Homebrew first -- many subsequent steps depend on it
+if ! command_exists brew; then
+    status_msg "Installing Homebrew..."
+    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" >/dev/null
+    if [ "$(uname)" = "Darwin" ]; then
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    else
+        echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >>"$HOME/.profile"
+        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
     fi
-done
-
-# Tmux configuration
-TPM_BACKUP_DIR=~/.tmux/plugins/.tpm-backup
-mkdir -p "$TPM_BACKUP_DIR"
-TPM_DIR=~/.tmux/plugins/tpm
-mkdir -p "$TPM_DIR"
-mv "$TPM_DIR" "$TPM_BACKUP_DIR" >/dev/null 2>&1 || true
-git clone https://github.com/tmux-plugins/tpm "$TPM_DIR" >/dev/null # Tmux plugin manager
-tmux source ~/.tmux.conf >/dev/null || true
-~/.tmux/plugins/tpm/bin/install_plugins >/dev/null
-
-# Use brace expansion to ensure the extras files exist in the home directory
-touch "$HOME"/.extras.{bashrc,fish}
-touch "$HOME"/.hushlogin # Disable the "Last login" message
-
-# Install fish and configure
-SCRIPT_DIR="$(dirname "$0")"/bin # Get the directory of the current script
-"$SCRIPT_DIR"/install_fish.sh    # Execute install_fish.sh from that directory
+fi
 
 brew_quiet_install() {
     brew install --quiet "$@"
 }
 
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
-}
+status_msg "Linking dotfiles..."
+link_with_overwrite_check "$DOTFILES_DIR/.bashrc" "$HOME/.bashrc"
+link_with_overwrite_check "$DOTFILES_DIR/.vimrc" "$HOME/.vimrc"
+link_with_overwrite_check "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"
+link_with_overwrite_check "$DOTFILES_DIR/.tmux.conf" "$HOME/.tmux.conf"
 
-if ! command_exists brew; then
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >>$HOME/.profile
-    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-fi
+# Ensure fish config directory exists
+mkdir -p "$HOME/.config/fish"
+link_with_overwrite_check "$DOTFILES_DIR/apps/fish/config.fish" "$HOME/.config/fish/config.fish"
+
+# Link aider config files
+for aider_file in "$DOTFILES_DIR"/.aider*; do
+    if [ -f "$aider_file" ]; then
+        link_with_overwrite_check "$aider_file" "$HOME/$(basename "$aider_file")"
+    fi
+done
+
+# Use brace expansion to ensure the extras files exist in the home directory
+touch "$HOME"/.extras.{bash,fish}
+touch "$HOME"/.hushlogin # Disable the "Last login" message
+
+# Install fish and configure (brew is now available)
+"$DOTFILES_DIR"/bin/install_fish.sh
+
+# Install envchain early -- brew autoupdate on macOS depends on it
+brew_quiet_install envchain
+
 if [ "$(uname)" = "Darwin" ]; then
+    status_msg "Installing macOS packages..."
     brew_quiet_install neovim pyvim      # neovim
     brew_quiet_install libusb pkg-config # wally-cli
     brew_quiet_install coreutils         # For aliasing ls to gls
@@ -71,37 +78,60 @@ if [ "$(uname)" = "Darwin" ]; then
     brew_quiet_install wget              # Download files
 
     # Automatically focus and raise windows under cursor
-    brew tap dimentium/autoraise
+    brew tap dimentium/autoraise >/dev/null
     brew_quiet_install autoraise
-    brew services restart autoraise
-    link_with_overwrite_check .AutoRaise ~/.AutoRaise
+    brew services restart autoraise >/dev/null
+    link_with_overwrite_check "$DOTFILES_DIR/.AutoRaise" ~/.AutoRaise
 
     # Aerospace window manager setup
     brew_quiet_install aerospace
-    link_with_overwrite_check .aerospace.toml ~/.aerospace.toml
+    link_with_overwrite_check "$DOTFILES_DIR/.aerospace.toml" ~/.aerospace.toml
 
-    # mac-pinentry needed for --sudo
-    brew_quiet_install pinentry-mac
-    # Update once a week (given in seconds)
-    brew autoupdate start 604800 --upgrade --cleanup --sudo
+    # Brew autoupdate: update once a week (604800 seconds) with --sudo.
+    # Uses envchain + SUDO_ASKPASS so the background job can sudo without
+    # a GUI password dialog.
+    if ! envchain brew-sudo printenv SUDO_PASSWORD >/dev/null 2>&1; then
+        status_msg "Setting up envchain for brew autoupdate sudo access..."
+        envchain --set brew-sudo SUDO_PASSWORD
+    fi
+    mkdir -p "$HOME/bin"
+    ln -sf "$DOTFILES_DIR/bin/.brew-askpass.sh" "$HOME/bin/.brew-askpass.sh"
+    brew tap homebrew/autoupdate 2>/dev/null || true
+    brew autoupdate start 604800 --upgrade --cleanup --sudo >/dev/null 2>&1 || true
+    # Inject SUDO_ASKPASS into the launchd plist so background runs can sudo
+    AUTOUPDATE_PLIST="$HOME/Library/LaunchAgents/com.github.domt4.homebrew-autoupdate"
+    if [ -f "${AUTOUPDATE_PLIST}.plist" ]; then
+        defaults write "$AUTOUPDATE_PLIST" EnvironmentVariables \
+            -dict SUDO_ASKPASS "$HOME/bin/.brew-askpass.sh"
+        launchctl unload "${AUTOUPDATE_PLIST}.plist" 2>/dev/null || true
+        launchctl load "${AUTOUPDATE_PLIST}.plist" 2>/dev/null || true
+    fi
     brew_quiet_install git-credential-manager
+
+    # OrbStack: lightweight Docker alternative for macOS
+    brew_quiet_install --cask orbstack
+
+    # Tailscale VPN daemon (runs as a LaunchDaemon on macOS)
+    brew_quiet_install tailscale
+    TAILSCALE_PLIST_DEST="/Library/LaunchDaemons/com.$USER.tailscaled.plist"
+    sed "s/__USERNAME__/$USER/g" "$DOTFILES_DIR/launchagents/com.tailscaled.plist.template" \
+        | sudo tee "$TAILSCALE_PLIST_DEST" >/dev/null
+    sudo launchctl load "$TAILSCALE_PLIST_DEST" 2>/dev/null || true
 
     # Install wally-cli for keyboard flashing (macOS only due to dependencies)
     brew_quiet_install go
     go install github.com/zsa/wally-cli@latest >/dev/null
 
 else # Assume linux
+    status_msg "Installing Linux packages..."
     brew_quiet_install neovim
 
     # Install python3-pynvim, pipx, and cron
-    sudo apt-get update
-    sudo apt-get install -y python3-pynvim pipx cron
+    sudo apt-get update -qq
+    sudo apt-get install -y -qq python3-pynvim pipx cron
 fi
 
 brew_quiet_install mosh # Lower-latency mobile shell
-
-# Install envchain for secure secret management via OS keychain
-brew_quiet_install envchain
 
 brew_quiet_install xclip
 
@@ -124,51 +154,84 @@ if command_exists crontab && command_exists trash-empty; then
     fi
 fi
 
+status_msg "Setting up tmux..."
 brew_quiet_install tmux
 
+# Tmux plugin manager setup (must come after tmux is installed)
+TPM_DIR=~/.tmux/plugins/tpm
+if [ ! -d "$TPM_DIR/.git" ]; then
+    rm -rf "$TPM_DIR"
+    git clone --quiet https://github.com/tmux-plugins/tpm "$TPM_DIR" >/dev/null # Tmux plugin manager
+fi
+tmux source ~/.tmux.conf >/dev/null 2>&1 || true
+~/.tmux/plugins/tpm/bin/install_plugins >/dev/null
+
 brew_quiet_install node pnpm
-pnpm setup
+pnpm setup >/dev/null
 brew_quiet_install gcc
 
-# Backup iTerm2 settings
-mv ~/Library/com.googlecode.iterm2.plist{,.bak} >/dev/null 2>&1 || true
-# Sync settings
-ln -sf ~/.dotfiles/apps/com.googlecode.iterm2.plist ~/Library/com.googlecode.iterm2.plist >/dev/null 2>&1 || true
-# Set up shell integration for iterm2
-curl -fsSL https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash >/dev/null
+# Install autoformatters for neovim (conform.nvim)
+brew_quiet_install stylua        # Lua formatter
+brew_quiet_install ruff          # Python linter & formatter
+pnpm install -g prettier         # JS/TS/HTML/CSS/JSON/YAML/Markdown formatter
+if [ "$(uname)" = "Darwin" ]; then
+    # xmllint (libxml2) is built into macOS
+    :
+else
+    sudo apt-get install -y libxml2-utils  # Provides xmllint for XML/plist formatting
+fi
 
+# iTerm2 setup (macOS only)
+if [ "$(uname)" = "Darwin" ]; then
+    # Backup iTerm2 settings
+    mv ~/Library/com.googlecode.iterm2.plist{,.bak} >/dev/null 2>&1 || true
+    # Sync settings
+    ln -sf "$DOTFILES_DIR/apps/com.googlecode.iterm2.plist" ~/Library/com.googlecode.iterm2.plist >/dev/null 2>&1 || true
+    # Set up shell integration for iterm2
+    curl -fsSL https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash >/dev/null
+fi
+
+status_msg "Configuring neovim..."
 # Create neovim settings which include current vimrc files
 # Backup existing configs
-for directory in ~/.config/nvim ~.local/{share,state}/nvim ~/cache/nvim; do
-    cp "$directory"{,.bak} >/dev/null 2>&1 || true
+for directory in ~/.config/nvim ~/.local/{share,state}/nvim ~/.cache/nvim; do
+    cp -r "$directory"{,.bak} >/dev/null 2>&1 || true
 done
 
 # Remove directory if not a symlink
 NEOVIM_CONFIG_DIR="$HOME/.config/nvim"
 if [ ! -L "$NEOVIM_CONFIG_DIR" ]; then
     rm -rf "$NEOVIM_CONFIG_DIR"
-    ln -s "$HOME/.dotfiles/apps/nvim" "$NEOVIM_CONFIG_DIR" # symlink to this repo's nvim config folder
+    ln -s "$DOTFILES_DIR/apps/nvim" "$NEOVIM_CONFIG_DIR" # symlink to this repo's nvim config folder
 fi
 
 # Use brace expansion to ensure the extras files exist in the home directory
-touch "$HOME"/.extras.{bashrc,fish}
+touch "$HOME"/.extras.{bash,fish}
 touch "$HOME"/.vimextras
 
 # Link envchain secrets integration for Fish
-if [ -f "$HOME/.dotfiles/apps/fish/envchain_secrets.fish" ]; then
-    link_with_overwrite_check "$HOME/.dotfiles/apps/fish/envchain_secrets.fish" "$HOME/.config/fish/envchain_secrets.fish"
+if [ -f "$DOTFILES_DIR/apps/fish/envchain_secrets.fish" ]; then
+    link_with_overwrite_check "$DOTFILES_DIR/apps/fish/envchain_secrets.fish" "$HOME/.config/fish/envchain_secrets.fish"
 fi
 
+status_msg "Configuring Claude Code..."
 # Claude Code configuration
 mkdir -p "$HOME/.claude"
 # Symlink skills directory and CLAUDE.md
 rm -rf "$HOME/.claude/commands"
-ln -s "$HOME/.dotfiles/ai/prompting/skills" "$HOME/.claude/commands"
-ln -sf "$HOME/.dotfiles/ai/prompting/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
+ln -s "$DOTFILES_DIR/ai/prompting/skills" "$HOME/.claude/commands"
+ln -sf "$DOTFILES_DIR/ai/prompting/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
 
 # Vagrant templates
 mkdir -p "$HOME/.config/vagrant-templates"
-ln -sf "$HOME/.dotfiles/ai/Vagrantfile" "$HOME/.config/vagrant-templates/Vagrantfile"
+ln -sf "$DOTFILES_DIR/ai/Vagrantfile" "$HOME/.config/vagrant-templates/Vagrantfile"
 
-# Install AI integrations
-fish bin/setup_llm.fish
+# Install git hooks for this repo
+# NOTE: When core.hooksPath is set (e.g. to .hooks/), .git/hooks/ is ignored.
+# Link pre-push into .hooks/ so it fires regardless of hooksPath setting.
+ln -sf "$DOTFILES_DIR/bin/pre-push" "$DOTFILES_DIR/.hooks/pre-push"
+
+status_msg "Setting up AI integrations..."
+fish "$DOTFILES_DIR/bin/setup_llm.fish"
+
+status_msg "Setup complete."
