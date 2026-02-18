@@ -6,7 +6,6 @@ GIT_ROOT=$(git rev-parse --show-toplevel)
 
 # Check if lint-staged is installed
 if [ ! -f "$GIT_ROOT/node_modules/.bin/lint-staged" ]; then
-  echo "Warning: lint-staged not found. Run 'pnpm install' to enable pre-commit formatting." >&2
   exit 0
 fi
 
