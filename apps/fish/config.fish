@@ -64,7 +64,7 @@ function ls
     end
 end
 
-set USE_MOSH true
+set USE_MOSH false
 function ssh
     if $USE_MOSH and (type -q mosh)
         echo "Using mosh instead. To disable, set \$USE_MOSH in shell config."
@@ -266,6 +266,6 @@ else
     set -gx PNPM_HOME "$HOME/.local/share/pnpm"
 end
 if not string match -q -- $PNPM_HOME $PATH
-  set -gx PATH "$PNPM_HOME" $PATH
+    set -gx PATH "$PNPM_HOME" $PATH
 end
 # pnpm end
