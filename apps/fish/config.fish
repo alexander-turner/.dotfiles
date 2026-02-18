@@ -69,7 +69,7 @@ function ls
     end
 end
 
-set USE_MOSH true
+set USE_MOSH false
 function ssh
     if $USE_MOSH and (type -q mosh)
         echo "Using mosh instead. To disable, set \$USE_MOSH in shell config."
