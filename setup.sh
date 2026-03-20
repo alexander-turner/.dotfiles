@@ -83,8 +83,8 @@ if [ "$(uname)" = "Darwin" ]; then
     brew services restart autoraise >/dev/null
     link_with_overwrite_check "$DOTFILES_DIR/.AutoRaise" ~/.AutoRaise
 
-    # Aerospace window manager setup
-    brew_quiet_install aerospace
+    # Aerospace window manager setup (requires custom tap)
+    brew_quiet_install --cask nikitabobko/tap/aerospace
     link_with_overwrite_check "$DOTFILES_DIR/.aerospace.toml" ~/.aerospace.toml
 
     # Brew autoupdate: update once a week (604800 seconds) with --sudo.
