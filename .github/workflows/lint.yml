@@ -12,6 +12,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Fish
         run: |
@@ -28,5 +31,14 @@ jobs:
       - name: Install Python tools
         run: pip install yamllint toml
 
-      - name: Run lint checks
-        run: ./bin/lint.sh --ci
+      - name: Auto-fix lint issues
+        run: ./bin/lint.sh --ci --fix
+
+      - name: Commit fixes if any
+        run: |
+          git diff --quiet && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "style: auto-fix lint issues"
+          git push
