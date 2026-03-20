@@ -143,7 +143,6 @@ alias findfile='find / -type f 2> /dev/null | grep'
 alias editbashrc='nvim $HOME/.bashrc'
 alias crontab="export VISUAL=nvim; crontab"
 alias gac="git add :/; git commit -m"
-alias blowitaway="rm -rf"
 alias ls='ls --color="always"'
 
 # Git aliases
