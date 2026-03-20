@@ -1,9 +1,6 @@
 -- bootstrap lazy.nvim, LazyVim and your plugins
 require("config.lazy")
 
--- Include vimrc settings
-vim.cmd("source ~/.vimrc")
-
 -- Only set up LSP when not in VSCode
 if not vim.g.vscode then
   vim.api.nvim_create_autocmd("FileType", {
