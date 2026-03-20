@@ -3,7 +3,7 @@
 echo ":: Installing fonts..."
 
 # Fira Code is the terminal font, has nice ligatures
-brew tap homebrew/cask-font >/dev/null
+# Font casks are now in the main homebrew/cask tap (homebrew/cask-font is deprecated)
 brew install --quiet --cask font-fira-code
 
 # Download Meslo Nerd Font for non-ASCII Tide theme characters
@@ -28,5 +28,5 @@ done
 
 echo -e "\033[1;31m Be sure to install the fira-code and Meslo fonts for your terminal of choice!\033[0m"
 
-# Install Garamond for Obsidian
+# Install Garamond for Obsidian (also in main homebrew/cask tap now)
 brew install --quiet --cask font-eb-garamond
