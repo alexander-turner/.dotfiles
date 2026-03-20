@@ -1,14 +1,19 @@
 #!/bin/bash
 # Shared linting script for both pre-push hook and CI
-# Usage: lint.sh [--ci]
+# Usage: lint.sh [--ci] [--fix]
 #   --ci: CI mode - fail if tools missing, no colors
+#   --fix: Auto-fix issues where possible (shellcheck, stylua)
 
 set -e
 
 CI_MODE=false
-if [[ "$1" == "--ci" ]]; then
-    CI_MODE=true
-fi
+FIX_MODE=false
+for arg in "$@"; do
+    case "$arg" in
+        --ci) CI_MODE=true ;;
+        --fix) FIX_MODE=true ;;
+    esac
+done
 
 # Colors (disabled in CI mode)
 if [[ "$CI_MODE" == true ]]; then
@@ -42,12 +47,24 @@ require_or_skip() {
 check_shellcheck() {
     require_or_skip shellcheck "Shellcheck" || return 0
     echo -n "Shellcheck: "
-    if shellcheck -e SC2016 setup.sh bin/*.sh 2>/dev/null && \
-       shellcheck -s bash -e SC2148 -e SC1090 -e SC1091 -e SC2015 .bashrc 2>/dev/null; then
-        echo -e "${GREEN}passed${NC}"
+    if [[ "$FIX_MODE" == true ]]; then
+        local diff_output
+        diff_output=$(shellcheck -e SC2016 --format=diff setup.sh bin/*.sh 2>/dev/null || true)
+        diff_output+=$(shellcheck -s bash -e SC2148 -e SC1090 -e SC1091 -e SC2015 --format=diff .bashrc 2>/dev/null || true)
+        if [ -n "$diff_output" ]; then
+            echo "$diff_output" | git apply --allow-empty 2>/dev/null || true
+            echo -e "${GREEN}fixed${NC}"
+        else
+            echo -e "${GREEN}passed${NC}"
+        fi
     else
-        echo -e "${RED}failed${NC}"
-        return 1
+        if shellcheck -e SC2016 setup.sh bin/*.sh 2>/dev/null && \
+           shellcheck -s bash -e SC2148 -e SC1090 -e SC1091 -e SC2015 .bashrc 2>/dev/null; then
+            echo -e "${GREEN}passed${NC}"
+        else
+            echo -e "${RED}failed${NC}"
+            return 1
+        fi
     fi
 }
 
@@ -67,11 +84,16 @@ check_fish() {
 check_stylua() {
     require_or_skip stylua "Lua format" || return 0
     echo -n "Lua format: "
-    if stylua --check . 2>/dev/null; then
-        echo -e "${GREEN}passed${NC}"
+    if [[ "$FIX_MODE" == true ]]; then
+        stylua . 2>/dev/null
+        echo -e "${GREEN}fixed${NC}"
     else
-        echo -e "${RED}failed${NC}"
-        return 1
+        if stylua --check . 2>/dev/null; then
+            echo -e "${GREEN}passed${NC}"
+        else
+            echo -e "${RED}failed${NC}"
+            return 1
+        fi
     fi
 }
 
