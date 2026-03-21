@@ -13,8 +13,9 @@ safe_link() {
     if [ -L "$target_file" ] && [ "$(readlink "$target_file")" = "$source_file" ]; then
         return
     fi
-    if [ -e "$target_file" ] && [ "$LINK_ONLY" = false ]; then
-        read -rp "$(basename "$target_file") already exists. Overwrite? (y/N) " choice
+    # Target exists and is a real file (not a symlink) — prompt before clobbering
+    if [ -e "$target_file" ] && [ ! -L "$target_file" ]; then
+        read -rp "$(basename "$target_file") already exists (not a symlink). Overwrite? (y/N) " choice
         case "$choice" in
         y | Y) ln -sf "$source_file" "$target_file" ;;
         *) echo "Skipping $(basename "$target_file")" ;;
@@ -57,8 +58,19 @@ fi
 
 # Neovim config
 NEOVIM_CONFIG_DIR="$HOME/.config/nvim"
-if [ ! -L "$NEOVIM_CONFIG_DIR" ]; then
-    rm -rf "$NEOVIM_CONFIG_DIR"
+if [ -L "$NEOVIM_CONFIG_DIR" ] && [ "$(readlink "$NEOVIM_CONFIG_DIR")" = "$DOTFILES_DIR/apps/nvim" ]; then
+    : # already correct
+elif [ -e "$NEOVIM_CONFIG_DIR" ] && [ ! -L "$NEOVIM_CONFIG_DIR" ]; then
+    read -rp "nvim config dir exists (not a symlink). Overwrite? (y/N) " choice
+    case "$choice" in
+    y | Y)
+        rm -rf "$NEOVIM_CONFIG_DIR"
+        ln -s "$DOTFILES_DIR/apps/nvim" "$NEOVIM_CONFIG_DIR"
+        ;;
+    *) echo "Skipping nvim config" ;;
+    esac
+else
+    rm -f "$NEOVIM_CONFIG_DIR"
     ln -s "$DOTFILES_DIR/apps/nvim" "$NEOVIM_CONFIG_DIR"
 fi
 
@@ -66,18 +78,20 @@ fi
 if [ "$(uname)" = "Darwin" ]; then
     safe_link "$DOTFILES_DIR/.AutoRaise" ~/.AutoRaise
     safe_link "$DOTFILES_DIR/.aerospace.toml" ~/.aerospace.toml
-    ln -sf "$DOTFILES_DIR/apps/com.googlecode.iterm2.plist" ~/Library/com.googlecode.iterm2.plist 2>/dev/null || true
+    safe_link "$DOTFILES_DIR/apps/com.googlecode.iterm2.plist" ~/Library/com.googlecode.iterm2.plist
 fi
 
 # Claude Code
 mkdir -p "$HOME/.claude"
-rm -rf "$HOME/.claude/commands"
+if [ -L "$HOME/.claude/commands" ]; then
+    rm "$HOME/.claude/commands"
+fi
 ln -s "$DOTFILES_DIR/ai/prompting/skills" "$HOME/.claude/commands"
-ln -sf "$DOTFILES_DIR/ai/prompting/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
+safe_link "$DOTFILES_DIR/ai/prompting/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
 
 # Vagrant templates
 mkdir -p "$HOME/.config/vagrant-templates"
-ln -sf "$DOTFILES_DIR/ai/Vagrantfile" "$HOME/.config/vagrant-templates/Vagrantfile"
+safe_link "$DOTFILES_DIR/ai/Vagrantfile" "$HOME/.config/vagrant-templates/Vagrantfile"
 
 # Git hooks for this dotfiles repo
 ln -sf "$DOTFILES_DIR/bin/pre-push" "$DOTFILES_DIR/.hooks/pre-push"
@@ -109,34 +123,24 @@ brew_quiet_install() {
     brew install --quiet "$@"
 }
 
-# Install from Brewfile if available, then handle extras not in Brewfile
-if [ -f "$DOTFILES_DIR/Brewfile" ]; then
-    status_msg "Installing from Brewfile..."
-    brew bundle --quiet --file="$DOTFILES_DIR/Brewfile" || true
-fi
+# Install all brew packages from Brewfile
+status_msg "Installing from Brewfile..."
+brew bundle --quiet --file="$DOTFILES_DIR/Brewfile" || true
 
 # Install fish and configure
 "$DOTFILES_DIR"/bin/install_fish.sh
 
-# Install envchain early -- brew autoupdate on macOS depends on it
-brew_quiet_install envchain
-
 if [ "$(uname)" = "Darwin" ]; then
-    status_msg "Installing macOS packages..."
-    brew_quiet_install neovim pyvim
-    brew_quiet_install libusb pkg-config
-    brew_quiet_install coreutils
-    brew_quiet_install pipx
-    brew_quiet_install wget
+    status_msg "Configuring macOS packages..."
 
     # Automatically focus and raise windows under cursor
     brew tap dimentium/autoraise >/dev/null
     brew_quiet_install autoraise
     brew services restart autoraise >/dev/null
 
-    brew_quiet_install aerospace
-
     # Brew autoupdate: update once a week (604800 seconds) with --sudo.
+    # Uses envchain + SUDO_ASKPASS so the background job can sudo without
+    # a GUI password dialog.
     if ! envchain brew-sudo printenv SUDO_PASSWORD >/dev/null 2>&1; then
         status_msg "Setting up envchain for brew autoupdate sudo access..."
         envchain --set brew-sudo SUDO_PASSWORD
@@ -152,20 +156,17 @@ if [ "$(uname)" = "Darwin" ]; then
         launchctl unload "${AUTOUPDATE_PLIST}.plist" 2>/dev/null || true
         launchctl load "${AUTOUPDATE_PLIST}.plist" 2>/dev/null || true
     fi
-    brew_quiet_install git-credential-manager
 
     # OrbStack: lightweight Docker alternative for macOS
     brew_quiet_install --cask orbstack
 
     # Tailscale VPN daemon
-    brew_quiet_install tailscale
     TAILSCALE_PLIST_DEST="/Library/LaunchDaemons/com.$USER.tailscaled.plist"
     sed "s/__USERNAME__/$USER/g" "$DOTFILES_DIR/launchagents/com.tailscaled.plist.template" \
         | sudo tee "$TAILSCALE_PLIST_DEST" >/dev/null
     sudo launchctl load "$TAILSCALE_PLIST_DEST" 2>/dev/null || true
 
     # Install wally-cli for keyboard flashing
-    brew_quiet_install go
     go install github.com/zsa/wally-cli@latest >/dev/null
 
     # iTerm2 shell integration
@@ -173,22 +174,13 @@ if [ "$(uname)" = "Darwin" ]; then
 
 else # Assume linux
     status_msg "Installing Linux packages..."
-    brew_quiet_install neovim
 
     sudo apt-get update -qq
     sudo apt-get install -y -qq python3-pynvim pipx cron
 fi
 
-brew_quiet_install mosh
-brew_quiet_install xclip
-
-# Install reversible trash option
-brew_quiet_install python
-if ! command_exists pipx; then
-    brew_quiet_install pipx
-fi
+# Install pipx packages (not in Brewfile)
 pipx install --quiet trash-cli
-brew_quiet_install safe-rm
 
 # Clear trash which is over 30 days old, daily
 if command_exists crontab && command_exists trash-empty; then
@@ -201,8 +193,7 @@ if command_exists crontab && command_exists trash-empty; then
 fi
 
 status_msg "Setting up tmux..."
-brew_quiet_install tmux
-
+# Tmux plugin manager setup (must come after tmux is installed)
 TPM_DIR=~/.tmux/plugins/tpm
 if [ ! -d "$TPM_DIR/.git" ]; then
     rm -rf "$TPM_DIR"
@@ -211,13 +202,9 @@ fi
 tmux source ~/.tmux.conf >/dev/null 2>&1 || true
 ~/.tmux/plugins/tpm/bin/install_plugins >/dev/null
 
-brew_quiet_install node pnpm
 pnpm setup >/dev/null
-brew_quiet_install gcc
 
-# Install autoformatters for neovim (conform.nvim)
-brew_quiet_install stylua
-brew_quiet_install ruff
+# Install global npm packages (not in Brewfile)
 pnpm install -g prettier
 if [ "$(uname)" != "Darwin" ]; then
     sudo apt-get install -y libxml2-utils

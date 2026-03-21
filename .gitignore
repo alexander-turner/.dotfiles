@@ -7,6 +7,7 @@ apps/fish/functions/_tide*
 *.tmp*
 .DS_Store
 *orig
+*vimrc
 *lazy-lock.json
 apps/nvim/lazyvim.json
 .aider*/

@@ -17,14 +17,15 @@ brew "stylua"
 brew "ruff"
 
 # macOS-only
-brew "coreutils" if OS.mac?
-brew "pyvim" if OS.mac?
-brew "wget" if OS.mac?
-brew "libusb" if OS.mac?
-brew "pkg-config" if OS.mac?
-brew "aerospace" if OS.mac?
-brew "go" if OS.mac?
-brew "tailscale" if OS.mac?
-brew "git-credential-manager" if OS.mac?
-
-cask "orbstack" if OS.mac?
+if OS.mac?
+  brew "coreutils"
+  brew "pyvim"
+  brew "wget"
+  brew "libusb"
+  brew "pkg-config"
+  brew "aerospace"
+  brew "go"
+  brew "tailscale"
+  brew "git-credential-manager"
+  cask "orbstack"
+end

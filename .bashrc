@@ -58,6 +58,27 @@ alias grep='grep --color=auto'
 alias ll='ls -alF'
 alias la='ls -A'
 
+# Custom aliases
+alias e='exit'
+alias rm='rm -I --preserve-root=all'
+alias findfile='find / -type f -iname "*${1}*" 2>/dev/null'
+alias editbashrc='nvim $HOME/.bashrc'
+alias crontab="export VISUAL=nvim; crontab"
+alias gac="git add :/; git commit -m"
+
+# Git aliases
+alias gs='git status '
+alias ga='git add '
+alias gb='git branch '
+alias gc='git commit'
+alias gd='git diff'
+alias gco='git checkout '
+
+function cdls() {
+    cd "$1" || return
+    ls
+}
+
 # Bash completion
 if ! shopt -oq posix; then
     if [ -f /usr/share/bash-completion/bash_completion ]; then
