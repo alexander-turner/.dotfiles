@@ -40,7 +40,7 @@ Do **NOT** use this skill for:
 ## Prerequisites
 
 - GitHub CLI (`gh`) must be authenticated
-- All changes must be committed to a feature branch (not `main`/`master`)
+- All changes must be committed to a feature branch (not `$CLAUDE_CODE_BASE_REF`/`master`)
 
 ## Updating an Existing PR
 
@@ -56,14 +56,14 @@ Before updating an existing PR (pushing new commits, editing the description, et
 
 ### Step 1: Gather Context
 
-1. Identify the base branch (typically `main` or `master`)
+1. The base branch is in the env variable `$CLAUDE_CODE_BASE_REF`
 2. Run `git diff <base-branch>...HEAD` to see all changes
 3. Run `git log <base-branch>..HEAD --oneline` to see all commits
 4. Review the changed files to understand the scope
 
-### Step 2: Self-Critique (Required)
+### Step 2: Self-Critique
 
-**Before creating the PR**, you MUST read [critique-prompt.md](critique-prompt.md) and launch a critique sub-agent using the Task tool:
+**Before creating the PR**, you MUST read the critique prompt at `.claude/skills/pr-creation/critique-prompt.md` and launch a critique sub-agent using the Task tool:
 
 - `subagent_type`: "general-purpose"
 - `description`: "Critique code changes"
@@ -91,18 +91,31 @@ You MUST read [pr-templates.md](pr-templates.md) for the PR template and formatt
    EXISTING_PR=$(gh pr list --head "$(git branch --show-current)" --json number --jq '.[0].number' 2>/dev/null)
    ```
    If a PR already exists, update it with `gh pr edit` instead of creating a new one.
-3. Create the PR using `gh pr create` with the template from the resource file
+3. Create the PR using `gh pr create` with the template from the resource file. Make sure that you use the target branch
 
-After creating the PR, and after any subsequent fix commits, update the PR description with `gh pr edit --body "..."` to reflect the current state of all changes.
+### Step 6: Update PR Title and Description (after any post-creation changes)
 
-### Step 6: Wait for CI Checks
+If you made any commits after creating the PR (from critique, validation, or CI failures), **always** update the PR title and description to reflect the final state of all changes:
+
+1. Re-read the diff (`git diff $CLAUDE_CODE_BASE_REF...HEAD`) and commit log (`git log $CLAUDE_CODE_BASE_REF..HEAD --oneline`) to see the full scope
+2. Rewrite the title and body to accurately describe the **current totality** of changes, not just the original scope:
+   ```bash
+   gh pr edit <pr-number> --title "<type>: <updated description>" --body "$(cat <<'EOF'
+   <updated body using template from pr-templates.md>
+   EOF
+   )"
+   ```
+
+Skip this step if no commits were made after Step 5.
+
+### Step 7: Wait for CI Checks (MANDATORY)
 
 1. Run `gh pr checks <pr-number> --watch` to monitor
 2. If any checks fail, investigate and fix the issues
-3. Push fixes and wait again
+3. Push fixes, update the PR description (Step 6), and wait again
 4. Only proceed once all checks are green
 
-### Step 7: Report Result
+### Step 8: Report Result
 
 Provide the PR URL and confirm all CI checks have passed.
 
@@ -114,8 +127,8 @@ Provide the PR URL and confirm all CI checks have passed.
 
 **Claude's actions:**
 
-1. Runs `git diff main...HEAD` — sees changes in `src/auth/login.ts` and `tests/auth/login.test.ts`
-2. Runs `git log main..HEAD --oneline` — sees 2 commits
+1. Runs `git diff $CLAUDE_CODE_BASE_REF...HEAD` — sees changes in `src/auth/login.ts` and `tests/auth/login.test.ts`
+2. Runs `git log $CLAUDE_CODE_BASE_REF..HEAD --oneline` — sees 2 commits
 3. Launches critique sub-agent with the diff
 4. Critique returns: "Looks good, minor suggestion to add null check on line 42"
 5. Fixes the null check, commits: `fix: add null check for empty session token`
@@ -133,8 +146,8 @@ Provide the PR URL and confirm all CI checks have passed.
 
 **Claude's actions:**
 
-1. Runs `git diff main...HEAD` — sees changes across 8 files including new components, tests, and API routes
-2. Runs `git log main..HEAD --oneline` — sees 5 commits
+1. Runs `git diff $CLAUDE_CODE_BASE_REF...HEAD` — sees changes across 8 files including new components, tests, and API routes
+2. Runs `git log $CLAUDE_CODE_BASE_REF..HEAD --oneline` — sees 5 commits
 3. Launches critique sub-agent with the full diff
 4. Critique returns 4 issues: unused import, missing error boundary, test not covering edge case, over-engineered helper
 5. Fixes all 4 issues across 2 additional commits
