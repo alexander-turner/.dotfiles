@@ -137,6 +137,11 @@ if [ "$(uname)" = "Darwin" ]; then
     brew tap dimentium/autoraise >/dev/null
     brew_quiet_install autoraise
     brew services restart autoraise >/dev/null
+    safe_link "$DOTFILES_DIR/.AutoRaise" ~/.AutoRaise
+
+    # Aerospace window manager setup (requires custom tap)
+    brew_quiet_install --cask nikitabobko/tap/aerospace
+    safe_link "$DOTFILES_DIR/.aerospace.toml" ~/.aerospace.toml
 
     # Brew autoupdate: update once a week (604800 seconds) with --sudo.
     # Uses envchain + SUDO_ASKPASS so the background job can sudo without

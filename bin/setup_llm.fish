@@ -32,14 +32,25 @@ else
     echo "Warning: codium not found on PATH, skipping extension install"
 end
 
-set CODIUM_USER "$HOME/Library/Application Support/VSCodium/User"
-mkdir -p "$CODIUM_USER"
+switch (uname)
+    case Darwin
+        set CODIUM_USER "$HOME/Library/Application Support/VSCodium/User"
+    case Linux
+        set CODIUM_USER "$HOME/.config/VSCodium/User"
+    case '*'
+        echo "Warning: unsupported OS for VSCodium config, skipping"
+        set CODIUM_USER ""
+end
 
-set GIT_ROOT (git rev-parse --show-toplevel)
+if test -n "$CODIUM_USER"
+    mkdir -p "$CODIUM_USER"
 
-# Force link settings.json and keybindings.json
-ln -sf "$GIT_ROOT/apps/vscodium/settings.json" "$CODIUM_USER/settings.json"
-ln -sf "$GIT_ROOT/apps/vscodium/keybindings.json" "$CODIUM_USER/keybindings.json"
+    set GIT_ROOT (git rev-parse --show-toplevel)
+
+    # Force link settings.json and keybindings.json
+    ln -sf "$GIT_ROOT/apps/vscodium/settings.json" "$CODIUM_USER/settings.json"
+    ln -sf "$GIT_ROOT/apps/vscodium/keybindings.json" "$CODIUM_USER/keybindings.json"
+end
 
 # Start local indexing for semantic search
 if command -q docker
