@@ -76,10 +76,15 @@ llm models default redpill-sonnet 1>/dev/null
 mkdir -p $HOME/.config/prompts
 cp $BIN_DIR/.system-prompt $HOME/.config/prompts/commit-system-prompt.txt
 
-mkdir -p $HOME/.git_hooks
-cp $BIN_DIR/.prepare-commit-msg $HOME/.git_hooks/prepare-commit-msg
+# Install prepare-commit-msg as a git template hook.
+# Using init.templateDir (not core.hooksPath) so repo-local hooks still work.
+# NOTE: init.templateDir is already set in the tracked .gitconfig; these commands
+# only set up the hook file itself.
+mkdir -p $HOME/.git_templates/hooks
+cp $BIN_DIR/.prepare-commit-msg $HOME/.git_templates/hooks/prepare-commit-msg
+chmod +x $HOME/.git_templates/hooks/prepare-commit-msg
 
-chmod +x $HOME/.git_hooks/prepare-commit-msg
-git config --global core.hooksPath ~/.git_hooks
+# Remove core.hooksPath if previously set (it hijacks hooks for all repos)
+git config --global --unset core.hooksPath 2>/dev/null; or true
 
 pipx install --quiet wut 1>/dev/null # explains last output of shell command
