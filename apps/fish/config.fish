@@ -1,4 +1,9 @@
 #!/usr/bin/env fish
+
+if set -q ANTIGRAVITY_AGENT
+  exec bash -c "$argv"
+end
+
 # No default greeting
 set fish_greeting ''
 
@@ -41,8 +46,8 @@ end
 
 abbr -a e exit
 
-function findfile
-    find / -type f 2>/dev/null | grep $argv
+function findfile --description 'Find files by name pattern'
+    find . -type f -iname "*$argv*" 2>/dev/null
 end
 
 abbr -a editbashrc 'nvim ~/.bashrc'
@@ -64,7 +69,7 @@ function ls
     end
 end
 
-set USE_MOSH true
+set USE_MOSH false
 function ssh
     if $USE_MOSH and (type -q mosh)
         echo "Using mosh instead. To disable, set \$USE_MOSH in shell config."
@@ -106,7 +111,7 @@ function yank
     else if $IS_MAC
         pbcopy
     else
-        xclip -sel c
+        clip
     end
 end
 
