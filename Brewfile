@@ -1,4 +1,5 @@
 # Core tools
+brew "gh"
 brew "fish"
 brew "neovim"
 brew "tmux"

@@ -127,6 +127,15 @@ brew_quiet_install() {
 status_msg "Installing from Brewfile..."
 brew bundle --quiet --file="$DOTFILES_DIR/Brewfile" || true
 
+# GitHub CLI — install and authenticate on first login
+if ! command_exists gh; then
+    brew_quiet_install gh
+fi
+if ! gh auth status &>/dev/null; then
+    status_msg "Authenticating GitHub CLI..."
+    gh auth login
+fi
+
 # Install fish and configure
 "$DOTFILES_DIR"/bin/install_fish.sh
 
