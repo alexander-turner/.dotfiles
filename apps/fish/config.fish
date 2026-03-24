@@ -96,10 +96,12 @@ function pip
 end
 
 # Clipboard function differs between macOS and others
-function yank # Copy to clipboard
+function yank
     if set -q SSH_TTY
-        # OSC 52 escape sequence for clipboard passthrough over SSH/mosh
-        set -l data (cat | base64 | tr -d '\n')
+        set -l tmp (mktemp)
+        cat >$tmp
+        set -l data (base64 < $tmp | tr -d '\n')
+        rm $tmp &>/dev/null
         printf '\033]52;c;%s\a' $data
     else if $IS_MAC
         pbcopy
@@ -266,6 +268,6 @@ else
     set -gx PNPM_HOME "$HOME/.local/share/pnpm"
 end
 if not string match -q -- $PNPM_HOME $PATH
-  set -gx PATH "$PNPM_HOME" $PATH
+    set -gx PATH "$PNPM_HOME" $PATH
 end
 # pnpm end
