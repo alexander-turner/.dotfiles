@@ -17,3 +17,4 @@ apps/nvim/lazyvim.json
 apps/fish/functions/_tide*
 apps/fish/functions/tide/
 apps/fish/conf.d/_tide*
+apps/iterm2/com.googlecode.iterm2.plist
