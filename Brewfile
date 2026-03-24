@@ -12,6 +12,9 @@ brew "pipx"
 brew "node"
 brew "pnpm"
 
+# Fonts
+cask "font-fira-code-nerd-font"
+
 # Formatters (conform.nvim)
 brew "stylua"
 brew "ruff"
