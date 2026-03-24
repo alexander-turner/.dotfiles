@@ -5,10 +5,11 @@ name: Sync from Template
 # No setup required - works out of the box.
 #
 # Features:
+# - 3-way merges local customizations with template updates automatically
+# - Falls back to template version + Claude resolution when no merge base exists
 # - Detects new files, changed files, and deleted files from the template
-# - Preserves local customizations (reports conflicts instead of overwriting)
 # - Tracks which template version the repo is synced to (.template-version)
-# - Requests @claude review for conflict resolution
+# - Requests @claude to resolve any remaining conflicts and finalize the merge
 #
 # =============================================================================
 # HANDLING CUSTOMIZATIONS DURING SYNC
@@ -51,16 +52,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout child repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          filter: blob:none
 
       - name: Checkout template repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: ${{ env.TEMPLATE_REPO }}
           path: _template
           token: ${{ secrets.TEMPLATE_SYNC_TOKEN || secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          filter: blob:none
+
+      - name: Check token workflow scope
+        env:
+          TOKEN: ${{ secrets.TEMPLATE_SYNC_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          # GitHub requires 'workflow' scope on PATs to push .github/workflows/ changes.
+          # Check the x-oauth-scopes response header from the GitHub API.
+          SCOPES=$(curl -sS -I -H "Authorization: token $TOKEN" \
+            https://api.github.com/user 2>/dev/null \
+            | grep -i '^x-oauth-scopes:' | sed 's/^[^:]*: //' | tr -d '\r\n' || true)
+
+          if echo "$SCOPES" | tr ',' '\n' | sed 's/^ *//' | grep -qx 'workflow'; then
+            echo "Token has 'workflow' scope."
+          else
+            echo "::error::TEMPLATE_SYNC_TOKEN lacks the 'workflow' scope, which GitHub requires to push changes to .github/workflows/ files. Add the 'workflow' scope to your PAT at https://github.com/settings/tokens and update the TEMPLATE_SYNC_TOKEN repository secret."
+            exit 1
+          fi
 
       - name: Sync template files with conflict detection
         id: sync
@@ -71,6 +92,7 @@ jobs:
           : > /tmp/conflict_files.txt
           : > /tmp/conflict_report.md
           : > /tmp/deleted_files.txt
+          : > /tmp/auto_merged_files.txt
 
           #############################################
           # Version tracking
@@ -78,8 +100,8 @@ jobs:
 
           TEMPLATE_SHA=$(git -C _template rev-parse HEAD)
           TEMPLATE_SHA_SHORT=$(echo "$TEMPLATE_SHA" | head -c 7)
-          echo "template_sha=$TEMPLATE_SHA" >> $GITHUB_OUTPUT
-          echo "template_sha_short=$TEMPLATE_SHA_SHORT" >> $GITHUB_OUTPUT
+          echo "template_sha=$TEMPLATE_SHA" >> "$GITHUB_OUTPUT"
+          echo "template_sha_short=$TEMPLATE_SHA_SHORT" >> "$GITHUB_OUTPUT"
 
           PREV_SHA=""
           if [ -f .template-version ]; then
@@ -92,11 +114,15 @@ jobs:
 
           # Generate changelog between versions if we have a previous SHA
           if [ -n "$PREV_SHA" ] && [ "$PREV_SHA" != "$TEMPLATE_SHA" ]; then
-            CHANGELOG=$(git -C _template log --oneline "$PREV_SHA..$TEMPLATE_SHA" 2>/dev/null || echo "Could not generate changelog (previous SHA may no longer exist)")
+            if git -C _template cat-file -e "$PREV_SHA" 2>/dev/null; then
+              CHANGELOG=$(git -C _template log --oneline "$PREV_SHA..$TEMPLATE_SHA" 2>/dev/null || true)
+            else
+              CHANGELOG="Could not generate changelog (previous SHA may no longer exist)"
+            fi
             if [ -n "$CHANGELOG" ]; then
-              echo "changelog<<CHANGELOG_DELIMITER_8a2b1c" >> $GITHUB_OUTPUT
-              echo "$CHANGELOG" >> $GITHUB_OUTPUT
-              echo "CHANGELOG_DELIMITER_8a2b1c" >> $GITHUB_OUTPUT
+              echo "changelog<<CHANGELOG_DELIMITER_8a2b1c" >> "$GITHUB_OUTPUT"
+              echo "$CHANGELOG" >> "$GITHUB_OUTPUT"
+              echo "CHANGELOG_DELIMITER_8a2b1c" >> "$GITHUB_OUTPUT"
             fi
           fi
 
@@ -241,35 +267,35 @@ jobs:
           # Conflicts
           if [ -s /tmp/conflict_files.txt ]; then
             conflicts=$(tr '\n' ' ' < /tmp/conflict_files.txt)
-            echo "has_conflicts=true" >> $GITHUB_OUTPUT
-            echo "conflict_files=$conflicts" >> $GITHUB_OUTPUT
+            echo "has_conflicts=true" >> "$GITHUB_OUTPUT"
+            echo "conflict_files=$conflicts" >> "$GITHUB_OUTPUT"
 
-            echo "conflict_report<<CONFLICT_REPORT_DELIMITER_7f3d9a" >> $GITHUB_OUTPUT
-            cat /tmp/conflict_report.md >> $GITHUB_OUTPUT
-            echo "CONFLICT_REPORT_DELIMITER_7f3d9a" >> $GITHUB_OUTPUT
+            echo "conflict_report<<CONFLICT_REPORT_DELIMITER_7f3d9a" >> "$GITHUB_OUTPUT"
+            cat /tmp/conflict_report.md >> "$GITHUB_OUTPUT"
+            echo "CONFLICT_REPORT_DELIMITER_7f3d9a" >> "$GITHUB_OUTPUT"
 
             echo "Template updates available for: $conflicts" > .template-sync-conflicts
           else
-            echo "has_conflicts=false" >> $GITHUB_OUTPUT
+            echo "has_conflicts=false" >> "$GITHUB_OUTPUT"
             rm -f .template-sync-conflicts
           fi
 
           # Deletions
           if [ -s /tmp/deleted_files.txt ]; then
             deleted=$(tr '\n' ' ' < /tmp/deleted_files.txt)
-            echo "has_deletions=true" >> $GITHUB_OUTPUT
-            echo "deleted_files=$deleted" >> $GITHUB_OUTPUT
+            echo "has_deletions=true" >> "$GITHUB_OUTPUT"
+            echo "deleted_files=$deleted" >> "$GITHUB_OUTPUT"
           else
-            echo "has_deletions=false" >> $GITHUB_OUTPUT
+            echo "has_deletions=false" >> "$GITHUB_OUTPUT"
           fi
 
           # Changes (new files added or version file updated)
           if git diff --quiet && [ -z "$(git ls-files --others --exclude-standard)" ]; then
-            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
           else
-            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
             changed_paths=$({ git diff --name-only; git ls-files --others --exclude-standard; } | tr '\n' ' ')
-            echo "changed_paths=$changed_paths" >> $GITHUB_OUTPUT
+            echo "changed_paths=$changed_paths" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Show diff (dry run)

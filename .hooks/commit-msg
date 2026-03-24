@@ -14,7 +14,7 @@ fi
 
 # Run commitlint if available via pnpm or npm
 if command -v pnpm >/dev/null 2>&1 && [ -f "$git_root/node_modules/.bin/commitlint" ]; then
-  pnpm exec commitlint --edit "$1"
+  pnpm exec commitlint --edit "$1" --config config/javascript/commitlint.config.js
 elif command -v npm >/dev/null 2>&1 && [ -f "$git_root/node_modules/.bin/commitlint" ]; then
-  npx commitlint --edit "$1"
+  npx commitlint --edit "$1" --config config/javascript/commitlint.config.js
 fi
