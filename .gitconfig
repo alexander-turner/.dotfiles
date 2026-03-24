@@ -9,7 +9,9 @@
 [core]
 	autocrlf = input
 	safecrlf = true
-	hooksPath = ~/.git_hooks
+[init]
+	defaultBranch = main
+	templateDir = ~/.git_templates
 [alias]
 	co = checkout
 	ci = commit
@@ -21,7 +23,7 @@
 [diff]
 	tool = vscode
 [credential]
-	helper = store
+	helper = cache --timeout=86400
 [init]
 	defaultBranch = main
 [pull]

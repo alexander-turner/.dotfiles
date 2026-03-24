@@ -46,8 +46,8 @@ end
 
 abbr -a e exit
 
-function findfile
-    find / -type f 2>/dev/null | grep $argv
+function findfile --description 'Find files by name pattern'
+    find . -type f -iname "*$argv*" 2>/dev/null
 end
 
 abbr -a editbashrc 'nvim ~/.bashrc'

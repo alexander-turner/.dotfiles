@@ -32,14 +32,25 @@ else
     echo "Warning: codium not found on PATH, skipping extension install"
 end
 
-set CODIUM_USER "$HOME/Library/Application Support/VSCodium/User"
-mkdir -p "$CODIUM_USER"
+switch (uname)
+    case Darwin
+        set CODIUM_USER "$HOME/Library/Application Support/VSCodium/User"
+    case Linux
+        set CODIUM_USER "$HOME/.config/VSCodium/User"
+    case '*'
+        echo "Warning: unsupported OS for VSCodium config, skipping"
+        set CODIUM_USER ""
+end
 
-set GIT_ROOT (git rev-parse --show-toplevel)
+if test -n "$CODIUM_USER"
+    mkdir -p "$CODIUM_USER"
 
-# Force link settings.json and keybindings.json
-ln -sf "$GIT_ROOT/apps/vscodium/settings.json" "$CODIUM_USER/settings.json"
-ln -sf "$GIT_ROOT/apps/vscodium/keybindings.json" "$CODIUM_USER/keybindings.json"
+    set GIT_ROOT (git rev-parse --show-toplevel)
+
+    # Force link settings.json and keybindings.json
+    ln -sf "$GIT_ROOT/apps/vscodium/settings.json" "$CODIUM_USER/settings.json"
+    ln -sf "$GIT_ROOT/apps/vscodium/keybindings.json" "$CODIUM_USER/keybindings.json"
+end
 
 # Start local indexing for semantic search
 if command -q docker
@@ -65,10 +76,15 @@ llm models default redpill-sonnet 1>/dev/null
 mkdir -p $HOME/.config/prompts
 cp $BIN_DIR/.system-prompt $HOME/.config/prompts/commit-system-prompt.txt
 
-mkdir -p $HOME/.git_hooks
-cp $BIN_DIR/.prepare-commit-msg $HOME/.git_hooks/prepare-commit-msg
+# Install prepare-commit-msg as a git template hook.
+# Using init.templateDir (not core.hooksPath) so repo-local hooks still work.
+# NOTE: init.templateDir is already set in the tracked .gitconfig; these commands
+# only set up the hook file itself.
+mkdir -p $HOME/.git_templates/hooks
+cp $BIN_DIR/.prepare-commit-msg $HOME/.git_templates/hooks/prepare-commit-msg
+chmod +x $HOME/.git_templates/hooks/prepare-commit-msg
 
-chmod +x $HOME/.git_hooks/prepare-commit-msg
-git config --global core.hooksPath ~/.git_hooks
+# Remove core.hooksPath if previously set (it hijacks hooks for all repos)
+git config --global --unset core.hooksPath 2>/dev/null; or true
 
 pipx install --quiet wut 1>/dev/null # explains last output of shell command
