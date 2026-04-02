@@ -4,6 +4,11 @@ if set -q ANTIGRAVITY_AGENT
   exec bash -c "$argv"
 end
 
+# Auto-launch tmux if not already inside a tmux session
+if status is-interactive; and not set -q TMUX; and command -q tmux
+    exec tmux new-session -A -s main
+end
+
 # No default greeting
 set fish_greeting ''
 
