@@ -17,4 +17,7 @@ if command -v pnpm >/dev/null 2>&1 && [ -f "$git_root/node_modules/.bin/commitli
   pnpm exec commitlint --edit "$1"
 elif command -v npm >/dev/null 2>&1 && [ -f "$git_root/node_modules/.bin/commitlint" ]; then
   npx commitlint --edit "$1"
+else
+  echo "ERROR: commitlint not found. Run 'pnpm install' to set up hooks." >&2
+  exit 1
 fi
