@@ -136,6 +136,13 @@ if [ -f "$PROJECT_DIR/package.json" ]; then
 	fi
 fi
 
+# Ensure commitlint is available for the commit-msg hook
+if ! command -v commitlint &>/dev/null && [ ! -f "$PROJECT_DIR/node_modules/.bin/commitlint" ]; then
+	if command -v npm &>/dev/null; then
+		npm install --silent --save-dev @commitlint/{cli,config-conventional} --prefix "$PROJECT_DIR" || warn "Failed to install commitlint"
+	fi
+fi
+
 if [ -f "$PROJECT_DIR/uv.lock" ] && command -v uv &>/dev/null; then
 	uv sync --quiet || warn "Failed to sync Python dependencies"
 	# Add .venv/bin to PATH so Python tools are available to hooks

@@ -108,8 +108,10 @@ def main() -> None:
     # --- Collect checks to run ---
     failures: list[str] = []
     outputs: list[str] = []
+    checks_run: list[str] = []
 
     def check(name: str, cmd: str) -> None:
+        checks_run.append(name)
         passed, output = _run_check(name, cmd)
         if not passed:
             failures.append(name)
@@ -119,6 +121,13 @@ def main() -> None:
     _check_python(check)
 
     # --- Produce result ---
+    if not checks_run:
+        print(
+            "WARNING: No checks configured — stop hook provides no protection. "
+            "Configure test/lint/check scripts in package.json or add pyproject.toml.",
+            file=sys.stderr,
+        )
+
     if not failures:
         retry_file.unlink(missing_ok=True)
         print(json.dumps({"decision": "approve"}))
