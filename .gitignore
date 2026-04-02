@@ -17,3 +17,4 @@ apps/nvim/lazyvim.json
 apps/fish/functions/_tide*
 apps/fish/functions/tide/
 apps/fish/conf.d/_tide*
+node_modules/
