@@ -23,7 +23,7 @@
 [diff]
 	tool = vscode
 [credential]
-	helper = cache --timeout=86400
+	helper = osxkeychain
 [init]
 	defaultBranch = main
 [pull]

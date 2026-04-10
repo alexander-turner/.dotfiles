@@ -250,6 +250,21 @@ function services_secrets_wrap
     envchain services -- $argv
 end
 
+# Wrap npm so the auth token is available from envchain
+function npm
+    envchain npm command npm $argv
+end
+
+# Wrap rclone so Cloudflare R2 / crypt secrets are available from envchain
+function rclone
+    envchain cloudflare command rclone $argv
+end
+
+# Wrap twine so PyPI token is available from envchain
+function twine
+    envchain pypi command twine $argv
+end
+
 function aider_redpill
     set -l aider_bin (type -p aider)
     set -l aider_flags --edit-format editor-diff
