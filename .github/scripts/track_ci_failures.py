@@ -122,7 +122,7 @@ def main() -> None:
         )
         print(f"Created tracker comment for {workflow_name} failure")
 
-    # Label when all attempts are exhausted
+    # Label when all attempts are exhausted (label may not exist in repo)
     if all_exhausted:
         try:
             gh_api(

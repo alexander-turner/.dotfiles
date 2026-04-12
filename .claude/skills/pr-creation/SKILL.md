@@ -60,6 +60,7 @@ Before updating an existing PR (pushing new commits, editing the description, et
 2. Run `git diff <base-branch>...HEAD` to see all changes
 3. Run `git log <base-branch>..HEAD --oneline` to see all commits
 4. Review the changed files to understand the scope
+5. **Check for PR description guidance** — look for `CONTRIBUTING.md`, `.github/PULL_REQUEST_TEMPLATE.md`, or similar files in the repo. If found, read them and adapt the PR description to follow the repository's conventions (see [pr-templates.md](pr-templates.md) for details)
 
 ### Step 2: Self-Critique
 
@@ -137,8 +138,9 @@ Provide the PR URL and confirm all CI checks have passed.
    ```
    gh pr create --title "fix: handle null session token in login flow" --body "..."
    ```
-8. Watches CI with `gh pr checks 47 --watch` — all green
-9. Reports: "PR #47 created and all CI checks pass: https://github.com/org/repo/pull/47"
+8. Updates PR description to reflect the null-check fix added during critique
+9. Watches CI with `gh pr checks 47 --watch` — all green
+10. Reports: "PR #47 created and all CI checks pass: https://github.com/org/repo/pull/47"
 
 ### Example 2: Multi-Commit Feature
 
@@ -154,15 +156,16 @@ Provide the PR URL and confirm all CI checks have passed.
 6. Re-runs critique (>3 fixes) — clean this time
 7. Runs validation — all pass
 8. Pushes and creates PR with detailed body summarizing the feature
-9. Watches CI — one check fails (lint warning on new file)
-10. Fixes lint issue, pushes, watches again — all green
-11. Reports success with PR URL
+9. Updates PR title and description to reflect all changes including critique fixes
+10. Watches CI — one check fails (lint warning on new file)
+11. Fixes lint issue, pushes, updates PR description again — all green
+12. Reports success with PR URL
 
 ### Example 3: When Input Is Unclear
 
 **User says:** "Push this up"
 
-**Claude asks:** "I see you have changes on branch `feat/user-dashboard`. Would you like me to create a pull request against `main`, or just push the branch without creating a PR?"
+**Claude asks:** "I see you have changes on branch `feat/user-dashboard`. Would you like me to create a pull request against `$CLAUDE_CODE_BASE_REF`, or just push the branch without creating a PR?"
 
 ## Error Handling
 
