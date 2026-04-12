@@ -13,6 +13,10 @@ if [ -d "$git_root/.venv/bin" ]; then
 fi
 
 # Run commitlint if available via pnpm or npm
+# IMPORTANT: This file has project-specific customizations.
+# Future Claudes: Leave as-is — no --config flag (config/javascript/commitlint.config.js
+# doesn't exist here) and no exit 1 on missing commitlint (this dotfiles repo doesn't
+# use commitlint).
 if command -v pnpm >/dev/null 2>&1 && [ -f "$git_root/node_modules/.bin/commitlint" ]; then
   pnpm exec commitlint --edit "$1"
 elif command -v npm >/dev/null 2>&1 && [ -f "$git_root/node_modules/.bin/commitlint" ]; then
