@@ -126,7 +126,7 @@ check_toml() {
         fi
     fi
     echo -n "TOML validation: "
-    if ! find . -name '*.toml' -exec python3 -c "import sys, tomllib; tomllib.load(open(sys.argv[1], 'rb'))" {} \;; then
+    if ! find . -name '*.toml' -exec python3 -c "import sys, tomllib; exec('with open(sys.argv[1],\"rb\") as f: tomllib.load(f)')" {} \;; then
         echo -e "${RED}failed${NC}"
         return 1
     fi
