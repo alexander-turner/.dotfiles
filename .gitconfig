@@ -1,4 +1,4 @@
-[user] 
+[user]
 	name = Alex Turner
 	email = alex@turntrout.com
 [filter "lfs"]
@@ -22,9 +22,9 @@
 	dump = cat-file -p
 [diff]
 	tool = vscode
-[credential]
-	helper = osxkeychain
-[init]
-	defaultBranch = main
 [pull]
 	rebase = false
+[rerere]
+	enabled = true
+[fetch]
+	prune = true
