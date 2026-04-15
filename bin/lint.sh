@@ -116,17 +116,17 @@ check_yaml() {
 
 # TOML validation
 check_toml() {
-    if ! python3 -c "import toml" 2>/dev/null; then
+    if ! python3 -c "import tomllib" 2>/dev/null; then
         if [[ "$CI_MODE" == true ]]; then
-            echo -e "${RED}TOML validation: missing (required in CI)${NC}"
+            echo -e "${RED}TOML validation: missing (requires Python 3.11+)${NC}"
             return 1
         else
-            echo -e "TOML validation: ${YELLOW}skipped (python toml not installed)${NC}"
+            echo -e "TOML validation: ${YELLOW}skipped (Python 3.11+ required)${NC}"
             return 0
         fi
     fi
     echo -n "TOML validation: "
-    if ! find . -name '*.toml' -exec python3 -c "import sys; import toml; toml.load(sys.argv[1])" {} \;; then
+    if ! find . -name '*.toml' -exec python3 -c "import sys, tomllib; tomllib.load(open(sys.argv[1], 'rb'))" {} \;; then
         echo -e "${RED}failed${NC}"
         return 1
     fi
@@ -144,12 +144,12 @@ check_json() {
         return 0
     fi
     local json_failed=0
-    for f in $JSON_FILES; do
+    while IFS= read -r f; do
         if ! python3 -c "import json, sys; json.load(open(sys.argv[1]))" "$f" 2>/dev/null; then
             echo -e "\n  ${RED}Invalid: $f${NC}"
             json_failed=1
         fi
-    done
+    done <<< "$JSON_FILES"
     if [ $json_failed -ne 0 ]; then
         echo -e "${RED}failed${NC}"
         return 1
