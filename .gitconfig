@@ -1,4 +1,4 @@
-[user] 
+[user]
 	name = Alex Turner
 	email = alex@turntrout.com
 [filter "lfs"]
@@ -28,3 +28,7 @@
 	helper = /usr/local/share/gcm-core/git-credential-manager
 [pull]
 	rebase = false
+[rerere]
+	enabled = true
+[fetch]
+	prune = true

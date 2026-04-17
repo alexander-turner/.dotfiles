@@ -32,4 +32,6 @@ if OS.mac?
   brew "tailscale"
   brew "git-credential-manager"
   cask "orbstack"
+  cask "hiddenbar"
+  brew "duti"
 end

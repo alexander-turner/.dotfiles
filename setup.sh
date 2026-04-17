@@ -41,6 +41,7 @@ status_msg "Linking dotfiles..."
 safe_link "$DOTFILES_DIR/.bashrc" "$HOME/.bashrc"
 safe_link "$DOTFILES_DIR/.vimrc" "$HOME/.vimrc"
 safe_link "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"
+safe_link "$DOTFILES_DIR/.npmrc" "$HOME/.npmrc"
 safe_link "$DOTFILES_DIR/.tmux.conf" "$HOME/.tmux.conf"
 
 mkdir -p "$HOME/.config/fish"
@@ -83,10 +84,7 @@ fi
 
 # Claude Code
 mkdir -p "$HOME/.claude"
-if [ -L "$HOME/.claude/commands" ]; then
-    rm "$HOME/.claude/commands"
-fi
-ln -s "$DOTFILES_DIR/ai/prompting/skills" "$HOME/.claude/commands"
+safe_link "$DOTFILES_DIR/ai/prompting/skills" "$HOME/.claude/commands"
 safe_link "$DOTFILES_DIR/ai/prompting/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
 
 # Vagrant templates
@@ -150,11 +148,9 @@ if [ "$(uname)" = "Darwin" ]; then
     brew tap dimentium/autoraise >/dev/null
     brew_quiet_install autoraise
     brew services restart autoraise >/dev/null
-    safe_link "$DOTFILES_DIR/.AutoRaise" ~/.AutoRaise
 
     # Aerospace window manager setup (requires custom tap)
     brew_quiet_install --cask nikitabobko/tap/aerospace
-    safe_link "$DOTFILES_DIR/.aerospace.toml" ~/.aerospace.toml
 
     # Brew autoupdate: update once a week (604800 seconds) with --sudo.
     # Uses envchain + SUDO_ASKPASS so the background job can sudo without
@@ -220,10 +216,10 @@ fi
 tmux source ~/.tmux.conf >/dev/null 2>&1 || true
 ~/.tmux/plugins/tpm/bin/install_plugins >/dev/null
 
-pnpm setup >/dev/null
-
-# Install global npm packages (not in Brewfile)
-pnpm install -g prettier
+if command_exists pnpm; then
+    pnpm setup >/dev/null
+    pnpm install -g prettier
+fi
 if [ "$(uname)" != "Darwin" ]; then
     sudo apt-get install -y libxml2-utils
 fi
