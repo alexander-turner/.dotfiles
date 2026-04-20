@@ -6,7 +6,7 @@ brew install --quiet ollama
 if command -q docker
     docker pull ghcr.io/open-webui/open-webui:main 1>/dev/null
     # Run on startup (unless-stopped) -- skip if container already exists
-    if not docker ps -a --format '{{.Names}}' | string match -q 'open-webui'
+    if not docker ps -a --format '{{.Names}}' | string match -q open-webui
         docker run -d -p 3000:8080 --restart unless-stopped -v open-webui:/app/backend/data --name open-webui ghcr.io/open-webui/open-webui:main 1>/dev/null
     end
 else
@@ -16,6 +16,16 @@ end
 # Set up aider
 brew install --quiet aider
 aider --analytics-disable --yes --exit 2>/dev/null; or true
+
+# Set up Claude Code. pnpm is the chosen package manager for this dotfiles
+# setup (user preference); install.cjs wires up the native binary shim.
+if command -q pnpm
+    pnpm add --global @anthropic-ai/claude-code
+    set -l CLAUDE_INSTALLER (pnpm root -g)/@anthropic-ai/claude-code/install.cjs
+    test -f "$CLAUDE_INSTALLER"; and node "$CLAUDE_INSTALLER"
+else
+    echo "Warning: pnpm not found, skipping Claude Code setup"
+end
 
 # Set up vscodium + roo code
 brew install --quiet --cask vscodium
@@ -27,7 +37,7 @@ set -l GIT_ROOT (git rev-parse --show-toplevel)
 if command -q codium
     while read -l ext
         codium --install-extension $ext 1>/dev/null 2>&1
-    end < $GIT_ROOT/apps/vscodium/extensions.txt
+    end <$GIT_ROOT/apps/vscodium/extensions.txt
 else
     echo "Warning: codium not found on PATH, skipping extension install"
 end
@@ -54,7 +64,7 @@ end
 
 # Start local indexing for semantic search
 if command -q docker
-    if not docker ps -a --format '{{.Names}}' | string match -q 'qdrant'
+    if not docker ps -a --format '{{.Names}}' | string match -q qdrant
         docker run -d \
             --name qdrant \
             --restart unless-stopped \
@@ -70,7 +80,7 @@ pipx install --quiet llm 1>/dev/null
 # Configure Redpill API with Sonnet for commit messages
 set -l LLM_DIR (dirname (llm logs path))
 mkdir -p "$LLM_DIR"
-printf '- model_id: redpill-sonnet\n  model_name: anthropic/claude-sonnet-4.5\n  api_base: "https://api.redpill.ai/v1"\n' > "$LLM_DIR/extra-openai-models.yaml"
+printf '- model_id: redpill-sonnet\n  model_name: anthropic/claude-sonnet-4.5\n  api_base: "https://api.redpill.ai/v1"\n' >"$LLM_DIR/extra-openai-models.yaml"
 llm models default redpill-sonnet 1>/dev/null
 
 mkdir -p $HOME/.config/prompts
