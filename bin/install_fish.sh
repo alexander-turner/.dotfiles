@@ -41,6 +41,9 @@ if [ "$SHELL" != "$FISH_PATH" ]; then
     chsh -s "$FISH_PATH"
 fi
 
+# Fix error in fish with "_tide_right_jobs"
+set -U _tide_right_items status cmd_duration context node python java ruby go time
+
 # Remove conflicting fish_prompt.fish before tide install (tide provides its own)
 rm -f "$HOME/.config/fish/functions/fish_prompt.fish"
 

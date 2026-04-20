@@ -1,4 +1,4 @@
-[user] 
+[user]
 	name = Alex Turner
 	email = alex@turntrout.com
 [filter "lfs"]
@@ -12,6 +12,7 @@
 [init]
 	defaultBranch = main
 	templateDir = ~/.git_templates
+	hooksPath = /Users/alexmturner/.git_hooks
 [alias]
 	co = checkout
 	ci = commit
@@ -23,8 +24,11 @@
 [diff]
 	tool = vscode
 [credential]
-	helper = osxkeychain
-[init]
-	defaultBranch = main
+	helper = cache --timeout=86400
+	helper = /usr/local/share/gcm-core/git-credential-manager
 [pull]
 	rebase = false
+[rerere]
+	enabled = true
+[fetch]
+	prune = true

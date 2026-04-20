@@ -182,7 +182,7 @@ function push
     return $push_status
 end
 
-set -gx PATH $PATH ~/bin ~/.local/bin /usr/local/go/bin
+fish_add_path ~/bin ~/.local/bin /usr/local/go/bin
 set -gx EDITOR nvim
 set -gx SHELL (which fish)
 
@@ -217,8 +217,7 @@ end
 if $IS_MAC
     eval "$(/opt/homebrew/bin/brew shellenv)"
 else
-    set -gx PATH /home/linuxbrew/.linuxbrew/bin $PATH
-    set -gx PATH /home/linuxbrew/.linuxbrew/sbin $PATH
+    fish_add_path /home/linuxbrew/.linuxbrew/bin /home/linuxbrew/.linuxbrew/sbin
 end
 
 # Run extra commands
@@ -284,7 +283,7 @@ end
 # set -x OLLAMA_ORIGINS *
 
 set -x tide_jobs_number_threshold 0
-set -gx PATH $PATH $HOME/go/bin
+fish_add_path $HOME/go/bin
 
 # pnpm
 if $IS_MAC
@@ -296,3 +295,6 @@ if not string match -q -- $PNPM_HOME $PATH
     set -gx PATH "$PNPM_HOME" $PATH
 end
 # pnpm end
+
+# Added by Jetski
+fish_add_path /Users/alexmturner/.jetski/jetski/bin

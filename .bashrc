@@ -61,7 +61,7 @@ alias la='ls -A'
 # Custom aliases
 alias e='exit'
 alias rm='rm -I --preserve-root=all'
-alias findfile='find . -type f -iname "*${1}*" 2>/dev/null'
+findfile() { find . -type f -iname "*${1}*" 2>/dev/null; }
 alias editbashrc='nvim $HOME/.bashrc'
 alias crontab="export VISUAL=nvim; crontab"
 alias gac="git add :/; git commit -m"
@@ -108,5 +108,18 @@ fi
 
 # NVM
 export NVM_DIR="$HOME/.nvm"
+<<<<<<< Updated upstream
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+=======
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                   # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion
+
+# pnpm
+export PNPM_HOME="/Users/alexmturner/Library/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+# pnpm end
+>>>>>>> Stashed changes
