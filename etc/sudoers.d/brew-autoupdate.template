@@ -1,0 +1,9 @@
+# Allow brew to run as root without a password prompt, scoped to the
+# Homebrew binary. Used by `brew autoupdate --sudo` running from launchd
+# so the background updater can install casks that need root without
+# popping a GUI password dialog.
+#
+# This replaces the older envchain + SUDO_ASKPASS setup. Installed by
+# setup.sh as /etc/sudoers.d/brew-autoupdate after `visudo -c` validation.
+# __USERNAME__ is replaced with the installing user's $USER at install time.
+__USERNAME__ ALL=(root) NOPASSWD: /opt/homebrew/bin/brew

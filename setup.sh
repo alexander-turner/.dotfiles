@@ -53,10 +53,6 @@ for aider_file in "$DOTFILES_DIR"/.aider*; do
     fi
 done
 
-if [ -f "$DOTFILES_DIR/apps/fish/envchain_secrets.fish" ]; then
-    safe_link "$DOTFILES_DIR/apps/fish/envchain_secrets.fish" "$HOME/.config/fish/envchain_secrets.fish"
-fi
-
 # Neovim config
 NEOVIM_CONFIG_DIR="$HOME/.config/nvim"
 if [ -L "$NEOVIM_CONFIG_DIR" ] && [ "$(readlink "$NEOVIM_CONFIG_DIR")" = "$DOTFILES_DIR/apps/nvim" ]; then
@@ -125,6 +121,23 @@ brew_quiet_install() {
 status_msg "Installing from Brewfile..."
 brew bundle --quiet --file="$DOTFILES_DIR/Brewfile" || true
 
+# rbw (Bitwarden CLI) bootstrap. Secrets live in Bitwarden; rbw-agent caches
+# the unlocked vault locally. The fish wrappers in apps/fish/config.fish
+# call `rbw get envchain/<ns>/<VAR>` and need rbw configured + unlocked.
+if command_exists rbw; then
+    if ! rbw config show 2>/dev/null | grep -q '"email"'; then
+        if [ -t 0 ]; then
+            read -rp "Bitwarden email for rbw: " bw_email
+            if [ -n "$bw_email" ]; then
+                rbw config set email "$bw_email"
+                status_msg "Run 'rbw login' then 'rbw unlock' to populate the vault cache."
+            fi
+        else
+            status_msg "rbw not configured. Run: rbw config set email <addr>; rbw login; rbw unlock"
+        fi
+    fi
+fi
+
 # GitHub CLI — install and authenticate on first login
 if ! command_exists gh; then
     brew_quiet_install gh
@@ -153,23 +166,22 @@ if [ "$(uname)" = "Darwin" ]; then
     brew_quiet_install --cask nikitabobko/tap/aerospace
 
     # Brew autoupdate: update once a week (604800 seconds) with --sudo.
-    # Uses envchain + SUDO_ASKPASS so the background job can sudo without
-    # a GUI password dialog.
-    if ! envchain brew-sudo printenv SUDO_PASSWORD >/dev/null 2>&1; then
-        status_msg "Setting up envchain for brew autoupdate sudo access..."
-        envchain --set brew-sudo SUDO_PASSWORD
+    # Uses a NOPASSWD sudoers fragment scoped to /opt/homebrew/bin/brew
+    # so the background launchd job can run sudo without prompting.
+    SUDOERS_TEMPLATE="$DOTFILES_DIR/etc/sudoers.d/brew-autoupdate.template"
+    SUDOERS_DEST="/etc/sudoers.d/brew-autoupdate"
+    if [ -f "$SUDOERS_TEMPLATE" ]; then
+        SUDOERS_RENDERED="$(mktemp)"
+        sed "s/__USERNAME__/$USER/g" "$SUDOERS_TEMPLATE" > "$SUDOERS_RENDERED"
+        if sudo visudo -cf "$SUDOERS_RENDERED" >/dev/null; then
+            sudo install -o root -g wheel -m 0440 "$SUDOERS_RENDERED" "$SUDOERS_DEST"
+        else
+            status_msg "WARN: rendered sudoers fragment failed validation; skipping install."
+        fi
+        rm -f "$SUDOERS_RENDERED"
     fi
-    mkdir -p "$HOME/bin"
-    ln -sf "$DOTFILES_DIR/bin/.brew-askpass.sh" "$HOME/bin/.brew-askpass.sh"
     brew tap homebrew/autoupdate 2>/dev/null || true
     brew autoupdate start 604800 --upgrade --cleanup --sudo >/dev/null 2>&1 || true
-    AUTOUPDATE_PLIST="$HOME/Library/LaunchAgents/com.github.domt4.homebrew-autoupdate"
-    if [ -f "${AUTOUPDATE_PLIST}.plist" ]; then
-        defaults write "$AUTOUPDATE_PLIST" EnvironmentVariables \
-            -dict SUDO_ASKPASS "$HOME/bin/.brew-askpass.sh"
-        launchctl unload "${AUTOUPDATE_PLIST}.plist" 2>/dev/null || true
-        launchctl load "${AUTOUPDATE_PLIST}.plist" 2>/dev/null || true
-    fi
 
     # OrbStack: lightweight Docker alternative for macOS
     brew_quiet_install --cask orbstack

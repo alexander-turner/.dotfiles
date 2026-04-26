@@ -242,42 +242,116 @@ end
 
 set -xg NODE_NO_WARNINGS 1
 
-# When you need to expose AI API keys
-# WARNING: Exposes the whole namespace, which may change in the future
+# Secret wrappers backed by Bitwarden via rbw.
+#
+# Each secret lives as a Login item named envchain/<ns>/<VAR>; rbw-agent
+# caches the unlocked vault, so reads are ~10ms after first unlock. Values
+# are captured into local exported variables in begin/end blocks, so they
+# vanish when the block exits (including on early return). `set` is a fish
+# builtin (no fork/exec), so values never appear in any process's argv.
+
+# Fetch one item; abort with non-zero status if rbw is missing, fails, or
+# the item is empty. The `--` guards against item names with leading dashes.
+# Trust model: `$item` is always a hardcoded literal supplied by the wrapper
+# functions below (e.g. "envchain/ai/OPENAI_API_KEY"); it is never derived
+# from user input or the environment. fish's `echo` is a builtin and does
+# not shell-expand interpolated values, so there is no injection surface.
+function _rbw_get --argument-names item
+    if not type -q rbw
+        echo "rbw not installed; run 'brew install rbw'" >&2
+        return 127
+    end
+    set -l value (rbw get -- $item 2>/dev/null)
+    set -l rc $status
+    if test $rc -ne 0
+        echo "rbw: failed to fetch '$item' (rc=$rc) — try 'rbw unlock'" >&2
+        return $rc
+    end
+    if test -z "$value"
+        echo "rbw: '$item' is empty in the vault" >&2
+        return 1
+    end
+    echo -- $value
+end
+
 function ai_secrets_wrap
-    envchain ai -- $argv
+    begin
+        set -lx OPENAI_API_KEY (_rbw_get envchain/ai/OPENAI_API_KEY); or return 1
+        set -lx ANTHROPIC_API_KEY (_rbw_get envchain/ai/ANTHROPIC_API_KEY); or return 1
+        set -lx GEMINI_API_KEY (_rbw_get envchain/ai/GEMINI_API_KEY); or return 1
+        set -lx REDPILL_API_KEY (_rbw_get envchain/ai/REDPILL_API_KEY); or return 1
+        set -lx CODEGPT_API_KEY (_rbw_get envchain/ai/CODEGPT_API_KEY); or return 1
+        set -lx VENICE_INFERENCE_KEY (_rbw_get envchain/ai/VENICE_INFERENCE_KEY); or return 1
+        $argv
+    end
 end
 
 function cloudflare_secrets_wrap
-    envchain cloudflare -- $argv
+    begin
+        set -lx CLOUDFLARE_API_TOKEN (_rbw_get envchain/cloudflare/CLOUDFLARE_API_TOKEN); or return 1
+        set -lx CLOUDFLARE_ACCOUNT_ID (_rbw_get envchain/cloudflare/CLOUDFLARE_ACCOUNT_ID); or return 1
+        set -lx CLOUDFLARE_ZONE_ID (_rbw_get envchain/cloudflare/CLOUDFLARE_ZONE_ID); or return 1
+        set -lx CLOUDFLARE_TESTING_HEADER (_rbw_get envchain/cloudflare/CLOUDFLARE_TESTING_HEADER); or return 1
+        set -lx S3_ENDPOINT_ID_TURNTROUT_MEDIA (_rbw_get envchain/cloudflare/S3_ENDPOINT_ID_TURNTROUT_MEDIA); or return 1
+        set -lx ACCESS_KEY_ID_TURNTROUT_MEDIA (_rbw_get envchain/cloudflare/ACCESS_KEY_ID_TURNTROUT_MEDIA); or return 1
+        set -lx SECRET_ACCESS_TURNTROUT_MEDIA (_rbw_get envchain/cloudflare/SECRET_ACCESS_TURNTROUT_MEDIA); or return 1
+        set -lx TOKEN_VALUE_TURNTROUT_MEDIA (_rbw_get envchain/cloudflare/TOKEN_VALUE_TURNTROUT_MEDIA); or return 1
+        set -lx RCLONE_CONFIG_R2_ACCESS_KEY_ID (_rbw_get envchain/cloudflare/RCLONE_CONFIG_R2_ACCESS_KEY_ID); or return 1
+        set -lx RCLONE_CONFIG_R2_SECRET_ACCESS_KEY (_rbw_get envchain/cloudflare/RCLONE_CONFIG_R2_SECRET_ACCESS_KEY); or return 1
+        set -lx RCLONE_CONFIG_B2_CRYPT_PASSWORD (_rbw_get envchain/cloudflare/RCLONE_CONFIG_B2_CRYPT_PASSWORD); or return 1
+        $argv
+    end
 end
 
 function services_secrets_wrap
-    envchain services -- $argv
+    begin
+        set -lx DEEPSOURCE_DSN (_rbw_get envchain/services/DEEPSOURCE_DSN); or return 1
+        set -lx ORIGINSTAMP_API_KEY (_rbw_get envchain/services/ORIGINSTAMP_API_KEY); or return 1
+        set -lx LOST_PIXEL_PROJECT_ID (_rbw_get envchain/services/LOST_PIXEL_PROJECT_ID); or return 1
+        set -lx LOST_PIXEL_API_KEY (_rbw_get envchain/services/LOST_PIXEL_API_KEY); or return 1
+        $argv
+    end
 end
 
-# Wrap npm so the auth token is available from envchain
+# Wrap npm so the auth token is available for publishes.
+# `command npm` invokes the real npm binary, bypassing this function.
 function npm
-    envchain npm command npm $argv
+    begin
+        set -lx NPM_TOKEN (_rbw_get envchain/npm/NPM_TOKEN); or return 1
+        command npm $argv
+    end
 end
 
-# Wrap rclone so Cloudflare R2 / crypt secrets are available from envchain
+# Wrap rclone so Cloudflare R2 / B2 crypt secrets are available.
 function rclone
-    envchain cloudflare command rclone $argv
+    cloudflare_secrets_wrap command rclone $argv
 end
 
-# Wrap twine so PyPI token is available from envchain
+# Wrap twine so PyPI token is available.
 function twine
-    envchain pypi command twine $argv
+    begin
+        set -lx TWINE_USERNAME (_rbw_get envchain/pypi/TWINE_USERNAME); or return 1
+        set -lx TWINE_PASSWORD (_rbw_get envchain/pypi/TWINE_PASSWORD); or return 1
+        set -lx PYPI_TOKEN (_rbw_get envchain/pypi/PYPI_TOKEN); or return 1
+        command twine $argv
+    end
 end
 
+# Aider via Redpill only needs REDPILL_API_KEY (mapped to OPENAI_API_KEY),
+# so we fetch just that one secret rather than calling ai_secrets_wrap and
+# loading the full namespace.
 function aider_redpill
     set -l aider_bin (type -p aider)
     set -l aider_flags --edit-format editor-diff
-
-    # We export AIDER_MODEL with the 'openai/' prefix. 
-    # This forces LiteLLM to use the OpenAI client for the Redpill endpoint.
-    envchain ai /bin/sh -c 'export OPENAI_API_KEY=$REDPILL_API_KEY; export OPENAI_API_BASE=https://api.redpill.ai/v1; export AIDER_MODEL=openai/anthropic/claude-sonnet-4.5; exec "$0" "$@"' "$aider_bin" $aider_flags $argv
+    begin
+        # Redpill exposes an OpenAI-compatible API, so we feed Aider's OpenAI
+        # client the Redpill key + base URL. The 'openai/' prefix on
+        # AIDER_MODEL forces LiteLLM to dispatch through the OpenAI client.
+        set -lx OPENAI_API_KEY (_rbw_get envchain/ai/REDPILL_API_KEY); or return 1
+        set -lx OPENAI_API_BASE https://api.redpill.ai/v1
+        set -lx AIDER_MODEL openai/anthropic/claude-sonnet-4.5
+        $aider_bin $aider_flags $argv
+    end
 end
 
 # set -x OLLAMA_ORIGINS *

@@ -27,7 +27,7 @@ Features (configurable by changing `setup.sh`):
 7. Installs `tmux` with the `tmux-restore` and `tmux-continuum` plugins. Basically, this means that your `tmux` sessions will be saved and restored automatically. No more losing your work when your computer crashes!
 8. Installs `AutoRaise`, which automatically focuses the window under the cursor (after a delay).
 9. Automatically uses `mosh` instead of `ssh`. `mosh` is a more robust version of `ssh` which can handle network changes and disconnections more gracefully. It generally presents a lower-latency user experience.
-10. Installs `envchain` for secure secret management via OS keychain. Store API keys and credentials hardware-encrypted instead of in plaintext config files.
+10. Installs [`rbw`](https://github.com/doy/rbw) (a fast Rust Bitwarden CLI) for secret management. API keys and credentials live encrypted in your Bitwarden vault and sync across machines automatically.
 11. Configures open source AI-powered development tools:
     - Automatic commit message generation,
     - Local LLM support with Ollama and Open WebUI,
@@ -65,33 +65,46 @@ echo "Never gonna give you up" | goosesay
                             `.'´
 ```
 
-This script creates `~/.extras.fish` and `~/.extras.bash`, which are automatically sourced by `config.fish` and `.bashrc`. These files are not tracked by version control --- include commands you only want for the current machine, but use `envchain` for secret management.
+This script creates `~/.extras.fish` and `~/.extras.bash`, which are automatically sourced by `config.fish` and `.bashrc`. These files are not tracked by version control --- include commands you only want for the current machine, but use Bitwarden (via `rbw`) for secret management.
 
-## Secure secret management with [`envchain`](https://github.com/sorah/envchain)
+## Secure secret management with [`rbw`](https://github.com/doy/rbw) + Bitwarden
 
-- Hardware-encrypted via MacOS Secure Enclave or Linux gnome-keyring
-- No plaintext secrets in config files or git repositories
-- Auto-unlocks with your OS (low friction)
+- Encrypted at rest in your Bitwarden vault; only the unlocked plaintext lives in `rbw-agent` memory
+- Syncs across every machine logged into your Bitwarden account
+- `rbw-agent` caches the unlocked vault, so reads are ~10ms
 
-### How to set secrets
-
-```fish
-envchain --set ai OPENAI_API_KEY
-envchain --set ai ANTHROPIC_API_KEY
-envchain --set cloudflare CLOUDFLARE_API_TOKEN
-```
-
-### How to grant access to secrets
-
-You'll need to wrap commands with the keys you want to grant access to.
+### One-time setup
 
 ```fish
-# Granular access to specific keys
-function run_push_checks
-    set -l service_keys DEEPSOURCE_DSN LOST_PIXEL_PROJECT_ID LOST_PIXEL_API_KEY
-    envchain services $service_keys -- python ~/Downloads/TurnTrout.com/scripts/run_push_checks.py $argv
-end
+brew install rbw
+rbw config set email <your-bitwarden-email>
+rbw login
+rbw unlock
 ```
+
+### Naming convention
+
+Each secret is stored as a Bitwarden Login item named `envchain/<namespace>/<VAR>`, in a folder called `envchain`. The fish wrappers (`ai_secrets_wrap`, `cloudflare_secrets_wrap`, `npm`, `rclone`, `twine`, `aider_redpill`, ...) call `rbw get` against these names.
+
+### Adding a new secret
+
+```fish
+rbw add envchain/ai/NEW_KEY    # paste the value when prompted
+rbw sync                        # other machines pick it up automatically
+```
+
+Then add a corresponding `set -lx NEW_KEY (_rbw_get envchain/ai/NEW_KEY); or return 1` line inside the relevant wrapper in `apps/fish/config.fish`.
+
+### Migrating from envchain
+
+If you previously used envchain on this machine, run the one-time migration script:
+
+```fish
+export BW_SESSION=(bw unlock --raw)
+bash bin/migrate-envchain-to-bitwarden.sh
+```
+
+It pipes each envchain value into `bw create item` via stdin without ever logging the value.
 
 ## Reinstalling programs using `brew`
 
