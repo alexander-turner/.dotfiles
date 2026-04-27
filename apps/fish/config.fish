@@ -67,8 +67,10 @@ function crontab
 end
 
 function ls
-    if $IS_MAC; and command -q gls
+    if command -q gls
         gls --color="always" --ignore-backups --hide="*.bak" $argv
+    else if $IS_MAC
+        command ls $argv
     else
         command ls --color="always" --ignore-backups --hide="*.bak" $argv
     end

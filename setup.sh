@@ -88,7 +88,7 @@ mkdir -p "$HOME/.config/vagrant-templates"
 safe_link "$DOTFILES_DIR/ai/Vagrantfile" "$HOME/.config/vagrant-templates/Vagrantfile"
 
 # Git hooks for this dotfiles repo (relative symlink so the repo is portable)
-ln -sf "../bin/pre-push" "$DOTFILES_DIR/.hooks/pre-push"
+safe_link "../bin/pre-push" "$DOTFILES_DIR/.hooks/pre-push"
 
 touch "$HOME"/.extras.{bash,fish}
 touch "$HOME"/.hushlogin
