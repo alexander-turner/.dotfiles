@@ -27,6 +27,14 @@ else
     echo "Warning: pnpm not found, skipping Claude Code setup"
 end
 
+# Link Claude Code global config from this dotfiles repo
+set -l DOTFILES_DIR (dirname (dirname (status -f)))
+set -l SAFE_LINK $BIN_DIR/lib/safe_link.sh
+mkdir -p $HOME/.claude
+bash $SAFE_LINK $DOTFILES_DIR/ai/prompting/skills $HOME/.claude/commands
+bash $SAFE_LINK $DOTFILES_DIR/ai/prompting/CLAUDE.md $HOME/.claude/CLAUDE.md
+bash $SAFE_LINK $DOTFILES_DIR/ai/prompting/settings.json $HOME/.claude/settings.json
+
 # Set up vscodium + roo code
 brew install --quiet --cask vscodium
 
