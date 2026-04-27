@@ -48,25 +48,29 @@ prompt_with_default_skip() {
     printf -v "$varname" '%s' "$value"
 }
 
-prompt_with_default_skip "Bitwarden API client_id" CLIENT_ID
-if [ -z "${CLIENT_ID:-}" ]; then
-    echo "Skipping bw bootstrap (no API client_id provided)."
-    exit 0
+# Skip the API-key login step if bw already has a session (logged in or
+# locked). Running bw login --apikey while already logged in is an error,
+# and re-prompting the user for credentials they already entered is rude.
+if bw status --raw 2>/dev/null | grep -qE '"status":"(locked|unlocked)"'; then
+    echo "bw already logged in; skipping API-key step."
+else
+    prompt_with_default_skip "Bitwarden API client_id" CLIENT_ID
+    if [ -z "${CLIENT_ID:-}" ]; then
+        echo "Skipping bw bootstrap (no API client_id provided)."
+        exit 0
+    fi
+    prompt_with_default_skip "Bitwarden API client_secret" CLIENT_SECRET hidden
+    [ -n "${CLIENT_SECRET:-}" ] || { echo "client_secret required when client_id is set." >&2; exit 1; }
+
+    # Stash API creds (combined as "id:secret" in a single keychain item).
+    security add-generic-password \
+        -s bw-api-credentials -a "$USER" -U \
+        -w "$CLIENT_ID:$CLIENT_SECRET" >/dev/null
+
+    # Login via API key. Values come from env, not argv.
+    BW_CLIENTID="$CLIENT_ID" BW_CLIENTSECRET="$CLIENT_SECRET" bw login --apikey >/dev/null
+    unset CLIENT_ID CLIENT_SECRET
 fi
-prompt_with_default_skip "Bitwarden API client_secret" CLIENT_SECRET hidden
-[ -n "${CLIENT_SECRET:-}" ] || { echo "client_secret required when client_id is set." >&2; exit 1; }
-
-# Stash API creds (combined as "id:secret" in a single keychain item).
-security add-generic-password \
-    -s bw-api-credentials -a "$USER" -U \
-    -w "$CLIENT_ID:$CLIENT_SECRET" >/dev/null
-
-# Logout first if already logged in (avoids "you are already logged in" error).
-bw logout >/dev/null 2>&1 || true
-
-# Login via API key. Values come from env, not argv.
-BW_CLIENTID="$CLIENT_ID" BW_CLIENTSECRET="$CLIENT_SECRET" bw login --apikey >/dev/null
-unset CLIENT_ID CLIENT_SECRET
 
 prompt_with_default_skip "Bitwarden master password" MASTER hidden
 if [ -z "${MASTER:-}" ]; then
@@ -80,8 +84,12 @@ security add-generic-password \
     -s bw-master-password -a "$USER" -U \
     -w "$MASTER" >/dev/null
 
-# Unlock and run initial seed.
-BW_SESSION=$(printf '%s' "$MASTER" | bw unlock --raw)
+# Unlock and run initial seed. Pass master password via `--passwordenv`
+# rather than stdin — bw on newer Node versions has an inquirer bug
+# (`ERR_USE_AFTER_CLOSE`) when stdin closes after a piped password.
+# BW_PASSWORD is scoped to just the bw subprocess; same threat model as
+# the stdin pipe (env vars are not in argv/ps on macOS).
+BW_SESSION=$(BW_PASSWORD="$MASTER" bw unlock --raw --passwordenv BW_PASSWORD)
 unset MASTER
 export BW_SESSION
 

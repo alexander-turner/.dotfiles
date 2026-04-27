@@ -55,9 +55,11 @@ fi
 # from a master password cached in the macOS Keychain.
 if [ -z "${BW_SESSION:-}" ]; then
     if mp=$(security find-generic-password -s bw-master-password -a "$USER" -w 2>/dev/null); then
-        # Pipe the password into bw via stdin; never appears on argv.
-        BW_SESSION=$(printf '%s' "$mp" | bw unlock --raw --passwordenv BW_DUMMY 2>/dev/null \
-            || printf '%s' "$mp" | bw unlock --raw 2>/dev/null) || {
+        # Pass the password to bw via env (`--passwordenv`); the variable
+        # is scoped to just the bw subprocess and never enters argv. We
+        # avoid stdin piping because bw on newer Node versions has an
+        # inquirer bug that crashes (ERR_USE_AFTER_CLOSE) on piped input.
+        BW_SESSION=$(BW_PASSWORD="$mp" bw unlock --raw --passwordenv BW_PASSWORD 2>/dev/null) || {
             err "bw unlock: cached master password rejected. Re-run setup.sh."
             unset mp
             exit 1

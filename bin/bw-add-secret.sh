@@ -37,7 +37,8 @@ fi
 
 if [ -z "${BW_SESSION:-}" ]; then
     if mp=$(security find-generic-password -s bw-master-password -a "$USER" -w 2>/dev/null); then
-        BW_SESSION=$(printf '%s' "$mp" | bw unlock --raw 2>/dev/null) || {
+        # See bw-login.sh for why we use --passwordenv instead of stdin.
+        BW_SESSION=$(BW_PASSWORD="$mp" bw unlock --raw --passwordenv BW_PASSWORD 2>/dev/null) || {
             echo "bw unlock failed; re-run setup.sh." >&2
             unset mp
             exit 1
