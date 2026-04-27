@@ -19,8 +19,8 @@ Features (configurable by changing `setup.sh`):
 ![Compares tide theme configurations for the fish shell.](https://github.com/IlanCosman/tide/raw/assets/images/header.png)
 
 3. Installs [`autojump`](https://github.com/wting/autojump) for quick directory navigation. Once you've been to directory `dir`, just hit `j dir` to go back there.
-4. Installs `neovim` and sets it as default editor. Furthermore, sets up `Lazynvim`, which is basically a full-fledged IDE.
-   ![Showing off the Lazynvim CLI IDE.](https://user-images.githubusercontent.com/292349/213447056-92290767-ea16-430c-8727-ce994c93e9cc.png)
+4. Installs `neovim` and sets it as default editor. Furthermore, sets up `LazyVim`, which is basically a full-fledged IDE.
+   ![Showing off the LazyVim CLI IDE.](https://user-images.githubusercontent.com/292349/213447056-92290767-ea16-430c-8727-ce994c93e9cc.png)
 
 5. Installs a bunch of nice shortcuts, including `git` aliases (e.g. `git add` -> `ga`).
 6. Overrides `rm` in favor of the reversible `tp` (`trash-put`) command. No more accidentally permanently deleting crucial files!
@@ -121,7 +121,7 @@ Values pipe stdin→stdin from envchain into `bw create item`; nothing is logged
 
 ## Reinstalling programs using `brew`
 
-`mac_brew.txt` contains a list of programs which I like using on my personal Mac. To install these, use `fish bin/install_apps.fish`.
+`Brewfile` contains a list of programs which I like using on my personal Mac. To install these, run `brew bundle --file=Brewfile`.
 
 ## Other notes
 
