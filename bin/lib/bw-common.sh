@@ -1,7 +1,7 @@
 # Shared helpers for the bw-* scripts in this directory. Source from a
 # script via:
 #
-#     DOTFILES_DIR="$(cd "$(dirname "$0")"/.. && pwd)"
+#     DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
 #     source "$DOTFILES_DIR/bin/lib/bw-common.sh"
 #
 # All functions return non-zero on failure. Callers should `|| exit` after

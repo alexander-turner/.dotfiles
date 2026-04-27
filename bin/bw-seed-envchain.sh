@@ -14,7 +14,7 @@
 
 set -euo pipefail
 
-DOTFILES_DIR="$(cd "$(dirname "$0")"/.. && pwd)"
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
 source "$DOTFILES_DIR/bin/lib/bw-common.sh"
 
 QUIET=0
