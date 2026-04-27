@@ -121,21 +121,27 @@ brew_quiet_install() {
 status_msg "Installing from Brewfile..."
 brew bundle --quiet --file="$DOTFILES_DIR/Brewfile" || true
 
-# rbw (Bitwarden CLI) bootstrap. Secrets live in Bitwarden; rbw-agent caches
-# the unlocked vault locally. The fish wrappers in apps/fish/config.fish
-# call `rbw get envchain/<ns>/<VAR>` and need rbw configured + unlocked.
-if command_exists rbw; then
-    if ! rbw config show 2>/dev/null | grep -q '"email"'; then
-        if [ -t 0 ]; then
-            read -rp "Bitwarden email for rbw: " bw_email
-            if [ -n "$bw_email" ]; then
-                rbw config set email "$bw_email"
-                status_msg "Run 'rbw login' then 'rbw unlock' to populate the vault cache."
-            fi
-        else
-            status_msg "rbw not configured. Run: rbw config set email <addr>; rbw login; rbw unlock"
-        fi
+# Bitwarden CLI bootstrap. Bitwarden is the cross-machine source of truth
+# for secrets; envchain is the local runtime cache. We use the personal
+# API key flow (so WebAuthn-only accounts work) and stash both the API
+# credentials and the master password in macOS Keychain so the seeder
+# can run unattended at shell startup.
+#
+# All prompts inside bw-login.sh are skippable (empty input).
+if command_exists bw && [ -t 0 ]; then
+    # `bw status` exits 0 with JSON containing status: "unauthenticated" |
+    # "locked" | "unlocked". We grep for the logged-in markers; absence ==
+    # not logged in (the safe default that triggers the bootstrap prompt).
+    if ! bw status --raw 2>/dev/null | grep -qE '"status":"(locked|unlocked)"'; then
+        status_msg "Bitwarden CLI not logged in."
+        read -rp "Run bw login bootstrap now? (y/N) " choice
+        case "$choice" in
+            y|Y) bash "$DOTFILES_DIR/bin/bw-login.sh" || status_msg "bw bootstrap skipped/failed; rerun bin/bw-login.sh later." ;;
+            *)   status_msg "Skipping. Rerun later with: bash $DOTFILES_DIR/bin/bw-login.sh" ;;
+        esac
     fi
+elif ! command_exists bw; then
+    status_msg "WARN: bw (bitwarden-cli) not installed; check Brewfile."
 fi
 
 # GitHub CLI — install and authenticate on first login

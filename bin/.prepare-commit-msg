@@ -45,15 +45,9 @@ spin_animation &
 spin_pid=$!  # Capture the process ID of the spinning animation
 
 # Generate the commit message via `llm` over Redpill's OpenAI-compatible
-# endpoint. We replicate the prior envchain-based pattern, just sourcing
-# the key from Bitwarden via rbw instead. The vault item NAME below is
-# not a secret; only its VALUE is, and that value is scoped to a single
-# `llm` invocation via inline-prefix env (no export, no argv exposure).
-if ! redpill_key=$(rbw get -- envchain/ai/REDPILL_API_KEY 2>/dev/null); then
-  printf "${RED}Error: could not fetch Redpill API key from rbw. Run 'rbw unlock' and retry.${NC}\n"
-  exit 1
-fi
-if ! commit_msg=$(git diff --cached | OPENAI_API_KEY="$redpill_key" llm -s "$(cat ~/.config/prompts/commit-system-prompt.txt)" 2>&1); then
+# endpoint. envchain ai exports REDPILL_API_KEY (and others) into the sh
+# child; we re-export it as OPENAI_API_KEY for just the llm invocation.
+if ! commit_msg=$(git diff --cached | envchain ai sh -c 'OPENAI_API_KEY="$REDPILL_API_KEY" exec llm -s "$(cat ~/.config/prompts/commit-system-prompt.txt)"' 2>&1); then
   # Stop the spinning animation by killing its process
   kill $spin_pid
   wait $spin_pid 2>/dev/null  # Wait for the process to terminate and suppress error messages
