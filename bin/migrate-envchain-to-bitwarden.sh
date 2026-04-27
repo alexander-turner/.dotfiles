@@ -33,8 +33,19 @@ require bw
 require jq
 
 if [ -z "${BW_SESSION:-}" ]; then
-    echo "BW_SESSION not set. Run: export BW_SESSION=\$(bw unlock --raw)" >&2
-    exit 1
+    if mp=$(security find-generic-password -s bw-master-password -a "$USER" -w 2>/dev/null); then
+        # See bw-login.sh: pass via --passwordenv to dodge bw's stdin/inquirer bug.
+        BW_SESSION=$(BW_PASSWORD="$mp" bw unlock --raw --passwordenv BW_PASSWORD 2>/dev/null) || {
+            echo "bw unlock failed; cached master password rejected." >&2
+            unset mp
+            exit 1
+        }
+        unset mp
+        export BW_SESSION
+    else
+        echo "BW_SESSION not set and no cached master password. Run bin/bw-login.sh first." >&2
+        exit 1
+    fi
 fi
 
 bw sync >/dev/null
