@@ -244,116 +244,74 @@ end
 
 set -xg NODE_NO_WARNINGS 1
 
-# Secret wrappers backed by Bitwarden via rbw.
-#
-# Each secret lives as a Login item named envchain/<ns>/<VAR>; rbw-agent
-# caches the unlocked vault, so reads are ~10ms after first unlock. Values
-# are captured into local exported variables in begin/end blocks, so they
-# vanish when the block exits (including on early return). `set` is a fish
-# builtin (no fork/exec), so values never appear in any process's argv.
-
-# Fetch one item; abort with non-zero status if rbw is missing, fails, or
-# the item is empty. The `--` guards against item names with leading dashes.
-# Trust model: `$item` is always a hardcoded literal supplied by the wrapper
-# functions below (e.g. "envchain/ai/OPENAI_API_KEY"); it is never derived
-# from user input or the environment. fish's `echo` is a builtin and does
-# not shell-expand interpolated values, so there is no injection surface.
-function _rbw_get --argument-names item
-    if not type -q rbw
-        echo "rbw not installed; run 'brew install rbw'" >&2
-        return 127
-    end
-    set -l value (rbw get -- $item 2>/dev/null)
-    set -l rc $status
-    if test $rc -ne 0
-        echo "rbw: failed to fetch '$item' (rc=$rc) — try 'rbw unlock'" >&2
-        return $rc
-    end
-    if test -z "$value"
-        echo "rbw: '$item' is empty in the vault" >&2
-        return 1
-    end
-    echo -- $value
-end
+# Secret wrappers: envchain reads secrets from the macOS Keychain, which is
+# auto-unlocked at GUI login (zero-prompt runtime). Bitwarden is the
+# cross-machine source of truth; values are pulled into envchain by
+# bin/bw-seed-envchain.sh (run on demand via `bwseed` and as a throttled
+# shell-startup background job below). See README for the data flow.
 
 function ai_secrets_wrap
-    begin
-        set -lx OPENAI_API_KEY (_rbw_get envchain/ai/OPENAI_API_KEY); or return 1
-        set -lx ANTHROPIC_API_KEY (_rbw_get envchain/ai/ANTHROPIC_API_KEY); or return 1
-        set -lx GEMINI_API_KEY (_rbw_get envchain/ai/GEMINI_API_KEY); or return 1
-        set -lx REDPILL_API_KEY (_rbw_get envchain/ai/REDPILL_API_KEY); or return 1
-        set -lx CODEGPT_API_KEY (_rbw_get envchain/ai/CODEGPT_API_KEY); or return 1
-        set -lx VENICE_INFERENCE_KEY (_rbw_get envchain/ai/VENICE_INFERENCE_KEY); or return 1
-        $argv
-    end
+    envchain ai -- $argv
 end
 
 function cloudflare_secrets_wrap
-    begin
-        set -lx CLOUDFLARE_API_TOKEN (_rbw_get envchain/cloudflare/CLOUDFLARE_API_TOKEN); or return 1
-        set -lx CLOUDFLARE_ACCOUNT_ID (_rbw_get envchain/cloudflare/CLOUDFLARE_ACCOUNT_ID); or return 1
-        set -lx CLOUDFLARE_ZONE_ID (_rbw_get envchain/cloudflare/CLOUDFLARE_ZONE_ID); or return 1
-        set -lx CLOUDFLARE_TESTING_HEADER (_rbw_get envchain/cloudflare/CLOUDFLARE_TESTING_HEADER); or return 1
-        set -lx S3_ENDPOINT_ID_TURNTROUT_MEDIA (_rbw_get envchain/cloudflare/S3_ENDPOINT_ID_TURNTROUT_MEDIA); or return 1
-        set -lx ACCESS_KEY_ID_TURNTROUT_MEDIA (_rbw_get envchain/cloudflare/ACCESS_KEY_ID_TURNTROUT_MEDIA); or return 1
-        set -lx SECRET_ACCESS_TURNTROUT_MEDIA (_rbw_get envchain/cloudflare/SECRET_ACCESS_TURNTROUT_MEDIA); or return 1
-        set -lx TOKEN_VALUE_TURNTROUT_MEDIA (_rbw_get envchain/cloudflare/TOKEN_VALUE_TURNTROUT_MEDIA); or return 1
-        set -lx RCLONE_CONFIG_R2_ACCESS_KEY_ID (_rbw_get envchain/cloudflare/RCLONE_CONFIG_R2_ACCESS_KEY_ID); or return 1
-        set -lx RCLONE_CONFIG_R2_SECRET_ACCESS_KEY (_rbw_get envchain/cloudflare/RCLONE_CONFIG_R2_SECRET_ACCESS_KEY); or return 1
-        set -lx RCLONE_CONFIG_B2_CRYPT_PASSWORD (_rbw_get envchain/cloudflare/RCLONE_CONFIG_B2_CRYPT_PASSWORD); or return 1
-        $argv
-    end
+    envchain cloudflare -- $argv
 end
 
 function services_secrets_wrap
-    begin
-        set -lx DEEPSOURCE_DSN (_rbw_get envchain/services/DEEPSOURCE_DSN); or return 1
-        set -lx ORIGINSTAMP_API_KEY (_rbw_get envchain/services/ORIGINSTAMP_API_KEY); or return 1
-        set -lx LOST_PIXEL_PROJECT_ID (_rbw_get envchain/services/LOST_PIXEL_PROJECT_ID); or return 1
-        set -lx LOST_PIXEL_API_KEY (_rbw_get envchain/services/LOST_PIXEL_API_KEY); or return 1
-        $argv
-    end
+    envchain services -- $argv
 end
 
-# Wrap npm so the auth token is available for publishes.
-# `command npm` invokes the real npm binary, bypassing this function.
+# `command npm` invokes the real npm binary, bypassing this same-named
+# fish function. It is fish syntax, not an envchain flag.
 function npm
-    begin
-        set -lx NPM_TOKEN (_rbw_get envchain/npm/NPM_TOKEN); or return 1
-        command npm $argv
-    end
+    envchain npm -- command npm $argv
 end
 
-# Wrap rclone so Cloudflare R2 / B2 crypt secrets are available.
 function rclone
-    cloudflare_secrets_wrap command rclone $argv
+    envchain cloudflare -- command rclone $argv
 end
 
-# Wrap twine so PyPI token is available.
 function twine
-    begin
-        set -lx TWINE_USERNAME (_rbw_get envchain/pypi/TWINE_USERNAME); or return 1
-        set -lx TWINE_PASSWORD (_rbw_get envchain/pypi/TWINE_PASSWORD); or return 1
-        set -lx PYPI_TOKEN (_rbw_get envchain/pypi/PYPI_TOKEN); or return 1
-        command twine $argv
-    end
+    envchain pypi -- command twine $argv
 end
 
-# Aider via Redpill only needs REDPILL_API_KEY (mapped to OPENAI_API_KEY),
-# so we fetch just that one secret rather than calling ai_secrets_wrap and
-# loading the full namespace.
+# Aider via Redpill: envchain populates REDPILL_API_KEY into the child
+# process; the shim script remaps it onto OPENAI_API_KEY and execs aider.
 function aider_redpill
-    set -l aider_bin (type -p aider)
-    set -l aider_flags --edit-format editor-diff
-    begin
-        # Redpill exposes an OpenAI-compatible API, so we feed Aider's OpenAI
-        # client the Redpill key + base URL. The 'openai/' prefix on
-        # AIDER_MODEL forces LiteLLM to dispatch through the OpenAI client.
-        set -lx OPENAI_API_KEY (_rbw_get envchain/ai/REDPILL_API_KEY); or return 1
-        set -lx OPENAI_API_BASE https://api.redpill.ai/v1
-        set -lx AIDER_MODEL openai/anthropic/claude-sonnet-4.5
-        $aider_bin $aider_flags $argv
+    envchain ai -- $HOME/.dotfiles/bin/aider-redpill-shim.sh (type -p aider) --edit-format editor-diff $argv
+end
+
+# ── Bitwarden sync helpers ────────────────────────────────────────────────
+# bw is the source of truth across machines; envchain is the runtime cache.
+# `bwseed` pulls vault → envchain. `bwadd` adds a new secret to both at once.
+# Auto-sync on shell startup is throttled by ~/.cache/bw-envchain-sync.stamp.
+
+function bwseed --description 'Refresh envchain from Bitwarden vault'
+    bash $HOME/.dotfiles/bin/bw-seed-envchain.sh $argv
+end
+
+function bwadd --description 'Add a new secret to Bitwarden + envchain'
+    bash $HOME/.dotfiles/bin/bw-add-secret.sh $argv
+end
+
+function _bw_envchain_autosync
+    # Throttle: skip if last successful run was within the past 6h.
+    # `stat -f %m` errors when the stamp doesn't exist; the `or echo 0`
+    # forces mtime=0 in that case so the throttle fails through to a sync.
+    set -l stamp $HOME/.cache/bw-envchain-sync.stamp
+    set -l interval 21600
+    mkdir -p (path dirname $stamp) 2>/dev/null
+    set -l mtime (stat -f %m $stamp 2>/dev/null; or echo 0)
+    if test (math (date +%s) - $mtime) -lt $interval
+        return 0
     end
+    fish -c "if bash $HOME/.dotfiles/bin/bw-seed-envchain.sh --quiet >/dev/null 2>&1; touch $stamp; end" &
+    disown
+end
+
+if status is-interactive; and type -q bw
+    _bw_envchain_autosync 2>/dev/null
 end
 
 # set -x OLLAMA_ORIGINS *

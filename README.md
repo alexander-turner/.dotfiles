@@ -27,7 +27,7 @@ Features (configurable by changing `setup.sh`):
 7. Installs `tmux` with the `tmux-restore` and `tmux-continuum` plugins. Basically, this means that your `tmux` sessions will be saved and restored automatically. No more losing your work when your computer crashes!
 8. Installs `AutoRaise`, which automatically focuses the window under the cursor (after a delay).
 9. Automatically uses `mosh` instead of `ssh`. `mosh` is a more robust version of `ssh` which can handle network changes and disconnections more gracefully. It generally presents a lower-latency user experience.
-10. Installs [`rbw`](https://github.com/doy/rbw) (a fast Rust Bitwarden CLI) for secret management. API keys and credentials live encrypted in your Bitwarden vault and sync across machines automatically.
+10. Installs `envchain` (OS Keychain at runtime) plus the [Bitwarden CLI](https://bitwarden.com/help/cli/) for cross-machine secret sync. API keys live encrypted in your Bitwarden vault; a background sync at shell startup pulls updates into envchain so wrappers like `npm`, `rclone`, `twine`, and `aider_redpill` stay zero-prompt at runtime.
 11. Configures open source AI-powered development tools:
     - Automatic commit message generation,
     - Local LLM support with Ollama and Open WebUI,
@@ -65,46 +65,59 @@ echo "Never gonna give you up" | goosesay
                             `.'´
 ```
 
-This script creates `~/.extras.fish` and `~/.extras.bash`, which are automatically sourced by `config.fish` and `.bashrc`. These files are not tracked by version control --- include commands you only want for the current machine, but use Bitwarden (via `rbw`) for secret management.
+This script creates `~/.extras.fish` and `~/.extras.bash`, which are automatically sourced by `config.fish` and `.bashrc`. These files are not tracked by version control --- include commands you only want for the current machine, but use Bitwarden + envchain for secret management.
 
-## Secure secret management with [`rbw`](https://github.com/doy/rbw) + Bitwarden
+## Secret management: Bitwarden vault → envchain runtime
 
-- Encrypted at rest in your Bitwarden vault; only the unlocked plaintext lives in `rbw-agent` memory
-- Syncs across every machine logged into your Bitwarden account
-- `rbw-agent` caches the unlocked vault, so reads are ~10ms
+Two layers, both encrypted, complementary roles:
+
+- **Bitwarden vault** (source of truth, cross-machine). End-to-end encrypted; syncs to every device logged into your Bitwarden account. We use the personal API key flow so WebAuthn-only accounts work without 2FA prompts on `bw login`.
+- **envchain** (runtime cache, per-machine). Reads from the macOS Keychain, which is silently unlocked at GUI login — so wrappers like `npm`, `rclone`, and `aider_redpill` are zero-prompt during normal use.
+
+Each secret is stored as a Bitwarden Login item named `envchain/<namespace>/<VAR>` inside a folder named `envchain`. The wrappers in `apps/fish/config.fish` call `envchain <namespace> -- <command>`, exactly as before.
 
 ### One-time setup
 
-```fish
-brew install rbw
-rbw config set email <your-bitwarden-email>
-rbw login
-rbw unlock
+Get a Bitwarden personal API key from web vault → Settings → Security → Keys → "View API Key", then:
+
+```bash
+bash bin/bw-login.sh
 ```
 
-### Naming convention
-
-Each secret is stored as a Bitwarden Login item named `envchain/<namespace>/<VAR>`, in a folder called `envchain`. The fish wrappers (`ai_secrets_wrap`, `cloudflare_secrets_wrap`, `npm`, `rclone`, `twine`, `aider_redpill`, ...) call `rbw get` against these names.
+You'll be prompted (each prompt is skippable) for `client_id`, `client_secret`, and your master password. Both are stashed in macOS Keychain; the master password lets the autosync run unattended on every shell startup. The script then runs an initial seed.
 
 ### Adding a new secret
 
-```fish
-rbw add envchain/ai/NEW_KEY    # paste the value when prompted
-rbw sync                        # other machines pick it up automatically
+```bash
+bwadd <namespace> <VAR>     # prompts for value (no echo), pushes to vault + envchain
 ```
 
-Then add a corresponding `set -lx NEW_KEY (_rbw_get envchain/ai/NEW_KEY); or return 1` line inside the relevant wrapper in `apps/fish/config.fish`.
+On every other machine the next shell startup picks it up automatically (or run `bwseed` on demand).
 
-### Migrating from envchain
+### Auto-sync on shell startup
 
-If you previously used envchain on this machine, run the one-time migration script:
+`config.fish` kicks off a background `bw sync` + envchain refresh on each interactive shell, throttled to once per six hours via `~/.cache/bw-envchain-sync.stamp`. To force a refresh now:
 
-```fish
-export BW_SESSION=(bw unlock --raw)
+```bash
+bwseed
+```
+
+### Migrating an existing envchain into Bitwarden
+
+If a machine has values in envchain that aren't in the vault yet:
+
+```bash
+export BW_SESSION=$(bw unlock --raw)
 bash bin/migrate-envchain-to-bitwarden.sh
 ```
 
-It pipes each envchain value into `bw create item` via stdin without ever logging the value.
+Values pipe stdin→stdin from envchain into `bw create item`; nothing is logged.
+
+### Threat model
+
+- Vault decryption requires the master password. A stolen API key without it gets only the encrypted vault.
+- The cached master password in macOS Keychain has the same protection envchain values themselves do — Keychain ACL + GUI-login-time unlock.
+- Secret values never appear on any process's argv: every helper pipes values stdin→stdin between bw, envchain, and child commands.
 
 ## Reinstalling programs using `brew`
 
