@@ -294,18 +294,18 @@ function bwadd --description 'Add a new secret to Bitwarden + envchain'
 end
 
 function _bw_envchain_autosync
+    # Throttle: skip if last successful run was within the past 6h.
+    # `stat -f %m` errors when the stamp doesn't exist; the `or echo 0`
+    # forces mtime=0 in that case so the throttle fails through to a sync.
     set -l stamp $HOME/.cache/bw-envchain-sync.stamp
     set -l interval 21600
     mkdir -p (path dirname $stamp) 2>/dev/null
-    if test -f $stamp
-        set -l now (date +%s)
-        set -l mtime (stat -f %m $stamp 2>/dev/null)
-        if test -n "$mtime"; and test (math $now - $mtime) -lt $interval
-            return 0
-        end
+    set -l mtime (stat -f %m $stamp 2>/dev/null; or echo 0)
+    if test (math (date +%s) - $mtime) -lt $interval
+        return 0
     end
     fish -c "if bash $HOME/.dotfiles/bin/bw-seed-envchain.sh --quiet >/dev/null 2>&1; touch $stamp; end" &
-    disown 2>/dev/null
+    disown
 end
 
 if status is-interactive; and type -q bw
