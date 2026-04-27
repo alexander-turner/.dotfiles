@@ -15,6 +15,7 @@
 set -euo pipefail
 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
+# shellcheck source=bin/lib/bw-common.sh disable=SC1091
 source "$DOTFILES_DIR/bin/lib/bw-common.sh"
 
 QUIET=0

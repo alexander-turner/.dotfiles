@@ -1,0 +1,3 @@
+# Skip vendored Neovim packages — these are third-party plugin sources
+# that should not be reformatted to match local style.
+apps/nvim/pack/
