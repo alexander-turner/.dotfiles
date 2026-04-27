@@ -12,7 +12,6 @@
 [init]
 	defaultBranch = main
 	templateDir = ~/.git_templates
-	hooksPath = /Users/alexmturner/.git_hooks
 [alias]
 	co = checkout
 	ci = commit

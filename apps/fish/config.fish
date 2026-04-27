@@ -34,7 +34,7 @@ if $IS_MAC
 else
     if test -f ~/.autojump/share/autojump/autojump.fish
         . ~/.autojump/share/autojump/autojump.fish
-    else
+    else if test -f /usr/share/autojump/autojump.fish
         . /usr/share/autojump/autojump.fish
     end
 end
@@ -67,8 +67,10 @@ function crontab
 end
 
 function ls
-    if $IS_MAC
-        /opt/homebrew/opt/coreutils/libexec/gnubin/ls --color="always" --ignore-backups --hide="*.bak" $argv
+    if command -q gls
+        gls --color="always" --ignore-backups --hide="*.bak" $argv
+    else if $IS_MAC
+        command ls $argv
     else
         command ls --color="always" --ignore-backups --hide="*.bak" $argv
     end
@@ -184,7 +186,7 @@ end
 
 fish_add_path ~/bin ~/.local/bin /usr/local/go/bin
 set -gx EDITOR nvim
-set -gx SHELL (which fish)
+set -gx SHELL (status fish-path)
 
 abbr -a n nvim
 
@@ -327,6 +329,3 @@ if not string match -q -- $PNPM_HOME $PATH
     set -gx PATH "$PNPM_HOME" $PATH
 end
 # pnpm end
-
-# Added by Jetski
-fish_add_path /Users/alexmturner/.jetski/jetski/bin
