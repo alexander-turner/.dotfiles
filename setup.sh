@@ -87,8 +87,8 @@ safe_link "$DOTFILES_DIR/ai/prompting/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
 mkdir -p "$HOME/.config/vagrant-templates"
 safe_link "$DOTFILES_DIR/ai/Vagrantfile" "$HOME/.config/vagrant-templates/Vagrantfile"
 
-# Git hooks for this dotfiles repo
-ln -sf "$DOTFILES_DIR/bin/pre-push" "$DOTFILES_DIR/.hooks/pre-push"
+# Git hooks for this dotfiles repo (relative symlink so the repo is portable)
+ln -sf "../bin/pre-push" "$DOTFILES_DIR/.hooks/pre-push"
 
 touch "$HOME"/.extras.{bash,fish}
 touch "$HOME"/.hushlogin
@@ -193,7 +193,11 @@ if [ "$(uname)" = "Darwin" ]; then
     sudo launchctl load "$TAILSCALE_PLIST_DEST" 2>/dev/null || true
 
     # Install wally-cli for keyboard flashing
-    go install github.com/zsa/wally-cli@latest >/dev/null
+    if command_exists go; then
+        go install github.com/zsa/wally-cli@latest >/dev/null
+    else
+        status_msg "WARN: Go not found, skipping wally-cli install. Install Go first."
+    fi
 
     # iTerm2 shell integration
     curl -fsSL https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash >/dev/null

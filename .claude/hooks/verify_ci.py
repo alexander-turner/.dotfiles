@@ -24,7 +24,10 @@ from pathlib import Path
 
 
 def _get_max_retries() -> int:
-    raw = int(os.environ.get("MAX_STOP_RETRIES", "3"))
+    try:
+        raw = int(os.environ.get("MAX_STOP_RETRIES", "3"))
+    except ValueError:
+        raw = 3
     return max(1, min(raw, 10))
 
 
