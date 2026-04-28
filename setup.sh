@@ -177,6 +177,15 @@ if [ "$(uname)" = "Darwin" ]; then
         | sudo tee "$TAILSCALE_PLIST_DEST" >/dev/null
     sudo launchctl load "$TAILSCALE_PLIST_DEST" 2>/dev/null || true
 
+    # claude-code-router (ccr): backs claude-{fast,private,think} wrappers.
+    # Supervised by launchd so it's running before any wrapper invocation
+    # and respawned if it crashes.
+    CCR_PLIST_DEST="$HOME/Library/LaunchAgents/com.turntrout.ccr.plist"
+    mkdir -p "$HOME/Library/LaunchAgents" "$HOME/Library/Logs/com.turntrout.ccr"
+    safe_link "$DOTFILES_DIR/launchagents/com.turntrout.ccr.plist" "$CCR_PLIST_DEST"
+    launchctl unload "$CCR_PLIST_DEST" 2>/dev/null || true
+    launchctl load "$CCR_PLIST_DEST" 2>/dev/null || true
+
     # Install wally-cli for keyboard flashing
     if command_exists go; then
         go install github.com/zsa/wally-cli@latest >/dev/null
