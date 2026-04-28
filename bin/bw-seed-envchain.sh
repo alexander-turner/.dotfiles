@@ -38,7 +38,8 @@ bw sync --session "$BW_SESSION" >/dev/null 2>&1 || true
 folder_id=$(bw_envchain_folder_id) || exit 0  # nothing to seed yet
 
 # seed_one: parse `envchain/<ns>/<VAR>`, fetch the password, pipe it into
-# `envchain --set --noecho`. Skips items not matching the naming scheme.
+# `envchain --set`. Skips items not matching the naming scheme.
+# Note: envchain's --noecho requires a TTY; we're piping, so omit it.
 #
 # We fetch by item ID via `bw get item <id> | jq -r .login.password` rather
 # than `bw get password <id>` because the latter is flaky across bw CLI
@@ -58,7 +59,7 @@ seed_one() {
         err "  FAIL   $ns/$var (empty password or fetch error)"
         return 0
     fi
-    if printf '%s' "$pw" | envchain --set --noecho "$ns" "$var" >/dev/null; then
+    if printf '%s' "$pw" | envchain --set "$ns" "$var" >/dev/null; then
         log "  ok     $ns/$var"
     else
         err "  FAIL   $ns/$var (envchain write failed)"

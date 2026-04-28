@@ -48,8 +48,9 @@ read_secret_into_SECRET() {
 }
 
 # Mirror the value into envchain locally. Pipe stdin→stdin.
+# Note: envchain's --noecho requires a TTY; we're piping, so omit it.
 write_envchain() {
-    printf '%s' "$SECRET" | envchain --set --noecho "$ns" "$var" >/dev/null
+    printf '%s' "$SECRET" | envchain --set "$ns" "$var" >/dev/null
 }
 
 # Create the vault item (folder envchain, name $item_name, value env.SECRET).

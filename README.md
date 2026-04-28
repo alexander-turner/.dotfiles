@@ -95,6 +95,16 @@ bwadd <namespace> <VAR>     # prompts for value (no echo), pushes to vault + env
 
 On every other machine the next shell startup picks it up automatically (or run `bwseed` on demand).
 
+### GitHub CLI auth via Bitwarden
+
+`setup.sh` authenticates `gh` non-interactively when a PAT is stored in the vault as `envchain/github/PAT`. Generate a token at <https://github.com/settings/tokens> (scopes: `repo`, `read:org` — add `admin:public_key` only if you want `gh` to upload your SSH key for you), then:
+
+```bash
+bin/bw-add-secret.sh github PAT
+```
+
+On the next `setup.sh` run (or directly via `bin/gh-auth-from-bw.sh`), `gh auth login --with-token` picks it up. No browser, no SSH-key-upload step — useful on headless boxes. If the item is missing, `setup.sh` falls back to the interactive `gh auth login` flow.
+
 ### Auto-sync on shell startup
 
 `config.fish` kicks off a background `bw sync` + envchain refresh on each interactive shell, throttled to once per six hours via `~/.cache/bw-envchain-sync.stamp`. To force a refresh now:
