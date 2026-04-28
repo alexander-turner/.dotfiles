@@ -17,7 +17,7 @@ status_msg() {
 # Resolve dotfiles directory from this script's location
 DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# shellcheck source=bin/lib/safe_link.sh
+# shellcheck source=bin/lib/safe_link.sh disable=SC1091
 source "$DOTFILES_DIR/bin/lib/safe_link.sh"
 
 # ── Symlinks (always run) ────────────────────────────────────────────────────
