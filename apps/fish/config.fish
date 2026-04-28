@@ -62,8 +62,7 @@ abbr -a fconf 'nvim ~/.config/fish/config.fish'
 abbr -a editfishconfig 'nvim ~/.config/fish/config.fish'
 
 function crontab
-    set -gx VISUAL nvim
-    command crontab $argv
+    env VISUAL=nvim command crontab $argv
 end
 
 function ls
@@ -201,7 +200,7 @@ function rm
 end
 
 function grep
-    command grep $argv --exclude="*~" --color=always
+    command grep $argv --exclude="*~" --color=auto
 end
 
 abbr pytest_diff 'pytest -vv --tb=short'
@@ -302,7 +301,7 @@ function _bw_envchain_autosync
     set -l stamp $HOME/.cache/bw-envchain-sync.stamp
     set -l interval 21600
     mkdir -p (path dirname $stamp) 2>/dev/null
-    set -l mtime (stat -f %m $stamp 2>/dev/null; or echo 0)
+    set -l mtime (path mtime $stamp 2>/dev/null; or echo 0)
     if test (math (date +%s) - $mtime) -lt $interval
         return 0
     end

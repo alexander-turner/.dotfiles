@@ -27,6 +27,8 @@
 	helper = /usr/local/share/gcm-core/git-credential-manager
 [pull]
 	rebase = false
+[push]
+	autoSetupRemote = true
 [rerere]
 	enabled = true
 [fetch]
