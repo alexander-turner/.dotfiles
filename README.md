@@ -90,7 +90,8 @@ You'll be prompted (each prompt is skippable) for `client_id`, `client_secret`, 
 ### Adding a new secret
 
 ```bash
-bwadd <namespace> <VAR>     # prompts for value (no echo), pushes to vault + envchain
+bwadd <namespace> <VAR>              # prompts for value, pushes to vault + envchain
+bwadd --update <namespace> <VAR>     # overwrite an existing vault value (rotation)
 ```
 
 On every other machine the next shell startup picks it up automatically (or run `bwseed` on demand).
