@@ -128,12 +128,34 @@ if ! command_exists gh; then
     brew_quiet_install gh
 fi
 if ! gh auth status &>/dev/null; then
-    if [ -t 0 ]; then
-        status_msg "Authenticating GitHub CLI (web flow grants the right scopes automatically)..."
-        status_msg "If pasting a token, it must have scopes: repo, read:org, admin:public_key."
-        gh auth login --git-protocol ssh --web || status_msg "gh auth skipped — run 'gh auth login --web' later."
-    else
-        status_msg "Skipping gh auth (non-interactive shell). Run 'gh auth login --web' manually."
+    authed_via_bw=0
+    # Try Bitwarden first: a Login item named `github-cli-pat` holds the PAT
+    # in its password field. Works headless (no browser, no SSH-key upload).
+    if command_exists bw && command_exists jq; then
+        # shellcheck source=bin/lib/bw-common.sh disable=SC1091
+        if source "$DOTFILES_DIR/bin/lib/bw-common.sh" && bw_is_logged_in && bw_ensure_session; then
+            gh_pat=$(bw get item --session "$BW_SESSION" github-cli-pat 2>/dev/null \
+                        | jq -r '.login.password // empty')
+            if [ -n "$gh_pat" ]; then
+                status_msg "Authenticating GitHub CLI from Bitwarden (item 'github-cli-pat')..."
+                if printf '%s' "$gh_pat" | gh auth login --git-protocol ssh --with-token 2>/dev/null; then
+                    authed_via_bw=1
+                else
+                    status_msg "gh auth via Bitwarden token failed; falling back to interactive."
+                fi
+                gh_pat=
+            fi
+        fi
+    fi
+
+    if [ "$authed_via_bw" -eq 0 ]; then
+        if [ -t 0 ]; then
+            status_msg "No 'github-cli-pat' in Bitwarden — falling back to interactive gh auth."
+            status_msg "Token scopes needed: repo, read:org (and admin:public_key only if you want gh to upload your SSH key)."
+            gh auth login --git-protocol ssh || status_msg "gh auth skipped — run 'gh auth login' later."
+        else
+            status_msg "Skipping gh auth (non-interactive, no Bitwarden PAT). Add a 'github-cli-pat' login to Bitwarden or run 'gh auth login' manually."
+        fi
     fi
 fi
 
