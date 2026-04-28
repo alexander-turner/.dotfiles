@@ -19,12 +19,17 @@ aider --analytics-disable --yes --exit 2>/dev/null; or true
 
 # Set up Claude Code. pnpm is the chosen package manager for this dotfiles
 # setup (user preference); install.cjs wires up the native binary shim.
+#
+# claude-code-router (ccr) is the local proxy that the claude-{fast,private,
+# think} wrappers point ANTHROPIC_BASE_URL at. Installing it here keeps it
+# in lockstep with the LaunchAgent (launchagents/com.turntrout.ccr.plist),
+# which expects the binary at ~/Library/pnpm/ccr.
 if command -q pnpm
-    pnpm add --global @anthropic-ai/claude-code
+    pnpm add --global @anthropic-ai/claude-code @musistudio/claude-code-router
     set -l CLAUDE_INSTALLER (pnpm root -g)/@anthropic-ai/claude-code/install.cjs
     test -f "$CLAUDE_INSTALLER"; and node "$CLAUDE_INSTALLER"
 else
-    echo "Warning: pnpm not found, skipping Claude Code setup"
+    echo "Warning: pnpm not found, skipping Claude Code + ccr setup"
 end
 
 # Link Claude Code global config from this dotfiles repo
