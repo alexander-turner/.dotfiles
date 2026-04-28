@@ -129,10 +129,11 @@ if ! command_exists gh; then
 fi
 if ! gh auth status &>/dev/null; then
     if [ -t 0 ]; then
-        status_msg "Authenticating GitHub CLI..."
-        gh auth login || status_msg "gh auth skipped — run 'gh auth login' later."
+        status_msg "Authenticating GitHub CLI (web flow grants the right scopes automatically)..."
+        status_msg "If pasting a token, it must have scopes: repo, read:org, admin:public_key."
+        gh auth login --git-protocol ssh --web || status_msg "gh auth skipped — run 'gh auth login --web' later."
     else
-        status_msg "Skipping gh auth (non-interactive shell). Run 'gh auth login' manually."
+        status_msg "Skipping gh auth (non-interactive shell). Run 'gh auth login --web' manually."
     fi
 fi
 
