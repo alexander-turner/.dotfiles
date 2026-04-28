@@ -33,6 +33,7 @@ Features (configurable by changing `setup.sh`):
     - Local LLM support with Ollama and Open WebUI,
     - Aider for CLI coding,
     - VSCodium with Roo Cline extension for privacy-first AI pair programming (use also with confidential cloud computing, like via [`redpill.ai`](https://redpill.ai)),
+    - `claude-code-router` (`ccr`) installed via pnpm and supervised by `launchagents/com.turntrout.ccr.plist`, so the private Claude wrappers route through [Venice](https://venice.ai) without the daemon dying across reboots. Store your Venice API key in Bitwarden as `envchain/ai/VENICE_INFERENCE_KEY` (the standard `envchain/<namespace>/<VAR>` convention) — `bwseed` then pulls it into envchain on every machine.
     - `wut` command to explain shell output.
 12. Most importantly, the `goosesay` command. A variant on the classic `cowsay` (which renders text inside a cow's speech bubble), `goosesay` goosens up your terminal just the right amount. For example:
 
@@ -89,10 +90,21 @@ You'll be prompted (each prompt is skippable) for `client_id`, `client_secret`, 
 ### Adding a new secret
 
 ```bash
-bwadd <namespace> <VAR>     # prompts for value (no echo), pushes to vault + envchain
+bwadd <namespace> <VAR>              # prompts for value, pushes to vault + envchain
+bwadd --update <namespace> <VAR>     # overwrite an existing vault value (rotation)
 ```
 
 On every other machine the next shell startup picks it up automatically (or run `bwseed` on demand).
+
+### GitHub CLI auth via Bitwarden
+
+`setup.sh` authenticates `gh` non-interactively when a PAT is stored in the vault as `envchain/github/PAT`. Generate a token at <https://github.com/settings/tokens> (scopes: `repo`, `read:org` — add `admin:public_key` only if you want `gh` to upload your SSH key for you), then:
+
+```bash
+bin/bw-add-secret.sh github PAT
+```
+
+On the next `setup.sh` run (or directly via `bin/gh-auth-from-bw.sh`), `gh auth login --with-token` picks it up. No browser, no SSH-key-upload step — useful on headless boxes. If the item is missing, `setup.sh` falls back to the interactive `gh auth login` flow.
 
 ### Auto-sync on shell startup
 

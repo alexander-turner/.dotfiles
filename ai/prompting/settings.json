@@ -1,0 +1,27 @@
+{
+  "env": {
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1",
+    "CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY": "1"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Review only the diff/lines being changed by this tool call — ignore pre-existing code unless the change directly touches it. Default to \"allow\".\n\nReturn \"deny\" ONLY for:\n- A definite runtime bug introduced by this change (broken syntax, wrong logic that will fail in normal use)\n- A definite security hole introduced by this change (injection from untrusted input, hardcoded secret VALUE in the file, credentials leaked to logs/argv)\n- A clear regression vs the prior code\n\nDo NOT deny for:\n- Style, naming, comments, or \"maintainability\" preferences\n- Overrides of standard commands (rm/ls/ssh/etc.) — assume intentional\n- Patterns that trust env vars set by the agent harness\n- Item/key NAMES (not values) appearing in error messages\n- \"Could be improved\" or \"consider\" suggestions\n- Performance concerns short of a user-visible >1s regression\n\nIf denying, output one sentence naming the specific bug + line numbers. Otherwise output \"allow\".",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
+  "enabledPlugins": {
+    "code-simplifier@claude-plugins-official": true,
+    "plugin-dev@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": true
+  }
+}

@@ -6,25 +6,6 @@ if [[ "${1:-}" == "--link-only" ]]; then
     LINK_ONLY=true
 fi
 
-safe_link() {
-    local source_file="$1"
-    local target_file="$2"
-    # Already correct symlink — skip
-    if [ -L "$target_file" ] && [ "$(readlink "$target_file")" = "$source_file" ]; then
-        return
-    fi
-    # Target exists and is a real file (not a symlink) — prompt before clobbering
-    if [ -e "$target_file" ] && [ ! -L "$target_file" ]; then
-        read -rp "$(basename "$target_file") already exists (not a symlink). Overwrite? (y/N) " choice
-        case "$choice" in
-        y | Y) ln -sf "$source_file" "$target_file" ;;
-        *) echo "Skipping $(basename "$target_file")" ;;
-        esac
-    else
-        ln -sf "$source_file" "$target_file"
-    fi
-}
-
 command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
@@ -35,6 +16,9 @@ status_msg() {
 
 # Resolve dotfiles directory from this script's location
 DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# shellcheck source=bin/lib/safe_link.sh disable=SC1091
+source "$DOTFILES_DIR/bin/lib/safe_link.sh"
 
 # ── Symlinks (always run) ────────────────────────────────────────────────────
 status_msg "Linking dotfiles..."
@@ -77,11 +61,6 @@ if [ "$(uname)" = "Darwin" ]; then
     safe_link "$DOTFILES_DIR/.aerospace.toml" ~/.aerospace.toml
     safe_link "$DOTFILES_DIR/apps/com.googlecode.iterm2.plist" ~/Library/com.googlecode.iterm2.plist
 fi
-
-# Claude Code
-mkdir -p "$HOME/.claude"
-safe_link "$DOTFILES_DIR/ai/prompting/skills" "$HOME/.claude/commands"
-safe_link "$DOTFILES_DIR/ai/prompting/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
 
 # Vagrant templates
 mkdir -p "$HOME/.config/vagrant-templates"
@@ -149,11 +128,13 @@ if ! command_exists gh; then
     brew_quiet_install gh
 fi
 if ! gh auth status &>/dev/null; then
-    if [ -t 0 ]; then
-        status_msg "Authenticating GitHub CLI..."
-        gh auth login || status_msg "gh auth skipped — run 'gh auth login' later."
+    if bash "$DOTFILES_DIR/bin/gh-auth-from-bw.sh" 2>/dev/null; then
+        status_msg "gh authenticated from Bitwarden."
+    elif [ -t 0 ]; then
+        status_msg "Falling back to interactive gh auth (scopes needed: repo, read:org)."
+        gh auth login --git-protocol ssh || status_msg "gh auth skipped — run 'gh auth login' later."
     else
-        status_msg "Skipping gh auth (non-interactive shell). Run 'gh auth login' manually."
+        status_msg "Skipping gh auth (non-interactive, no Bitwarden PAT). Run 'gh auth login' manually."
     fi
 fi
 
@@ -197,6 +178,15 @@ if [ "$(uname)" = "Darwin" ]; then
     sed "s/__USERNAME__/$USER/g" "$DOTFILES_DIR/launchagents/com.tailscaled.plist.template" \
         | sudo tee "$TAILSCALE_PLIST_DEST" >/dev/null
     sudo launchctl load "$TAILSCALE_PLIST_DEST" 2>/dev/null || true
+
+    # claude-code-router (ccr): backs claude-{fast,private,think} wrappers.
+    # Supervised by launchd so it's running before any wrapper invocation
+    # and respawned if it crashes.
+    CCR_PLIST_DEST="$HOME/Library/LaunchAgents/com.turntrout.ccr.plist"
+    mkdir -p "$HOME/Library/LaunchAgents" "$HOME/Library/Logs/com.turntrout.ccr"
+    safe_link "$DOTFILES_DIR/launchagents/com.turntrout.ccr.plist" "$CCR_PLIST_DEST"
+    launchctl unload "$CCR_PLIST_DEST" 2>/dev/null || true
+    launchctl load "$CCR_PLIST_DEST" 2>/dev/null || true
 
     # Install wally-cli for keyboard flashing
     if command_exists go; then

@@ -37,23 +37,40 @@ fi
 # Set Fish as the default shell (skip if already set)
 FISH_PATH=$(which fish)
 grep -qxF "$FISH_PATH" /etc/shells || echo "$FISH_PATH" | sudo tee -a /etc/shells >/dev/null
-if [ "$SHELL" != "$FISH_PATH" ]; then
-    chsh -s "$FISH_PATH"
+
+# Detect the user's actual login shell from the password DB rather than $SHELL
+# ($SHELL reflects the parent process and can be misleading inside tmux/scripts).
+current_login_shell=""
+if [ "$(uname)" = "Darwin" ] && command_exists dscl; then
+    current_login_shell=$(dscl . -read "/Users/${REAL_USER}" UserShell 2>/dev/null | awk '{print $2}')
+elif command_exists getent; then
+    current_login_shell=$(getent passwd "$REAL_USER" | cut -d: -f7)
 fi
 
-# Configure tide's right-prompt items (must run inside fish; set -U is fish syntax)
-fish -c "set -U _tide_right_items status cmd_duration context node python java ruby go time" 2>/dev/null || true
+if [ -n "$current_login_shell" ] && [ "$current_login_shell" = "$FISH_PATH" ]; then
+    echo ":: Login shell already set to $FISH_PATH; skipping chsh."
+else
+    chsh -s "$FISH_PATH" || echo ":: chsh failed — set fish as login shell manually with 'chsh -s $FISH_PATH'." >&2
+fi
 
-# Remove conflicting fish_prompt.fish before tide install (tide provides its own)
-rm -f "$HOME/.config/fish/functions/fish_prompt.fish"
+# Skip fisher/tide install if tide is already present
+if fish -c 'functions -q tide' 2>/dev/null; then
+    echo ":: tide already installed; skipping fisher/tide setup."
+else
+    # Remove conflicting fish_prompt.fish before tide install (tide provides its own)
+    rm -f "$HOME/.config/fish/functions/fish_prompt.fish"
 
-echo ":: Installing fish plugins..."
-fish <<FISH_SCRIPT
-  curl -fsSL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source
-  fisher install jorgebucaran/fisher >/dev/null
+    echo ":: Installing fish plugins..."
+    fish <<FISH_SCRIPT
+      # Fix error in fish with "_tide_right_jobs"
+      set -U _tide_right_items status cmd_duration context node python java ruby go time
 
-  fisher install IlanCosman/tide@v6 >/dev/null
+      curl -fsSL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source
+      fisher install jorgebucaran/fisher >/dev/null
+
+      fisher install IlanCosman/tide@v6 >/dev/null
 FISH_SCRIPT
+fi
 
 # Resolve DOTFILES_DIR from this script's location (bin/ is one level down)
 DOTFILES_DIR="$(cd "$(dirname "$0")/.." && pwd)"
