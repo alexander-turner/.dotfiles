@@ -29,7 +29,7 @@ jobs:
           sudo mv stylua /usr/local/bin/
 
       - name: Install Python tools
-        run: pip install yamllint toml
+        run: pip install yamllint toml ruff
 
       - name: Auto-fix lint issues
         run: ./bin/lint.sh --ci --fix

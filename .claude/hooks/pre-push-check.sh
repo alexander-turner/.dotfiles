@@ -26,7 +26,7 @@ has_script lint && run_check "lint" "pnpm lint"
 has_script check && run_check "typecheck" "pnpm check"
 
 # Run tests if stop hook retries were exhausted (safety net)
-PROJ_HASH=$(printf '%s' "$PROJECT_DIR" | sha256sum | cut -c1-16)
+PROJ_HASH=$(printf '%s' "$PROJECT_DIR" | (sha256sum 2>/dev/null || shasum -a 256) | cut -c1-16)
 RETRY_DIR="/tmp/claude-stop-$(id -u)"
 if [[ ! -f "${RETRY_DIR}/attempts-${PROJ_HASH}" ]]; then
   # No active retry counter means either first push or stop hook already passed

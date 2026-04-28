@@ -97,11 +97,11 @@ check_stylua() {
     fi
 }
 
-# YAML validation
+# YAML validation (includes .github/ workflows — they are standard YAML)
 check_yaml() {
     require_or_skip yamllint "YAML validation" || return 0
     echo -n "YAML validation: "
-    YAML_FILES=$(find . -name '*.yml' -o -name '*.yaml' | grep -v '.github/' || true)
+    YAML_FILES=$(find . -name '*.yml' -o -name '*.yaml' | grep -v '^./node_modules' || true)
     if [ -z "$YAML_FILES" ]; then
         echo -e "${GREEN}no files${NC}"
         return 0
@@ -157,6 +157,28 @@ check_json() {
     echo -e "${GREEN}passed${NC}"
 }
 
+# Python lint
+check_python() {
+    require_or_skip ruff "Python lint" || return 0
+    echo -n "Python lint: "
+    PY_FILES=$(find . -name '*.py' -not -path './.git/*' -not -path './node_modules/*' || true)
+    if [ -z "$PY_FILES" ]; then
+        echo -e "${GREEN}no files${NC}"
+        return 0
+    fi
+    if [[ "$FIX_MODE" == true ]]; then
+        echo "$PY_FILES" | xargs ruff check --fix 2>/dev/null || true
+        echo -e "${GREEN}fixed${NC}"
+    else
+        if echo "$PY_FILES" | xargs ruff check 2>/dev/null; then
+            echo -e "${GREEN}passed${NC}"
+        else
+            echo -e "${RED}failed${NC}"
+            return 1
+        fi
+    fi
+}
+
 # Run all checks
 echo "Running lint checks..."
 check_shellcheck || FAILED=1
@@ -165,6 +187,7 @@ check_stylua || FAILED=1
 check_yaml || FAILED=1
 check_toml || FAILED=1
 check_json || FAILED=1
+check_python || FAILED=1
 
 if [ $FAILED -ne 0 ]; then
     echo -e "\n${RED}Lint checks failed.${NC}"
