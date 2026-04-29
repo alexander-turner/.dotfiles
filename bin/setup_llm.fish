@@ -89,7 +89,7 @@ end
 
 # Automatic commit messages
 # https://harper.blog/2024/03/11/use-an-llm-to-automagically-generate-meaningful-git-commit-messages/
-pipx install --quiet llm 1>/dev/null
+uv tool install --quiet llm 1>/dev/null
 # Configure Redpill API with Sonnet for commit messages
 set -l LLM_DIR (dirname (llm logs path))
 mkdir -p "$LLM_DIR"
@@ -110,4 +110,4 @@ chmod +x $HOME/.git_templates/hooks/prepare-commit-msg
 # Remove core.hooksPath if previously set (it hijacks hooks for all repos)
 git config --global --unset core.hooksPath 2>/dev/null; or true
 
-pipx install --quiet wut 1>/dev/null # explains last output of shell command
+uv tool install --quiet wut-cli 1>/dev/null # explains last output of shell command

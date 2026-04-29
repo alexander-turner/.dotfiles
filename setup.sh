@@ -196,11 +196,11 @@ else # Assume linux
     status_msg "Installing Linux packages..."
 
     sudo apt-get update -qq
-    sudo apt-get install -y -qq python3-pynvim pipx cron
+    sudo apt-get install -y -qq python3-pynvim cron
 fi
 
-# Install pipx packages (not in Brewfile)
-pipx install --quiet trash-cli
+# Install CLI tools via uv (not in Brewfile -- they're Python packages)
+uv tool install --quiet trash-cli
 
 # Clear trash which is over 30 days old, daily
 if command_exists crontab && command_exists trash-empty; then

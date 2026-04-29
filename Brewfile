@@ -10,7 +10,7 @@ brew "safe-rm"
 brew "xclip"
 brew "gcc"
 brew "python"
-brew "pipx"
+brew "uv"
 brew "node"
 brew "pnpm"
 
