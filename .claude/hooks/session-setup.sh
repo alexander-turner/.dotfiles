@@ -68,7 +68,7 @@ fi
 
 # Remove stop-hook retry counter for THIS project so a new session starts fresh
 # (keyed on project dir hash, matching verify_ci.py's _retry_file)
-PROJ_HASH=$(printf '%s' "$PROJECT_DIR" | sha256sum | cut -c1-16)
+PROJ_HASH=$(printf '%s' "$PROJECT_DIR" | (sha256sum 2>/dev/null || shasum -a 256) | cut -c1-16)
 RETRY_DIR="/tmp/claude-stop-$(id -u)"
 rm -f "${RETRY_DIR}/attempts-${PROJ_HASH}"
 

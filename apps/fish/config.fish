@@ -72,8 +72,7 @@ abbr -a fconf 'nvim ~/.config/fish/config.fish'
 abbr -a editfishconfig 'nvim ~/.config/fish/config.fish'
 
 function crontab
-    set -gx VISUAL nvim
-    command crontab $argv
+    env VISUAL=nvim command crontab $argv
 end
 
 function ls
@@ -211,7 +210,7 @@ function rm
 end
 
 function grep
-    command grep $argv --exclude="*~" --color=always
+    command grep $argv --exclude="*~" --color=auto
 end
 
 abbr pytest_diff 'pytest -vv --tb=short'
@@ -307,12 +306,13 @@ end
 
 function _bw_envchain_autosync
     # Throttle: skip if last successful run was within the past 6h.
-    # `stat -f %m` errors when the stamp doesn't exist; the `or echo 0`
-    # forces mtime=0 in that case so the throttle fails through to a sync.
+    # stat syntax differs across platforms; try GNU (-c %Y) then BSD (-f %m).
+    # Either errors when the stamp doesn't exist; the `or echo 0` forces
+    # mtime=0 in that case so the throttle fails through to a sync.
     set -l stamp $HOME/.cache/bw-envchain-sync.stamp
     set -l interval 21600
     mkdir -p (path dirname $stamp) 2>/dev/null
-    set -l mtime (stat -f %m $stamp 2>/dev/null; or echo 0)
+    set -l mtime (stat -c %Y $stamp 2>/dev/null; or stat -f %m $stamp 2>/dev/null; or echo 0)
     if test (math (date +%s) - $mtime) -lt $interval
         return 0
     end
