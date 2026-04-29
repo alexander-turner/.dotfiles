@@ -25,6 +25,16 @@ else
     set IS_MAC false
 end
 
+# Reattach to macOS launchd ssh-agent (tmux strips SSH_AUTH_SOCK)
+if $IS_MAC; and test -z "$SSH_AUTH_SOCK"
+    for sock in /private/tmp/com.apple.launchd.*/Listeners
+        if test -S "$sock"
+            set -gx SSH_AUTH_SOCK "$sock"
+            break
+        end
+    end
+end
+
 # Custom settings
 fish_vi_key_bindings
 
