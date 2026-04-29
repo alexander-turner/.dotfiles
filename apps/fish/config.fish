@@ -38,15 +38,9 @@ end
 # Custom settings
 fish_vi_key_bindings
 
-# Autojump setup
-if $IS_MAC
-    [ -f /opt/homebrew/share/autojump/autojump.fish ]; and source /opt/homebrew/share/autojump/autojump.fish
-else
-    if test -f ~/.autojump/share/autojump/autojump.fish
-        . ~/.autojump/share/autojump/autojump.fish
-    else if test -f /usr/share/autojump/autojump.fish
-        . /usr/share/autojump/autojump.fish
-    end
+# zoxide (replaces autojump). `--cmd j` keeps the long-standing `j <dir>` workflow.
+if command -q zoxide
+    zoxide init fish --cmd j | source
 end
 
 if $IS_MAC

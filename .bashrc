@@ -97,8 +97,8 @@ if [ -t 0 ]; then
     stty -ixon
 fi
 
-# Autojump
-[[ -s "$HOME/.autojump/etc/profile.d/autojump.sh" ]] && source "$HOME/.autojump/etc/profile.d/autojump.sh"
+# zoxide (replaces autojump). `--cmd j` keeps the long-standing `j <dir>` workflow.
+command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init bash --cmd j)"
 
 # Machine-specific extras
 EXTRAS_PATH="$HOME/.extras.bash"

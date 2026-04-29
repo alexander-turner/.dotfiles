@@ -14,7 +14,7 @@ else
 end
 
 # Set up aider
-brew install --quiet aider
+uv tool install --quiet aider-chat
 aider --analytics-disable --yes --exit 2>/dev/null; or true
 
 # Set up Claude Code. pnpm is the chosen package manager for this dotfiles
