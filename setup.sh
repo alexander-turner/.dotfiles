@@ -57,7 +57,6 @@ fi
 
 # macOS-only config links
 if [ "$(uname)" = "Darwin" ]; then
-    safe_link "$DOTFILES_DIR/.AutoRaise" ~/.AutoRaise
     safe_link "$DOTFILES_DIR/.aerospace.toml" ~/.aerospace.toml
     safe_link "$DOTFILES_DIR/apps/com.googlecode.iterm2.plist" ~/Library/com.googlecode.iterm2.plist
 fi
@@ -128,8 +127,8 @@ if command_exists bw && [ -t 0 ]; then
         status_msg "Bitwarden CLI not logged in."
         read -rp "Run bw login bootstrap now? (y/N) " choice
         case "$choice" in
-            y|Y) bash "$DOTFILES_DIR/bin/bw-login.sh" || status_msg "bw bootstrap skipped/failed; rerun bin/bw-login.sh later." ;;
-            *)   status_msg "Skipping. Rerun later with: bash $DOTFILES_DIR/bin/bw-login.sh" ;;
+        y | Y) bash "$DOTFILES_DIR/bin/bw-login.sh" || status_msg "bw bootstrap skipped/failed; rerun bin/bw-login.sh later." ;;
+        *) status_msg "Skipping. Rerun later with: bash $DOTFILES_DIR/bin/bw-login.sh" ;;
         esac
     fi
 elif ! command_exists bw; then
@@ -157,11 +156,6 @@ fi
 if [ "$(uname)" = "Darwin" ]; then
     status_msg "Configuring macOS packages..."
 
-    # Automatically focus and raise windows under cursor
-    brew tap dimentium/autoraise >/dev/null
-    brew_quiet_install autoraise
-    brew services restart autoraise >/dev/null
-
     # Aerospace window manager setup (requires custom tap)
     brew_quiet_install --cask nikitabobko/tap/aerospace
 
@@ -172,7 +166,7 @@ if [ "$(uname)" = "Darwin" ]; then
     SUDOERS_DEST="/etc/sudoers.d/brew-autoupdate"
     if [ -f "$SUDOERS_TEMPLATE" ]; then
         SUDOERS_RENDERED="$(mktemp)"
-        sed "s/__USERNAME__/$USER/g" "$SUDOERS_TEMPLATE" > "$SUDOERS_RENDERED"
+        sed "s/__USERNAME__/$USER/g" "$SUDOERS_TEMPLATE" >"$SUDOERS_RENDERED"
         if sudo visudo -cf "$SUDOERS_RENDERED" >/dev/null; then
             sudo install -o root -g wheel -m 0440 "$SUDOERS_RENDERED" "$SUDOERS_DEST"
         else
@@ -188,8 +182,8 @@ if [ "$(uname)" = "Darwin" ]; then
 
     # Tailscale VPN daemon
     TAILSCALE_PLIST_DEST="/Library/LaunchDaemons/com.$USER.tailscaled.plist"
-    sed "s/__USERNAME__/$USER/g" "$DOTFILES_DIR/launchagents/com.tailscaled.plist.template" \
-        | sudo tee "$TAILSCALE_PLIST_DEST" >/dev/null
+    sed "s/__USERNAME__/$USER/g" "$DOTFILES_DIR/launchagents/com.tailscaled.plist.template" |
+        sudo tee "$TAILSCALE_PLIST_DEST" >/dev/null
     sudo launchctl load "$TAILSCALE_PLIST_DEST" 2>/dev/null || true
 
     # claude-code-router (ccr): backs claude-{fast,private,think} wrappers.
@@ -220,8 +214,8 @@ else # Assume linux
     sudo apt-get install -y -qq python3-pynvim pipx cron libsecret-tools
 fi
 
-# Install pipx packages (not in Brewfile)
-pipx install --quiet trash-cli
+# Install CLI tools via uv (not in Brewfile -- they're Python packages)
+uv tool install --quiet trash-cli
 
 # Clear trash which is over 30 days old, daily
 if command_exists crontab && command_exists trash-empty; then

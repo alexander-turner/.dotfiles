@@ -25,18 +25,22 @@ else
     set IS_MAC false
 end
 
+# Reattach to macOS launchd ssh-agent (tmux strips SSH_AUTH_SOCK)
+if $IS_MAC; and test -z "$SSH_AUTH_SOCK"
+    for sock in /private/tmp/com.apple.launchd.*/Listeners
+        if test -S "$sock"
+            set -gx SSH_AUTH_SOCK "$sock"
+            break
+        end
+    end
+end
+
 # Custom settings
 fish_vi_key_bindings
 
-# Autojump setup
-if $IS_MAC
-    [ -f /opt/homebrew/share/autojump/autojump.fish ]; and source /opt/homebrew/share/autojump/autojump.fish
-else
-    if test -f ~/.autojump/share/autojump/autojump.fish
-        . ~/.autojump/share/autojump/autojump.fish
-    else if test -f /usr/share/autojump/autojump.fish
-        . /usr/share/autojump/autojump.fish
-    end
+# zoxide (replaces autojump). `--cmd j` keeps the long-standing `j <dir>` workflow.
+if command -q zoxide
+    zoxide init fish --cmd j | source
 end
 
 if $IS_MAC

@@ -18,7 +18,7 @@ Features (configurable by changing `setup.sh`):
 2. Also installs a cool `fish` theme, [`tide`](https://github.com/IlanCosman/tide):
 ![Compares tide theme configurations for the fish shell.](https://github.com/IlanCosman/tide/raw/assets/images/header.png)
 
-3. Installs [`autojump`](https://github.com/wting/autojump) for quick directory navigation. Once you've been to directory `dir`, just hit `j dir` to go back there.
+3. Installs [`zoxide`](https://github.com/ajeetdsouza/zoxide) for quick directory navigation. Once you've been to directory `dir`, just hit `j dir` to go back there.
 4. Installs `neovim` and sets it as default editor. Furthermore, sets up `LazyVim`, which is basically a full-fledged IDE.
    ![Showing off the LazyVim CLI IDE.](https://user-images.githubusercontent.com/292349/213447056-92290767-ea16-430c-8727-ce994c93e9cc.png)
 

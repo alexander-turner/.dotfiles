@@ -56,7 +56,9 @@ fi
 # Skip fisher/tide install if tide is already present
 if fish -c 'functions -q tide' 2>/dev/null; then
     echo ":: tide already installed; skipping fisher/tide setup."
+    tide_already_configured=1
 else
+    tide_already_configured=0
     # Remove conflicting fish_prompt.fish before tide install (tide provides its own)
     rm -f "$HOME/.config/fish/functions/fish_prompt.fish"
 
@@ -80,15 +82,19 @@ bash "$DOTFILES_DIR"/bin/font_install.sh
 FISH_CONFIG_DIR="$HOME/.config/fish"
 mkdir -p "$FISH_CONFIG_DIR/functions"
 
-# See if user wants preset settings
-read -rp "Accept preset tide settings? (Y/n) " answer
-
-if [ -z "$answer" ] || echo "$answer" | grep -iq "^y"; then
-    # Copy preset config files into existing fish config directory
-    # Use -f to remove destination files that can't be opened (e.g. root-owned from prior sudo runs)
-    cp -rf "$DOTFILES_DIR"/apps/fish/* "$FISH_CONFIG_DIR/"
+if [ "$tide_already_configured" = "1" ]; then
+    echo ":: tide already configured; leaving existing settings untouched."
 else
-    fish -c "tide configure"
+    # See if user wants preset settings
+    read -rp "Accept preset tide settings? (Y/n) " answer
+
+    if [ -z "$answer" ] || echo "$answer" | grep -iq "^y"; then
+        # Copy preset config files into existing fish config directory
+        # Use -f to remove destination files that can't be opened (e.g. root-owned from prior sudo runs)
+        cp -rf "$DOTFILES_DIR"/apps/fish/* "$FISH_CONFIG_DIR/"
+    else
+        fish -c "tide configure"
+    fi
 fi
 
 # Always symlink key config files so changes in dotfiles repo are reflected.
