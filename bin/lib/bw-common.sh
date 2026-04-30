@@ -7,12 +7,19 @@
 # All functions return non-zero on failure. Callers should `|| exit` after
 # each call (or rely on `set -e`).
 
+# shellcheck source=bin/lib/secret-store.sh disable=SC1091
+source "${BASH_SOURCE[0]%/*}/secret-store.sh"
+
 # Verify the required external commands are on PATH. Usage:
 #   bw_require_cmds bw jq envchain security
+# Empty arguments are skipped — callers can splice in
+# `$(secret_store_required_cmd)`, which is empty when the file backend is
+# in use (no external command needed).
 bw_require_cmds() {
     local missing=()
     local cmd
     for cmd in "$@"; do
+        [ -z "$cmd" ] && continue
         command -v "$cmd" >/dev/null 2>&1 || missing+=("$cmd")
     done
     if [ ${#missing[@]} -gt 0 ]; then
@@ -35,19 +42,21 @@ bw_require_logged_in() {
 }
 
 # Ensure $BW_SESSION is exported, unlocking via the master password cached
-# in macOS Keychain (service `bw-master-password`) if needed. We use
-# `--passwordenv` rather than stdin to dodge a bw/inquirer bug on newer
-# Node versions. The env var is scoped to the bw subprocess only.
+# in the OS secret store (service `bw-master-password`, see
+# bin/lib/secret-store.sh) if needed. We use `--passwordenv` rather than
+# stdin to dodge a bw/inquirer bug on newer Node versions. The env var is
+# scoped to the bw subprocess only.
 bw_ensure_session() {
     if [ -n "${BW_SESSION:-}" ]; then
         export BW_SESSION
         return 0
     fi
     local mp
-    mp=$(security find-generic-password -s bw-master-password -a "$USER" -w 2>/dev/null) || {
+    mp=$(secret_get bw-master-password)
+    if [ -z "${mp:-}" ]; then
         echo "bw: locked and no cached master password. Run bin/bw-login.sh." >&2
         return 1
-    }
+    fi
     BW_SESSION=$(BW_PASSWORD="$mp" bw unlock --raw --passwordenv BW_PASSWORD 2>/dev/null) || {
         echo "bw unlock: cached master password rejected. Re-run bin/bw-login.sh." >&2
         unset mp
