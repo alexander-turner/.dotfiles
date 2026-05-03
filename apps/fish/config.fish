@@ -4,9 +4,31 @@ if set -q ANTIGRAVITY_AGENT
   exec bash -c "$argv"
 end
 
-# Auto-launch tmux if not already inside a tmux session
+# Kill detached tmux sessions with auto-numbered names. Run before reboot to
+# keep continuum's snapshot from accumulating orphan sessions across restores.
+# Named sessions (`main`, `website`, ...) are preserved.
+function tmux-prune --description 'Kill detached, auto-numbered tmux sessions'
+    set -l killed 0
+    for line in (tmux list-sessions -F '#{session_name} #{session_attached}' 2>/dev/null)
+        set -l parts (string split ' ' -- $line)
+        if test "$parts[2]" = "0"; and string match -qr '^[0-9]+$' -- $parts[1]
+            tmux kill-session -t $parts[1]
+            set killed (math $killed + 1)
+        end
+    end
+    echo "Pruned $killed detached auto-numbered session(s)."
+end
+
+# Auto-launch tmux if not already inside a tmux session.
+# First iTerm2 window after reboot: no server -> start one, attach to `main`
+# (continuum-restore fires here). Subsequent windows: server is up, so spawn a
+# fresh independent session per window for parallel layouts.
 if status is-interactive; and not set -q TMUX; and command -q tmux
-    exec tmux new-session -A -s main
+    if tmux has-session 2>/dev/null
+        exec tmux new-session
+    else
+        exec tmux new-session -A -s main
+    end
 end
 
 # No default greeting
