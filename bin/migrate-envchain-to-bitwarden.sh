@@ -11,9 +11,11 @@ set -euo pipefail
 
 DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
 # shellcheck source=bin/lib/bw-common.sh disable=SC1091
+# bw-common.sh transitively sources bin/lib/secret-store.sh, which defines
+# secret_store_required_cmd used below.
 source "$DOTFILES_DIR/bin/lib/bw-common.sh"
 
-bw_require_cmds bw jq envchain security || exit 1
+bw_require_cmds bw jq envchain "$(secret_store_required_cmd)" || exit 1
 bw_require_logged_in                    || exit 1
 bw_ensure_session                       || exit 1
 

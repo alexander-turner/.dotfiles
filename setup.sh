@@ -83,11 +83,24 @@ fi
 if ! command_exists brew; then
     status_msg "Installing Homebrew..."
     NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" >/dev/null
-    if [ "$(uname)" = "Darwin" ]; then
+fi
+
+# Always (re)load brew shellenv into this script's environment — handles
+# the case where brew was already installed but isn't in PATH (e.g., fresh
+# bash invocation without ~/.profile sourced). Also ensures ~/.profile has
+# the eval line on Linux for future login shells; the line is appended at
+# most once.
+if [ "$(uname)" = "Darwin" ]; then
+    if [ -x /opt/homebrew/bin/brew ]; then
         eval "$(/opt/homebrew/bin/brew shellenv)"
-    else
-        echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >>"$HOME/.profile"
+    fi
+else
+    if [ -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
         eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        BREW_EVAL_LINE='eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"'
+        if ! grep -qxF "$BREW_EVAL_LINE" "$HOME/.profile" 2>/dev/null; then
+            echo "$BREW_EVAL_LINE" >>"$HOME/.profile"
+        fi
     fi
 fi
 
@@ -196,7 +209,9 @@ else # Assume linux
     status_msg "Installing Linux packages..."
 
     sudo apt-get update -qq
-    sudo apt-get install -y -qq python3-pynvim cron
+    # libsecret-tools provides `secret-tool`, the Linux equivalent of macOS
+    # `security` used by bin/lib/secret-store.sh for caching bw credentials.
+    sudo apt-get install -y -qq python3-pynvim pipx cron libsecret-tools
 fi
 
 # Install CLI tools via uv (not in Brewfile -- they're Python packages)
