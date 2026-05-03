@@ -4,9 +4,16 @@ if set -q ANTIGRAVITY_AGENT
   exec bash -c "$argv"
 end
 
-# Auto-launch tmux if not already inside a tmux session
+# Auto-launch tmux if not already inside a tmux session.
+# First iTerm2 window after reboot: no server -> start one, attach to `main`
+# (continuum-restore fires here). Subsequent windows: server is up, so spawn a
+# fresh independent session per window for parallel layouts.
 if status is-interactive; and not set -q TMUX; and command -q tmux
-    exec tmux new-session -A -s main
+    if tmux has-session 2>/dev/null
+        exec tmux new-session
+    else
+        exec tmux new-session -A -s main
+    end
 end
 
 # No default greeting
