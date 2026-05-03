@@ -64,15 +64,17 @@ else
 
     echo ":: Installing fish plugins..."
     fish <<FISH_SCRIPT
-      # Fix error in fish with "_tide_right_jobs"
-      set -U _tide_right_items status cmd_duration context node python java ruby go time
-
       curl -fsSL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source
       fisher install jorgebucaran/fisher >/dev/null
 
       fisher install IlanCosman/tide@v6 >/dev/null
 FISH_SCRIPT
 fi
+
+# Drop `jobs` from tide's right prompt: the bundled _tide_item_jobs trips on
+# non-numeric values from background daemons (e.g. tailscaled). Run on every
+# setup so a re-run can't reintroduce it via `tide configure` defaults.
+fish -c '_tide_find_and_remove jobs _tide_right_items' 2>/dev/null || true
 
 # Resolve DOTFILES_DIR from this script's location (bin/ is one level down)
 DOTFILES_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -101,6 +103,7 @@ fi
 # Done after the copy so cp doesn't try to write through symlinks back to the source.
 ln -sf "$DOTFILES_DIR"/apps/fish/config.fish "$FISH_CONFIG_DIR/config.fish"
 ln -sf "$DOTFILES_DIR"/apps/fish/functions/fish_prompt.fish "$FISH_CONFIG_DIR/functions/fish_prompt.fish"
-ln -sf "$DOTFILES_DIR"/apps/fish/functions/_tide_item_jobs.fish "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish"
+# Clear any stale dangling symlink left by older versions of this script.
+[ -L "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish" ] && [ ! -e "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish" ] && rm -f "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish"
 
 fish "$DOTFILES_DIR"/bin/install_fish_plugins.fish >/dev/null

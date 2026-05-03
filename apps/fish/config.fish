@@ -342,7 +342,6 @@ end
 
 # set -x OLLAMA_ORIGINS *
 
-set -x tide_jobs_number_threshold 0
 fish_add_path $HOME/go/bin
 
 # pnpm
