@@ -31,6 +31,12 @@ safe_link "$DOTFILES_DIR/.tmux.conf" "$HOME/.tmux.conf"
 mkdir -p "$HOME/.config/fish"
 safe_link "$DOTFILES_DIR/apps/fish/config.fish" "$HOME/.config/fish/config.fish"
 
+# Claude Code global settings — Layer 1 security baseline (sandbox, deny rules,
+# curated allows) plus telemetry-off env vars, Edit/Write review hook, and
+# enabled plugins. Pairs with .devcontainer/ for in-container isolation.
+mkdir -p "$HOME/.claude"
+safe_link "$DOTFILES_DIR/ai/prompting/settings.json" "$HOME/.claude/settings.json"
+
 for aider_file in "$DOTFILES_DIR"/.aider*; do
     if [ -f "$aider_file" ]; then
         safe_link "$aider_file" "$HOME/$(basename "$aider_file")"
