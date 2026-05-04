@@ -138,7 +138,7 @@ import sys, tomllib
 with open(sys.argv[1], 'rb') as fp:
     tomllib.load(fp)
 " "$f"; then
-            echo -e "${RED}  Invalid: $f${NC}"
+            echo -e "\n  ${RED}Invalid: $f${NC}"
             toml_failed=1
         fi
     done <<< "$TOML_FILES"

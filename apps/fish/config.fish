@@ -334,7 +334,7 @@ function _bw_envchain_autosync
     if test (math (date +%s) - $mtime) -lt $interval
         return 0
     end
-    fish -c "if bash $DOTFILES_DIR/bin/bw-seed-envchain.sh --quiet >/dev/null 2>&1; touch $stamp; end" &
+    fish -c "if bash '$DOTFILES_DIR/bin/bw-seed-envchain.sh' --quiet >/dev/null 2>&1; touch '$stamp'; end" &
     disown
 end
 

@@ -41,7 +41,8 @@ prompt_skippable() {
     printf '%s (empty to skip): ' "$prompt" >&2
     if [ "$hidden" = "hidden" ]; then
         # Restore echo even if user hits Ctrl-C mid-read.
-        trap 'stty echo 2>/dev/null; exit 130' INT TERM
+        trap 'stty echo 2>/dev/null; exit 130' INT
+        trap 'stty echo 2>/dev/null; exit 143' TERM
         stty -echo
         IFS= read -r value
         stty echo
