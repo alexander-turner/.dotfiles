@@ -76,7 +76,7 @@ Two layers, both encrypted, complementary roles:
 - **Bitwarden vault** (source of truth, cross-machine). End-to-end encrypted; syncs to every device logged into your Bitwarden account. We use the personal API key flow so WebAuthn-only accounts work without 2FA prompts on `bw login`.
 - **envchain** (runtime cache, per-machine). Reads from the macOS Keychain, which is silently unlocked at GUI login — so wrappers like `npm`, `rclone`, and `aider_redpill` are zero-prompt during normal use.
 
-Each secret is stored as a Bitwarden Login item named `envchain/<namespace>/<VAR>` inside a folder named `envchain`. The wrappers in `apps/fish/config.fish` call `envchain <namespace> -- <command>`, exactly as before.
+Each secret is stored as a Bitwarden Login item named `envchain/<namespace>/<VAR>` inside a folder named `envchain`. The wrappers in `apps/fish/config.fish` call `envchain <namespace> <command> <args...>`, exactly as before.
 
 ### One-time setup
 

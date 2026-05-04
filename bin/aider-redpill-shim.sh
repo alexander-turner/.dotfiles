@@ -4,7 +4,7 @@
 # command passed in $@.
 #
 # Invoked via:
-#   envchain ai -- bin/aider-redpill-shim.sh /path/to/aider [aider args...]
+#   envchain ai bin/aider-redpill-shim.sh /path/to/aider [aider args...]
 #
 # envchain populates REDPILL_API_KEY and friends in the environment; this
 # script just remaps and execs. No user input is concatenated into any

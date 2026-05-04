@@ -276,21 +276,21 @@ set -xg NODE_NO_WARNINGS 1
 # shell-startup background job below). See README for the data flow.
 
 function ai_secrets_wrap
-    envchain ai -- $argv
+    envchain ai $argv
 end
 
 function cloudflare_secrets_wrap
-    envchain cloudflare -- $argv
+    envchain cloudflare $argv
 end
 
 function services_secrets_wrap
-    envchain services -- $argv
+    envchain services $argv
 end
 
-# envchain execs its target literally — `command npm` is fish syntax, not
-# a binary. Resolve to a real executable path here, checking standard
-# install locations directly (avoids fish's command/type lookup quirks
-# inside same-named functions).
+# envchain syntax is `envchain NAMESPACE CMD [ARGS...]` — there's no `--`
+# separator; envchain execs argv[2] literally. `command foo` won't work
+# either: envchain sees the literal string "command" and tries execvp on
+# it. Resolve binaries to absolute paths here.
 function _resolve_bin
     set -l name $argv[1]
     for p in /opt/homebrew/bin /usr/local/bin /usr/bin
@@ -313,7 +313,7 @@ function npm
         echo "npm: real binary not found" >&2
         return 127
     end
-    envchain npm -- $bin $argv
+    envchain npm $bin $argv
 end
 
 function rclone
@@ -322,17 +322,22 @@ function rclone
         echo "rclone: real binary not found" >&2
         return 127
     end
-    envchain cloudflare -- $bin $argv
+    envchain cloudflare $bin $argv
 end
 
 function twine
-    envchain pypi -- command twine $argv
+    set -l bin (_resolve_bin twine)
+    if test -z "$bin"
+        echo "twine: real binary not found" >&2
+        return 127
+    end
+    envchain pypi $bin $argv
 end
 
 # Aider via Redpill: envchain populates REDPILL_API_KEY into the child
 # process; the shim script remaps it onto OPENAI_API_KEY and execs aider.
 function aider_redpill
-    envchain ai -- $HOME/.dotfiles/bin/aider-redpill-shim.sh (type -p aider) --edit-format editor-diff $argv
+    envchain ai $HOME/.dotfiles/bin/aider-redpill-shim.sh (type -p aider) --edit-format editor-diff $argv
 end
 
 # ── Bitwarden sync helpers ────────────────────────────────────────────────
