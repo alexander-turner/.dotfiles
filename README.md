@@ -35,7 +35,7 @@ Features (configurable by changing `setup.sh`):
     - VSCodium with Roo Cline extension for privacy-first AI pair programming (use also with confidential cloud computing, like via [`redpill.ai`](https://redpill.ai)),
     - `claude-code-router` (`ccr`) installed via pnpm and supervised by `launchagents/com.turntrout.ccr.plist`, so the private Claude wrappers route through [Venice](https://venice.ai) without the daemon dying across reboots. Store your Venice API key in Bitwarden as `envchain/ai/VENICE_INFERENCE_KEY` (the standard `envchain/<namespace>/<VAR>` convention) — `bwseed` then pulls it into envchain on every machine.
     - `wut` command to explain shell output.
-13. Sandboxes [Claude Code](https://docs.claude.com/en/docs/claude-code): every `claude` invocation auto-launches a container, the OS sandbox denies reads of `~/.ssh`/`.aws`/`.gnupg`/`.env*`, and permission rules block arbitrary shell-out (`curl`, `wget`, `python -c`, `eval`, force-push). See [Claude Code security](#claude-code-security).
+13. Sandboxes [Claude Code](https://docs.claude.com/en/docs/claude-code) per-repo: every `claude` invocation auto-launches a container, the OS sandbox denies reads of secret stores, and permission rules block arbitrary shell-out. See [Claude Code security](#claude-code-security).
 14. Most importantly, the `goosesay` command. A variant on the classic `cowsay` (which renders text inside a cow's speech bubble), `goosesay` goosens up your terminal just the right amount. For example:
 
 ```plaintext
@@ -140,13 +140,11 @@ Values pipe stdin→stdin from envchain into `bw create item`; nothing is logged
 
 Three layers, all installed by `setup.sh`:
 
-- **Container.** `.devcontainer/` is the [Anthropic reference container](https://github.com/anthropics/claude-code/tree/main/.devcontainer) plus `fish`/`pnpm`/`python3`, `pypi.org` + `*.githubusercontent.com` added to the `init-firewall.sh` egress allowlist, and `NPM_CONFIG_IGNORE_SCRIPTS=true` pinned. `~/.claude` is a single shared volume so auth persists across repos.
-- **Sandbox.** `ai/prompting/settings.json` (symlinked to `~/.claude/settings.json`) enables `sandbox`, denies reads of `~/.ssh`/`.aws`/`.gnupg`/`**/.env*`, denies writes to shell rc files including `~/.config/fish/**`, and limits `network.allowedDomains` to npm/pypi/anthropic/github.
-- **Permissions.** Deny rules block `curl`/`wget`/`python -c`/`node -e`/`fish -c`/`eval`/force-push and exfil destinations (pastebin etc). Allow rules whitelist `npm`/`pnpm install`/`run test*`/`build*`/`lint*`, `git status`/`diff`/`add`/`commit`, and the `brew`/`docker`/`orb`/`launchctl` essentials. Deny wins on first match, so any allow that overlaps a deny is dead config.
+- **Container.** `.devcontainer/` is the [Anthropic reference container](https://github.com/anthropics/claude-code/tree/main/.devcontainer) plus `fish`/`pnpm`/`python3` and a few extra approved domains in the egress allowlist. `~/.claude` is a single shared volume so auth persists across repos.
+- **Sandbox.** `ai/prompting/settings.json` (symlinked to `~/.claude/settings.json`) enables `sandbox`, denies reads of secret stores, denies writes to shell rc files (including fish), and restricts outbound network to an explicit allowlist.
+- **Permissions.** Deny rules block shell-out vectors and exfil destinations. Allow rules pre-approve routine package, test, and git commands. Deny wins on first match, so any allow that overlaps a deny is dead config.
 
 `claude` invoked anywhere on the host auto-launches the container via `bin/claude` (bash/zsh) and `apps/fish/functions/claude.fish` (fish). Both fall back to host execution on `CLAUDE_NO_SANDBOX=1` or if `@devcontainers/cli` is missing. `~/.local/bin` must be ahead of the real `claude` in `$PATH` for the shim to win on bash/zsh.
-
-Set an Anthropic spend cap in the Console — the only backstop for runaway loops.
 
 ## Other notes
 

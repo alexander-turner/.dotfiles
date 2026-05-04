@@ -287,15 +287,24 @@ function services_secrets_wrap
     envchain services -- $argv
 end
 
-# `type -P` resolves the binary path bypassing this same-named function.
-# We can't use `command npm` here — envchain execs literally and `command`
-# is a shell builtin (no PATH lookup respects it), so envchain breaks.
+# envchain execs literally — we can't pass it `command npm` (a shell builtin
+# fish syntax, not a real binary) — so resolve the binary path explicitly here.
+function _path_to
+    set -l p (command -s $argv[1])
+    test -z "$p"; and set p (which $argv[1] 2>/dev/null)
+    echo $p
+end
+
 function npm
-    envchain npm -- (type -P npm) $argv
+    set -l bin (_path_to npm)
+    test -z "$bin"; and echo "npm: not found in PATH" >&2; and return 127
+    envchain npm -- $bin $argv
 end
 
 function rclone
-    envchain cloudflare -- (type -P rclone) $argv
+    set -l bin (_path_to rclone)
+    test -z "$bin"; and echo "rclone: not found in PATH" >&2; and return 127
+    envchain cloudflare -- $bin $argv
 end
 
 function twine
