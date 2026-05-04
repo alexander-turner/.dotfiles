@@ -7,9 +7,7 @@ if [ "$(uname)" != "Darwin" ]; then
     exit 1
 fi
 
-LOG="$HOME/Library/Logs/watch-protonvpn.log"
-
-log() { echo "$(date '+%Y-%m-%d %H:%M:%S') $*" | tee -a "$LOG"; }
+log() { logger -t watch-protonvpn "$*"; }
 
 cleanup() { log "watcher stopped"; exit 0; }
 trap cleanup INT TERM

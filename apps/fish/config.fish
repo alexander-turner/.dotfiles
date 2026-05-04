@@ -99,7 +99,7 @@ function ls
     else if $IS_MAC
         command ls -G $argv
     else
-        command ls --color="always" $argv
+        command ls --color="always" --ignore-backups --hide="*.bak" $argv
     end
 end
 

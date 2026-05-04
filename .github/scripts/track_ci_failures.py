@@ -45,7 +45,7 @@ def main() -> None:
     workflow_name = os.environ["WORKFLOW_NAME"]
     run_url = os.environ["RUN_URL"]
     run_id = int(os.environ["RUN_ID"])
-    head_sha = (os.environ.get("HEAD_SHA") or "")[:7]
+    head_sha = (os.environ.get("HEAD_SHA") or "unknown")[:7]
 
     # Find existing tracker comment
     comments = gh_api(f"repos/{repo}/issues/{pr_number}/comments") or []
