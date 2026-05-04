@@ -12,9 +12,9 @@ DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
 # shellcheck source=bin/lib/bw-common.sh disable=SC1091
 source "$DOTFILES_DIR/bin/lib/bw-common.sh"
 
-bw_require_cmds bw jq gh
-bw_is_logged_in
-bw_ensure_session
+bw_require_cmds bw jq gh || exit 1
+bw_require_logged_in || exit 1
+bw_ensure_session || exit 1
 
 item_name="envchain/github/PAT"
 pat=$(bw get item --session "$BW_SESSION" "$item_name" 2>/dev/null \

@@ -36,7 +36,7 @@ fi
 
 # Check if the `llm` command is installed
 if ! command -v llm &> /dev/null; then
-  echo "${RED}Error: 'llm' command is not installed. Please install it and try again.${NC}"
+  printf "${RED}Error: 'llm' command is not installed. Please install it and try again.${NC}\n"
   exit 1
 fi
 
@@ -69,10 +69,9 @@ tput cnorm  # Show the cursor again
 echo  # Move the cursor to the next line
 
 # Display the generated commit message with color-coded headings
-echo "${BLUE}=== Generated Commit Message ===${NC}"
-echo "${GREEN}$commit_msg${NC}"
-echo "${BLUE}=================================${NC}"
-echo
+printf "${BLUE}=== Generated Commit Message ===${NC}\n"
+printf "${GREEN}%s${NC}\n" "$commit_msg"
+printf "${BLUE}=================================${NC}\n\n"
 
 # Write the generated commit message to the specified file (usually the commit message file in .git)
 echo "$commit_msg" > "$1"

@@ -47,12 +47,16 @@ migrate_var() {
         return 0
     fi
 
-    SECRET="$value" bw get template item \
+    # Export SECRET so jq can read it via env.SECRET in the pipeline.
+    # The prefix form (SECRET="$value" cmd) only injects into the first
+    # subprocess, not into subsequent pipeline stages.
+    export SECRET="$value"
+    bw get template item \
         | jq --arg n "$item_name" --arg fid "$folder_id" \
             '.name=$n | .folderId=$fid | .login={"username":null,"password":env.SECRET,"totp":null,"uris":[]} | .notes=null' \
         | bw encode \
         | bw create item --session "$BW_SESSION" >/dev/null
-    unset value
+    unset SECRET value
     echo "  ok     $item_name"
 }
 

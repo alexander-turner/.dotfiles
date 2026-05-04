@@ -121,7 +121,7 @@ function yank
     else if $IS_MAC
         pbcopy
     else
-        clip
+        xclip -selection clipboard
     end
 end
 
