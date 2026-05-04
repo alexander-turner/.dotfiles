@@ -288,33 +288,38 @@ function services_secrets_wrap
 end
 
 # envchain execs its target literally — `command npm` is fish syntax, not
-# a binary. Resolve to a real executable path here, validating each
-# candidate so a quirky lookup can't poison the exec.
+# a binary. Resolve to a real executable path here, checking standard
+# install locations directly (avoids fish's command/type lookup quirks
+# inside same-named functions).
 function _resolve_bin
-    for candidate in (command -s $argv[1] 2>/dev/null) \
-                     (which $argv[1] 2>/dev/null) \
-                     /opt/homebrew/bin/$argv[1] \
-                     /usr/local/bin/$argv[1] \
-                     /usr/bin/$argv[1]
-        if test -x "$candidate"; and not test -d "$candidate"
-            echo $candidate
+    set -l name $argv[1]
+    for p in /opt/homebrew/bin /usr/local/bin /usr/bin
+        if test -x $p/$name; and not test -d $p/$name
+            echo $p/$name
             return 0
         end
+    end
+    set -l fallback (which $name 2>/dev/null)
+    if test -n "$fallback"; and test -x "$fallback"
+        echo $fallback
+        return 0
     end
     return 1
 end
 
 function npm
-    set -l bin (_resolve_bin npm); or begin
-        echo "npm: real binary not found in PATH" >&2
+    set -l bin (_resolve_bin npm)
+    if test -z "$bin"
+        echo "npm: real binary not found" >&2
         return 127
     end
     envchain npm -- $bin $argv
 end
 
 function rclone
-    set -l bin (_resolve_bin rclone); or begin
-        echo "rclone: real binary not found in PATH" >&2
+    set -l bin (_resolve_bin rclone)
+    if test -z "$bin"
+        echo "rclone: real binary not found" >&2
         return 127
     end
     envchain cloudflare -- $bin $argv
