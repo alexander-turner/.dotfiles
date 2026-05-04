@@ -105,6 +105,7 @@ fi
 # Done after the copy so cp doesn't try to write through symlinks back to the source.
 ln -sf "$DOTFILES_DIR"/apps/fish/config.fish "$FISH_CONFIG_DIR/config.fish"
 ln -sf "$DOTFILES_DIR"/apps/fish/functions/fish_prompt.fish "$FISH_CONFIG_DIR/functions/fish_prompt.fish"
+ln -sf "$DOTFILES_DIR"/apps/fish/functions/claude.fish "$FISH_CONFIG_DIR/functions/claude.fish"
 # Clear any stale dangling symlink left by older versions of this script.
 [ -L "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish" ] && [ ! -e "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish" ] && rm -f "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish"
 

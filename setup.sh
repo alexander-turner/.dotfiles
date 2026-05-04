@@ -245,7 +245,7 @@ tmux source ~/.tmux.conf >/dev/null 2>&1 || true
 
 if command_exists pnpm; then
     pnpm setup >/dev/null
-    pnpm install -g prettier
+    pnpm install -g prettier @devcontainers/cli
 fi
 if [ "$(uname)" != "Darwin" ]; then
     sudo apt-get install -y libxml2-utils
