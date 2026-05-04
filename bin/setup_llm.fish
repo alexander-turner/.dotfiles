@@ -95,7 +95,7 @@ set -l LLM_DIR (dirname (llm logs path))
 mkdir -p "$LLM_DIR"
 set -l MODELS_FILE "$LLM_DIR/extra-openai-models.yaml"
 if not test -f "$MODELS_FILE"; or not grep -q "redpill-sonnet" "$MODELS_FILE" 2>/dev/null
-    printf '- model_id: redpill-sonnet\n  model_name: anthropic/claude-sonnet-4-5\n  api_base: "https://api.redpill.ai/v1"\n' >>"$MODELS_FILE"
+    printf '- model_id: redpill-sonnet\n  model_name: anthropic/claude-sonnet-4.5\n  api_base: "https://api.redpill.ai/v1"\n' >>"$MODELS_FILE"
 end
 llm models default redpill-sonnet 1>/dev/null
 

@@ -101,5 +101,7 @@ fi
 # Done after the copy so cp doesn't try to write through symlinks back to the source.
 ln -sf "$DOTFILES_DIR"/apps/fish/config.fish "$FISH_CONFIG_DIR/config.fish"
 ln -sf "$DOTFILES_DIR"/apps/fish/functions/fish_prompt.fish "$FISH_CONFIG_DIR/functions/fish_prompt.fish"
+# Remove stale symlink from older installs that pointed at a now-gitignored file.
+rm -f "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish"
 
 fish "$DOTFILES_DIR"/bin/install_fish_plugins.fish >/dev/null
