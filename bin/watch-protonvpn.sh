@@ -12,7 +12,9 @@ trap cleanup INT TERM
 
 while true; do
     if ! pgrep -x "ProtonVPN" > /dev/null; then
-        open -a "ProtonVPN" 2>/dev/null || true
+        if [ -d "/Applications/ProtonVPN.app" ]; then
+            open -a "ProtonVPN"
+        fi
     fi
     sleep 30
 done
