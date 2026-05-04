@@ -4,7 +4,7 @@
 #   --ci: CI mode - fail if tools missing, no colors
 #   --fix: Auto-fix issues where possible (shellcheck, stylua)
 
-set -e
+set -euo pipefail
 
 CI_MODE=false
 FIX_MODE=false

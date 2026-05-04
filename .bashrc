@@ -63,7 +63,7 @@ alias e='exit'
 alias rm='rm -I --preserve-root=all'
 findfile() { find . -type f -iname "*${1}*" 2>/dev/null; }
 alias editbashrc='nvim $HOME/.bashrc'
-alias crontab="export VISUAL=nvim; crontab"
+alias crontab="VISUAL=nvim crontab"
 alias gac="git add :/; git commit -m"
 
 # Git aliases
