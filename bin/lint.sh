@@ -126,7 +126,23 @@ check_toml() {
         fi
     fi
     echo -n "TOML validation: "
-    if ! find . -name '*.toml' -exec python3 -c "import sys, tomllib; exec('with open(sys.argv[1],\"rb\") as f: tomllib.load(f)')" {} \;; then
+    TOML_FILES=$(find . -name '*.toml' -not -path './.git/*' -not -path './node_modules/*' || true)
+    if [ -z "$TOML_FILES" ]; then
+        echo -e "${GREEN}no files${NC}"
+        return 0
+    fi
+    local toml_failed=0
+    while IFS= read -r f; do
+        if ! python3 -c "
+import sys, tomllib
+with open(sys.argv[1], 'rb') as fp:
+    tomllib.load(fp)
+" "$f"; then
+            echo -e "\n  ${RED}Invalid: $f${NC}"
+            toml_failed=1
+        fi
+    done <<< "$TOML_FILES"
+    if [ $toml_failed -ne 0 ]; then
         echo -e "${RED}failed${NC}"
         return 1
     fi

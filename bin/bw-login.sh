@@ -40,9 +40,13 @@ prompt_skippable() {
     local prompt="$1" varname="$2" hidden="${3:-}" value
     printf '%s (empty to skip): ' "$prompt" >&2
     if [ "$hidden" = "hidden" ]; then
+        # Restore echo even if user hits Ctrl-C mid-read.
+        trap 'stty echo 2>/dev/null; exit 130' INT
+        trap 'stty echo 2>/dev/null; exit 143' TERM
         stty -echo
         IFS= read -r value
         stty echo
+        trap - INT TERM
         printf '\n' >&2
     else
         IFS= read -r value
