@@ -37,6 +37,12 @@ safe_link "$DOTFILES_DIR/apps/fish/config.fish" "$HOME/.config/fish/config.fish"
 mkdir -p "$HOME/.claude"
 safe_link "$DOTFILES_DIR/ai/prompting/settings.json" "$HOME/.claude/settings.json"
 
+# Claude Code wrapper for non-fish shells: bash/zsh/etc. invoke this shim, which
+# auto-launches the dotfiles devcontainer. ~/.local/bin must be ahead of the
+# real claude in PATH for the shim to win. Fish has its own functions/claude.fish.
+mkdir -p "$HOME/.local/bin"
+safe_link "$DOTFILES_DIR/bin/claude" "$HOME/.local/bin/claude"
+
 for aider_file in "$DOTFILES_DIR"/.aider*; do
     if [ -f "$aider_file" ]; then
         safe_link "$aider_file" "$HOME/$(basename "$aider_file")"
@@ -245,7 +251,16 @@ tmux source ~/.tmux.conf >/dev/null 2>&1 || true
 
 if command_exists pnpm; then
     pnpm setup >/dev/null
-    pnpm install -g prettier @devcontainers/cli
+    pnpm install -g prettier
+fi
+
+# devcontainer CLI — used by the host-side `claude` wrappers (bin/claude and
+# apps/fish/functions/claude.fish) to bring up .devcontainer/ on demand.
+# Installed via npm (not pnpm) because npm is bundled with Node and doesn't
+# need the pnpm-setup PATH dance — keeps the bootstrap reliable on fresh boxes.
+if command_exists npm; then
+    npm install -g @devcontainers/cli >/dev/null 2>&1 || \
+        status_msg "WARN: 'npm i -g @devcontainers/cli' failed. The claude wrapper will fall back to running on the host."
 fi
 if [ "$(uname)" != "Darwin" ]; then
     sudo apt-get install -y libxml2-utils

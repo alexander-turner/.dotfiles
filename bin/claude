@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# claude wrapper — auto-launches the dotfiles devcontainer when invoked outside one.
+# Symlinked to ~/.local/bin/claude (which must be ahead of the real claude in $PATH).
+# Fish has its own equivalent at apps/fish/functions/claude.fish.
+#
+# Bypass for one invocation: CLAUDE_NO_SANDBOX=1 claude ...
+# Inside a devcontainer (Dockerfile sets DEVCONTAINER=true): pass-through, no extra container.
+set -euo pipefail
+
+canonicalize() {
+    if command -v realpath >/dev/null 2>&1; then
+        realpath "$1" 2>/dev/null && return
+    fi
+    if readlink -f "$1" >/dev/null 2>&1; then
+        readlink -f "$1"
+        return
+    fi
+    echo "$1"
+}
+
+SELF_CANONICAL=$(canonicalize "$0")
+
+find_real_claude() {
+    local IFS=:
+    local p candidate cand
+    for p in $PATH; do
+        candidate="$p/claude"
+        [[ -x "$candidate" && ! -d "$candidate" ]] || continue
+        cand=$(canonicalize "$candidate")
+        [[ "$cand" == "$SELF_CANONICAL" ]] && continue
+        echo "$candidate"
+        return 0
+    done
+    return 1
+}
+
+# Pass-through: already in container, or user opted out for this invocation.
+if [[ -n "${DEVCONTAINER:-}" || -n "${CLAUDE_NO_SANDBOX:-}" ]]; then
+    real=$(find_real_claude) || { echo "claude: real binary not found in PATH" >&2; exit 127; }
+    exec "$real" "$@"
+fi
+
+if ! command -v devcontainer >/dev/null 2>&1; then
+    echo "claude: devcontainer CLI not installed (run setup.sh, or 'npm i -g @devcontainers/cli')." >&2
+    echo "claude: falling back to host execution; set CLAUDE_NO_SANDBOX=1 to silence this notice." >&2
+    real=$(find_real_claude) || { echo "claude: real binary not found in PATH" >&2; exit 127; }
+    exec "$real" "$@"
+fi
+
+# Use the repo's own .devcontainer if present, else fall back to the dotfiles config.
+cfg_args=()
+if [[ ! -e .devcontainer/devcontainer.json ]]; then
+    cfg_args=(--config "$HOME/.dotfiles/.devcontainer/devcontainer.json")
+fi
+
+# Idempotent — fast no-op once the container is running for this workspace folder.
+if ! devcontainer up --workspace-folder "$PWD" "${cfg_args[@]}" >/dev/null; then
+    echo "claude: 'devcontainer up' failed; bypass with CLAUDE_NO_SANDBOX=1." >&2
+    exit 1
+fi
+
+exec devcontainer exec --workspace-folder "$PWD" "${cfg_args[@]}" claude "$@"
