@@ -35,7 +35,7 @@ Features (configurable by changing `setup.sh`):
     - VSCodium with Roo Cline extension for privacy-first AI pair programming (use also with confidential cloud computing, like via [`redpill.ai`](https://redpill.ai)),
     - `claude-code-router` (`ccr`) installed via pnpm and supervised by `launchagents/com.turntrout.ccr.plist`, so the private Claude wrappers route through [Venice](https://venice.ai) without the daemon dying across reboots. Store your Venice API key in Bitwarden as `envchain/ai/VENICE_INFERENCE_KEY` (the standard `envchain/<namespace>/<VAR>` convention) — `bwseed` then pulls it into envchain on every machine.
     - `wut` command to explain shell output.
-13. Hardens [Claude Code](https://docs.claude.com/en/docs/claude-code) with a defense-in-depth setup: every `claude` invocation auto-launches the bundled devcontainer (Anthropic reference image + iptables egress allowlist), and the global `~/.claude/settings.json` adds an OS-level sandbox (denies reads of `~/.ssh`/`.aws`/`.gnupg`/`.env*`, denies writes to shell rc files), permission deny rules for shell-out vectors (`curl`, `wget`, `python -c`, `node -e`, `fish -c`, `eval`, `git push --force`), and a curated allowlist for the routine commands (`npm`/`pnpm` test/build/lint, `git status`/`diff`/`add`/`commit`, `ollama`/`brew`/`docker`/`orb`). See [Claude Code security](#claude-code-security) below.
+13. Sandboxes [Claude Code](https://docs.claude.com/en/docs/claude-code): every `claude` invocation auto-launches a container, the OS sandbox denies reads of `~/.ssh`/`.aws`/`.gnupg`/`.env*`, and permission rules block arbitrary shell-out (`curl`, `wget`, `python -c`, `eval`, force-push). See [Claude Code security](#claude-code-security).
 14. Most importantly, the `goosesay` command. A variant on the classic `cowsay` (which renders text inside a cow's speech bubble), `goosesay` goosens up your terminal just the right amount. For example:
 
 ```plaintext
@@ -138,40 +138,15 @@ Values pipe stdin→stdin from envchain into `bw create item`; nothing is logged
 
 ## Claude Code security
 
-Three layers protect against a misbehaving model or a compromised tool call:
+Three layers, all installed by `setup.sh`:
 
-1. **Container isolation.** `.devcontainer/` is the Anthropic reference container (`Dockerfile`, `devcontainer.json`, `init-firewall.sh`) with three additions: `fish`/`pnpm`/`python3` in the image, four extra approved domains in the egress allowlist (`pypi.org`, `files.pythonhosted.org`, `raw.githubusercontent.com`, `objects.githubusercontent.com`), and `NPM_CONFIG_IGNORE_SCRIPTS=true` pinned via `containerEnv`. The container uses a single shared `claude-code-config` volume for `~/.claude` so authentication and history persist across all repos; bash history stays per-workspace via `claude-code-bashhistory-${devcontainerId}`.
+- **Container.** `.devcontainer/` is the [Anthropic reference container](https://github.com/anthropics/claude-code/tree/main/.devcontainer) plus `fish`/`pnpm`/`python3`, `pypi.org` + `*.githubusercontent.com` added to the `init-firewall.sh` egress allowlist, and `NPM_CONFIG_IGNORE_SCRIPTS=true` pinned. `~/.claude` is a single shared volume so auth persists across repos.
+- **Sandbox.** `ai/prompting/settings.json` (symlinked to `~/.claude/settings.json`) enables `sandbox`, denies reads of `~/.ssh`/`.aws`/`.gnupg`/`**/.env*`, denies writes to shell rc files including `~/.config/fish/**`, and limits `network.allowedDomains` to npm/pypi/anthropic/github.
+- **Permissions.** Deny rules block `curl`/`wget`/`python -c`/`node -e`/`fish -c`/`eval`/force-push and exfil destinations (pastebin etc). Allow rules whitelist `npm`/`pnpm install`/`run test*`/`build*`/`lint*`, `git status`/`diff`/`add`/`commit`, and the `brew`/`docker`/`orb`/`launchctl` essentials. Deny wins on first match, so any allow that overlaps a deny is dead config.
 
-2. **OS-level sandbox.** The canonical `ai/prompting/settings.json` (symlinked into `~/.claude/settings.json`) sets `sandbox.enabled: true` with:
-   - `denyRead`: `~/.ssh/**`, `~/.aws/**`, `~/.gnupg/**`, `**/.env*`
-   - `denyWrite`: `~/.bashrc`, `~/.zshrc`, `~/.profile`, `~/.config/fish/**`
-   - `network.allowedDomains`: `api.anthropic.com`, `registry.npmjs.org`, `pypi.org`, `files.pythonhosted.org`, `github.com`, `raw.githubusercontent.com`, `objects.githubusercontent.com`
+`claude` invoked anywhere on the host auto-launches the container via `bin/claude` (bash/zsh) and `apps/fish/functions/claude.fish` (fish). Both fall back to host execution on `CLAUDE_NO_SANDBOX=1` or if `@devcontainers/cli` is missing. `~/.local/bin` must be ahead of the real `claude` in `$PATH` for the shim to win on bash/zsh.
 
-3. **Permission rules.** `permissions.deny` blocks shell-out vectors (`curl`, `wget`, `python -c`, `python3 -c`, `node -e`, `fish -c`, `eval`, `git push --force`/`-f`) and exfiltration WebFetch destinations (`pastebin.com`, `transfer.sh`, `0x0.st`, `gist.github.com`). `permissions.allow` whitelists the routine ergonomic commands (`npm`/`pnpm install`/`run test*`/`build*`/`lint*`, `git status`/`diff`/`add`/`commit`/`log`/`branch`, `ollama`/`brew`/`docker`/`orb`/`launchctl` essentials). Note: deny always wins (first-match evaluation), so any allow that overlaps a deny is dead config.
-
-### Auto-launching the container per repo
-
-Two wrappers (one per shell family) make every `claude` invocation outside a container automatically `devcontainer up && devcontainer exec claude`:
-
-- **fish:** `apps/fish/functions/claude.fish` — installed via `bin/install_fish.sh` (`ln -sf` so edits propagate).
-- **bash/zsh:** `bin/claude` — symlinked to `~/.local/bin/claude` by `setup.sh`. Requires `~/.local/bin` to be ahead of the real claude in `$PATH`.
-
-Both wrappers:
-- Use the repo's own `.devcontainer/devcontainer.json` if it has one, else fall back to the dotfiles config via `--config $HOME/.dotfiles/.devcontainer/devcontainer.json`.
-- Pass-through (no container) when `DEVCONTAINER=true` is set (i.e. already inside one).
-- Pass-through for one invocation when `CLAUDE_NO_SANDBOX=1` is set: `CLAUDE_NO_SANDBOX=1 claude ...`.
-- Fall back to host execution with a warning if the [`@devcontainers/cli`](https://github.com/devcontainers/cli) is missing (`setup.sh` installs it via `npm i -g`).
-
-The bash shim canonicalizes its own path and excludes itself from the PATH search, so the `~/.local/bin/claude` symlink doesn't recurse into itself. The fish function is loaded as a function (not from PATH) so it doesn't have the recursion problem.
-
-### Layer 2 (auto mode)
-
-Not configured here — it's a runtime toggle. Cycle into it with `Shift+Tab` mid-session, or launch with `claude --enable-auto-mode`. The classifier voids some script-interpreter allows in favor of its own judgment; the deny rules above still apply (deny always wins). The 3-consecutive / 20-total denial circuit breaker is automatic.
-
-### What you have to set yourself
-
-- **API budget cap.** Configure on the Anthropic Console → Workspaces → spend limit. This is the only spend backstop if the model gets stuck in a loop.
-- **PATH ordering.** Make sure `~/.local/bin` is ahead of `/opt/homebrew/bin` (or wherever the real `claude` lives) so the bash shim wins on bash/zsh.
+Set an Anthropic spend cap in the Console — the only backstop for runaway loops.
 
 ## Other notes
 

@@ -287,14 +287,15 @@ function services_secrets_wrap
     envchain services -- $argv
 end
 
-# `command npm` invokes the real npm binary, bypassing this same-named
-# fish function. It is fish syntax, not an envchain flag.
+# `type -P` resolves the binary path bypassing this same-named function.
+# We can't use `command npm` here — envchain execs literally and `command`
+# is a shell builtin (no PATH lookup respects it), so envchain breaks.
 function npm
-    envchain npm -- command npm $argv
+    envchain npm -- (type -P npm) $argv
 end
 
 function rclone
-    envchain cloudflare -- command rclone $argv
+    envchain cloudflare -- (type -P rclone) $argv
 end
 
 function twine
