@@ -34,6 +34,8 @@ end
 # No default greeting
 set fish_greeting ''
 
+set -gx DOTFILES_DIR "$HOME/.dotfiles"
+
 # These elements don't scale with font size
 set --universal tide_right_prompt_prefix ''
 set --universal tide_left_prompt_suffix ''
@@ -95,9 +97,9 @@ function ls
     if command -q gls
         gls --color="always" --ignore-backups --hide="*.bak" $argv
     else if $IS_MAC
-        command ls $argv
+        command ls -G $argv
     else
-        command ls --color="always" --ignore-backups --hide="*.bak" $argv
+        command ls --color="always" $argv
     end
 end
 
@@ -120,7 +122,7 @@ if $IS_MAC
 end
 
 function flash
-    sh ~/.dotfiles/bin/keyboard_flash.sh
+    sh "$DOTFILES_DIR/bin/keyboard_flash.sh"
 end
 
 function pytest
@@ -304,7 +306,7 @@ end
 # Aider via Redpill: envchain populates REDPILL_API_KEY into the child
 # process; the shim script remaps it onto OPENAI_API_KEY and execs aider.
 function aider_redpill
-    envchain ai -- $HOME/.dotfiles/bin/aider-redpill-shim.sh (type -p aider) --edit-format editor-diff $argv
+    envchain ai -- "$DOTFILES_DIR/bin/aider-redpill-shim.sh" (type -p aider) --edit-format editor-diff $argv
 end
 
 # ── Bitwarden sync helpers ────────────────────────────────────────────────
@@ -313,11 +315,11 @@ end
 # Auto-sync on shell startup is throttled by ~/.cache/bw-envchain-sync.stamp.
 
 function bwseed --description 'Refresh envchain from Bitwarden vault'
-    bash $HOME/.dotfiles/bin/bw-seed-envchain.sh $argv
+    bash "$DOTFILES_DIR/bin/bw-seed-envchain.sh" $argv
 end
 
 function bwadd --description 'Add a new secret to Bitwarden + envchain'
-    bash $HOME/.dotfiles/bin/bw-add-secret.sh $argv
+    bash "$DOTFILES_DIR/bin/bw-add-secret.sh" $argv
 end
 
 function _bw_envchain_autosync
@@ -332,7 +334,7 @@ function _bw_envchain_autosync
     if test (math (date +%s) - $mtime) -lt $interval
         return 0
     end
-    fish -c "if bash $HOME/.dotfiles/bin/bw-seed-envchain.sh --quiet >/dev/null 2>&1; touch $stamp; end" &
+    fish -c "if bash $DOTFILES_DIR/bin/bw-seed-envchain.sh --quiet >/dev/null 2>&1; touch $stamp; end" &
     disown
 end
 

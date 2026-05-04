@@ -1,6 +1,15 @@
 #!/bin/bash
-# Download the latest keyboard configuration
-curl -s -L "https://oryx.zsa.io/rXDjb/latest/binary" -o "/tmp/ergodox.hex"
+# Download and flash the latest keyboard configuration.
+# KEYBOARD_BINARY_URL can be overridden to point to a different Oryx layout.
+set -euo pipefail
 
-# Install it with wally-cli
-wally-cli "/tmp/ergodox.hex"
+URL="${KEYBOARD_BINARY_URL:-https://oryx.zsa.io/rXDjb/latest/binary}"
+HEX=$(mktemp /tmp/ergodox-XXXXXX.hex)
+trap 'rm -f "$HEX"' EXIT
+
+if ! curl -fsSL "$URL" -o "$HEX"; then
+    echo "keyboard_flash.sh: failed to download firmware from $URL" >&2
+    exit 1
+fi
+
+wally-cli "$HEX"

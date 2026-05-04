@@ -40,5 +40,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -m "style: auto-fix lint issues"
+          git commit -m "style: auto-fix lint issues [skip ci]"
           git push

@@ -7,12 +7,18 @@ if [ "$(uname)" != "Darwin" ]; then
     exit 1
 fi
 
-cleanup() { exit 0; }
+LOG="$HOME/Library/Logs/watch-protonvpn.log"
+
+log() { echo "$(date '+%Y-%m-%d %H:%M:%S') $*" | tee -a "$LOG"; }
+
+cleanup() { log "watcher stopped"; exit 0; }
 trap cleanup INT TERM
 
+log "watcher started"
 while true; do
     if ! pgrep -x "ProtonVPN" > /dev/null; then
         if [ -d "/Applications/ProtonVPN.app" ]; then
+            log "ProtonVPN not running; relaunching"
             open -a "ProtonVPN"
         fi
     fi
