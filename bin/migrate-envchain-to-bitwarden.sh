@@ -47,11 +47,15 @@ migrate_var() {
         return 0
     fi
 
-    SECRET="$value" bw get template item \
-        | jq --arg n "$item_name" --arg fid "$folder_id" \
-            '.name=$n | .folderId=$fid | .login={"username":null,"password":env.SECRET,"totp":null,"uris":[]} | .notes=null' \
-        | bw encode \
-        | bw create item --session "$BW_SESSION" >/dev/null
+    # Run in a subshell so the SECRET export doesn't persist in the parent
+    # shell across loop iterations. jq reads env.SECRET from its own env.
+    ( export SECRET="$value"
+      bw get template item \
+          | jq --arg n "$item_name" --arg fid "$folder_id" \
+              '.name=$n | .folderId=$fid | .login={"username":null,"password":env.SECRET,"totp":null,"uris":[]} | .notes=null' \
+          | bw encode \
+          | bw create item --session "$BW_SESSION" >/dev/null
+    )
     unset value
     echo "  ok     $item_name"
 }
