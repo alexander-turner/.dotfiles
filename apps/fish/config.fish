@@ -340,8 +340,6 @@ if status is-interactive; and type -q bw
     _bw_envchain_autosync 2>/dev/null
 end
 
-# set -x OLLAMA_ORIGINS *
-
 fish_add_path $HOME/go/bin
 
 # pnpm

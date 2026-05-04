@@ -250,7 +250,4 @@ for directory in ~/.local/{share,state}/nvim ~/.cache/nvim; do
     cp -r "$directory"{,.bak} >/dev/null 2>&1 || true
 done
 
-status_msg "Setting up AI integrations..."
-fish "$DOTFILES_DIR/bin/setup_llm.fish"
-
 status_msg "Setup complete."
