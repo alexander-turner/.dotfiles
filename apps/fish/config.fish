@@ -197,7 +197,7 @@ function push
 
     # Find git root directory
     set -l git_root (git rev-parse --show-toplevel 2>/dev/null)
-    if test $push_status -eq 0 -a -n "$git_root"
+    if test $push_status -eq 0; and test -n "$git_root"
         set -l post_push_hook "$git_root/.git/hooks/post-push"
 
         # Check if post-push hook exists and is executable

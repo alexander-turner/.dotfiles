@@ -51,8 +51,8 @@ trap 'kill "$spin_pid" 2>/dev/null; tput cnorm' EXIT
 # child; we re-export it as OPENAI_API_KEY for just the llm invocation.
 if ! commit_msg=$(git diff --cached | envchain ai sh -c 'OPENAI_API_KEY="$REDPILL_API_KEY" exec llm -s "$(cat ~/.config/prompts/commit-system-prompt.txt)"' 2>&1); then
   # Stop the spinning animation by killing its process
-  kill $spin_pid
-  wait $spin_pid 2>/dev/null  # Wait for the process to terminate and suppress error messages
+  kill "$spin_pid"
+  wait "$spin_pid" 2>/dev/null  # Wait for the process to terminate and suppress error messages
 
   # Finalizing output
   tput cnorm  # Show the cursor again

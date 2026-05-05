@@ -50,10 +50,14 @@ fi
 if [ -n "$current_login_shell" ] && [ "$current_login_shell" = "$FISH_PATH" ]; then
     echo ":: Login shell already set to $FISH_PATH; skipping chsh."
 else
-    # Pass $REAL_USER explicitly so a sudo-run install changes the right
-    # user's shell instead of root's (both macOS and Linux accept a positional
-    # username argument to chsh).
-    chsh -s "$FISH_PATH" "$REAL_USER" || echo ":: chsh failed — set fish as login shell manually with 'chsh -s $FISH_PATH'." >&2
+    # When running as root (via sudo), pass $REAL_USER so we change the right
+    # user's shell. As a non-root user, passing a username argument causes PAM
+    # to reject the call on many Linux distros, so omit it in that case.
+    if [ "$(id -u)" -eq 0 ]; then
+        chsh -s "$FISH_PATH" "$REAL_USER" || echo ":: chsh failed — set fish as login shell manually with 'chsh -s $FISH_PATH'." >&2
+    else
+        chsh -s "$FISH_PATH" || echo ":: chsh failed — set fish as login shell manually with 'chsh -s $FISH_PATH'." >&2
+    fi
 fi
 
 # Skip fisher/tide install if tide is already present
