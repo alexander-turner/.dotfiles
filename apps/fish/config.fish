@@ -140,7 +140,7 @@ function yank
         set -l tmp (mktemp)
         cat >$tmp
         set -l data (base64 < $tmp | tr -d '\n')
-        rm $tmp &>/dev/null
+        command rm $tmp &>/dev/null
         printf '\033]52;c;%s\a' $data
     else if $IS_MAC
         pbcopy
@@ -197,7 +197,7 @@ function push
 
     # Find git root directory
     set -l git_root (git rev-parse --show-toplevel 2>/dev/null)
-    if test $status -eq 0
+    if test $push_status -eq 0; and test -n "$git_root"
         set -l post_push_hook "$git_root/.git/hooks/post-push"
 
         # Check if post-push hook exists and is executable
@@ -262,10 +262,10 @@ end
 abbr -a fxtra editfishextras
 
 # Only load iTerm2 integration when already inside tmux, not during tmux startup
-if test -e {$HOME}/.iterm2_shell_integration.fish
+if test -e $HOME/.iterm2_shell_integration.fish
     # Only load if TMUX variable is already set (we're inside a running tmux session)
     if set -q TMUX
-        source {$HOME}/.iterm2_shell_integration.fish
+        source $HOME/.iterm2_shell_integration.fish
     end
 end
 

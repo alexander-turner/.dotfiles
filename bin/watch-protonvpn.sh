@@ -9,7 +9,9 @@ fi
 
 log() { logger -t watch-protonvpn "$*"; }
 
-cleanup() { log "watcher stopped"; exit 0; }
+sleep_pid=""
+# kill 0 would signal the entire process group, so guard on non-empty PID.
+cleanup() { log "watcher stopped"; [ -n "$sleep_pid" ] && kill "$sleep_pid" 2>/dev/null; exit 0; }
 trap cleanup INT TERM
 
 log "watcher started"
@@ -20,5 +22,7 @@ while true; do
             open -a "ProtonVPN"
         fi
     fi
-    sleep 30
+    # Background sleep so the trap fires immediately; track PID to kill it cleanly.
+    # `|| true` so a signal-killed wait doesn't trigger set -e.
+    sleep 30 & sleep_pid=$!; wait "$sleep_pid" || true
 done
