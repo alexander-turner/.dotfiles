@@ -35,7 +35,7 @@ else
 fi
 
 # Set Fish as the default shell (skip if already set)
-FISH_PATH=$(which fish)
+FISH_PATH=$(command -v fish)
 grep -qxF "$FISH_PATH" /etc/shells || echo "$FISH_PATH" | sudo tee -a /etc/shells >/dev/null
 
 # Detect the user's actual login shell from the password DB rather than $SHELL
@@ -50,7 +50,13 @@ fi
 if [ -n "$current_login_shell" ] && [ "$current_login_shell" = "$FISH_PATH" ]; then
     echo ":: Login shell already set to $FISH_PATH; skipping chsh."
 else
-    chsh -s "$FISH_PATH" || echo ":: chsh failed — set fish as login shell manually with 'chsh -s $FISH_PATH'." >&2
+    # Pass $REAL_USER explicitly so a sudo-run install changes the right user's
+    # shell instead of root's. macOS chsh uses -u; Linux accepts a positional arg.
+    if [ "$(uname)" = "Darwin" ]; then
+        chsh -s "$FISH_PATH" || echo ":: chsh failed — set fish as login shell manually with 'chsh -s $FISH_PATH'." >&2
+    else
+        chsh -s "$FISH_PATH" "$REAL_USER" || echo ":: chsh failed — set fish as login shell manually with 'chsh -s $FISH_PATH'." >&2
+    fi
 fi
 
 # Skip fisher/tide install if tide is already present

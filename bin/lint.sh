@@ -101,7 +101,7 @@ check_stylua() {
 check_yaml() {
     require_or_skip yamllint "YAML validation" || return 0
     echo -n "YAML validation: "
-    YAML_FILES=$(find . -name '*.yml' -o -name '*.yaml' | grep -v '^./node_modules' || true)
+    YAML_FILES=$(find . \( -name '*.yml' -o -name '*.yaml' \) -not -path '*/node_modules/*' || true)
     if [ -z "$YAML_FILES" ]; then
         echo -e "${GREEN}no files${NC}"
         return 0
@@ -154,7 +154,7 @@ check_json() {
     require_or_skip python3 "JSON validation" || return 0
     echo -n "JSON validation: "
     # Exclude JSONC files (VSCode/VSCodium settings allow trailing commas)
-    JSON_FILES=$(find . -name '*.json' -not -path './node_modules/*' -not -path './.git/*' -not -path './apps/vscodium/*' || true)
+    JSON_FILES=$(find . -name '*.json' -not -path '*/node_modules/*' -not -path './.git/*' -not -path './apps/vscodium/*' || true)
     if [ -z "$JSON_FILES" ]; then
         echo -e "${GREEN}no files${NC}"
         return 0
@@ -177,7 +177,7 @@ check_json() {
 check_python() {
     require_or_skip ruff "Python lint" || return 0
     echo -n "Python lint: "
-    PY_FILES=$(find . -name '*.py' -not -path './.git/*' -not -path './node_modules/*' || true)
+    PY_FILES=$(find . -name '*.py' -not -path './.git/*' -not -path '*/node_modules/*' || true)
     if [ -z "$PY_FILES" ]; then
         echo -e "${GREEN}no files${NC}"
         return 0

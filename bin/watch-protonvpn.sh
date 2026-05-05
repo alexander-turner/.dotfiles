@@ -20,5 +20,6 @@ while true; do
             open -a "ProtonVPN"
         fi
     fi
-    sleep 30
+    # Background sleep so the trap fires immediately on SIGTERM/SIGINT.
+    sleep 30 & wait $!
 done

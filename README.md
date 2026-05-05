@@ -136,4 +136,4 @@ Values pipe stdin→stdin from envchain into `bw create item`; nothing is logged
 
 ## Other notes
 
-- To disable parenthesis matching in `nvim`, delete the `mini.pairs` plugin from `~/.local/share/nvim/lazy/LazyVim/lua/azyvim/plugins/coding.lua`.
+- To disable parenthesis matching in `nvim`, delete the `mini.pairs` plugin from `~/.local/share/nvim/lazy/LazyVim/lua/lazyvim/plugins/coding.lua`.

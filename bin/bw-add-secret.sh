@@ -49,12 +49,14 @@ bw sync --session "$BW_SESSION" >/dev/null 2>&1 || true
 read_secret_into_SECRET() {
     if [ -t 0 ]; then
         printf 'Value for %s (hidden): ' "$item_name" >&2
+        trap 'stty echo 2>/dev/null' INT TERM EXIT
         stty -echo
-        IFS= read -r SECRET
+        IFS= read -r SECRET || true  # allow EOF without triggering set -e
         stty echo
+        trap - INT TERM EXIT
         printf '\n' >&2
     else
-        IFS= read -r SECRET
+        IFS= read -r SECRET || true
     fi
     [ -n "${SECRET:-}" ] || { echo "Empty value; aborting." >&2; exit 1; }
     export SECRET

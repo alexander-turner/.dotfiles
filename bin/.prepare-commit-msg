@@ -43,6 +43,8 @@ fi
 # Start the spinning animation in the background
 spin_animation &
 spin_pid=$!  # Capture the process ID of the spinning animation
+# Ensure spinner is killed and cursor is restored on any exit (normal or abnormal)
+trap 'kill "$spin_pid" 2>/dev/null; tput cnorm' EXIT
 
 # Generate the commit message via `llm` over Redpill's OpenAI-compatible
 # endpoint. envchain ai exports REDPILL_API_KEY (and others) into the sh
@@ -74,4 +76,4 @@ printf "${GREEN}%s${NC}\n" "$commit_msg"
 printf "${BLUE}=================================${NC}\n\n"
 
 # Write the generated commit message to the specified file (usually the commit message file in .git)
-echo "$commit_msg" > "$1"
+printf '%s\n' "$commit_msg" > "$1"
