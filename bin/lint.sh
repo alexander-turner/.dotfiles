@@ -126,7 +126,7 @@ check_toml() {
         fi
     fi
     echo -n "TOML validation: "
-    TOML_FILES=$(find . -name '*.toml' -not -path './.git/*' -not -path './node_modules/*' || true)
+    TOML_FILES=$(find . -name '*.toml' -not -path './.git/*' -not -path '*/node_modules/*' || true)
     if [ -z "$TOML_FILES" ]; then
         echo -e "${GREEN}no files${NC}"
         return 0

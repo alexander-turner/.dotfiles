@@ -9,7 +9,8 @@ fi
 
 log() { logger -t watch-protonvpn "$*"; }
 
-cleanup() { log "watcher stopped"; exit 0; }
+sleep_pid=0
+cleanup() { log "watcher stopped"; kill "$sleep_pid" 2>/dev/null; exit 0; }
 trap cleanup INT TERM
 
 log "watcher started"
@@ -20,6 +21,6 @@ while true; do
             open -a "ProtonVPN"
         fi
     fi
-    # Background sleep so the trap fires immediately on SIGTERM/SIGINT.
-    sleep 30 & wait $!
+    # Background sleep so the trap fires immediately; track PID to kill it cleanly.
+    sleep 30 & sleep_pid=$!; wait "$sleep_pid"
 done
