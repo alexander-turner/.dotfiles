@@ -1,0 +1,56 @@
+name: Idempotency
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+# Verifies setup.sh --link-only is safely re-runnable. Running it twice in
+# an isolated $HOME must produce identical symlink sets and zero "Skipping"
+# / "Overwrite?" output on the second pass. doctor.sh is then asked to
+# verify only the symlink section (other checks need brew/fish, which we
+# deliberately don't install in this fast smoke job).
+
+jobs:
+  link-only-idempotent:
+    name: setup.sh --link-only is idempotent
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run setup.sh --link-only twice in an isolated HOME
+        run: |
+          set -euo pipefail
+          export TEST_HOME="$RUNNER_TEMP/fakehome"
+          mkdir -p "$TEST_HOME"
+          # safe_link writes its backups under $HOME/.dotfiles-backup; isolating
+          # $HOME means the real runner home is untouched.
+          HOME="$TEST_HOME" bash setup.sh --link-only | tee run1.log
+          ( cd "$TEST_HOME" && find . -type l -printf '%p -> %l\n' | sort ) > links1.txt
+          HOME="$TEST_HOME" bash setup.sh --link-only | tee run2.log
+          ( cd "$TEST_HOME" && find . -type l -printf '%p -> %l\n' | sort ) > links2.txt
+
+          # Symlink set must be identical between runs.
+          diff -u links1.txt links2.txt
+
+          # Second run must not have prompted, skipped, or backed anything up.
+          if grep -E "(already exists|Overwrite|Skipping|backed up to)" run2.log; then
+            echo "::error::setup.sh --link-only is not idempotent — see matches above" >&2
+            exit 1
+          fi
+
+      - name: Doctor reports symlinks healthy
+        run: |
+          set -uo pipefail
+          export HOME="$RUNNER_TEMP/fakehome"
+          # We tolerate FAILs from "Required commands" (brew/fish/nvim/zoxide
+          # aren't installed in this minimal job) but every Symlinks check
+          # must PASS.
+          out=$(bash bin/doctor.sh || true)
+          echo "$out"
+          symlinks_section=$(echo "$out" | awk '/=== Symlinks ===/{flag=1;next} /^=== /{flag=0} flag')
+          if echo "$symlinks_section" | grep -q "FAIL"; then
+            echo "::error::doctor.sh reported a symlink FAIL after setup.sh --link-only" >&2
+            exit 1
+          fi

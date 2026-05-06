@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Cross-platform secret storage wrapper.
 #
 # Backends, in detection order:
