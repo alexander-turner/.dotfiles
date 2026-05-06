@@ -127,8 +127,6 @@ real dir → prompt, missing → create.
   llama-3.3, mistral, etc.). The `mods` fish function wraps invocations
   in `envchain ai` so `VENICE_INFERENCE_KEY` is populated from the
   Keychain.
-- The legacy `aider_redpill` wrapper is kept for now (existing muscle
-  memory) but new wrappers must default to Venice.
 
 ### Cross-platform
 
