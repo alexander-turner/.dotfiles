@@ -9,6 +9,15 @@
 [core]
 	autocrlf = input
 	safecrlf = true
+	pager = delta
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	navigate = true
+	light = false
+	line-numbers = true
+[merge]
+	conflictstyle = zdiff3
 [init]
 	defaultBranch = main
 	templateDir = ~/.git_templates

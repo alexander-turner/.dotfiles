@@ -31,6 +31,10 @@ safe_link "$DOTFILES_DIR/.tmux.conf" "$HOME/.tmux.conf"
 mkdir -p "$HOME/.config/fish"
 safe_link "$DOTFILES_DIR/apps/fish/config.fish" "$HOME/.config/fish/config.fish"
 
+# mods (Charm AI): config lives in $XDG_CONFIG_HOME/mods/mods.yml
+mkdir -p "$HOME/.config/mods"
+safe_link "$DOTFILES_DIR/apps/mods/mods.yml" "$HOME/.config/mods/mods.yml"
+
 for aider_file in "$DOTFILES_DIR"/.aider*; do
     if [ -f "$aider_file" ]; then
         safe_link "$aider_file" "$HOME/$(basename "$aider_file")"
@@ -60,6 +64,11 @@ if [ "$(uname)" = "Darwin" ]; then
     mkdir -p "$HOME/Library"
     safe_link "$DOTFILES_DIR/.aerospace.toml" ~/.aerospace.toml
     safe_link "$DOTFILES_DIR/apps/com.googlecode.iterm2.plist" ~/Library/com.googlecode.iterm2.plist
+
+    # JankyBorders: config + invocation. Aerospace's after-startup-command
+    # spawns `borders`, which auto-loads ~/.config/borders/bordersrc.
+    mkdir -p "$HOME/.config/borders"
+    safe_link "$DOTFILES_DIR/apps/borders/bordersrc" "$HOME/.config/borders/bordersrc"
 fi
 
 # Vagrant templates
