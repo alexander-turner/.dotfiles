@@ -94,7 +94,11 @@ function crontab
 end
 
 function ls
-    if command -q gls
+    # eza is a drop-in for the most common ls flags (-l, -a, -A, -F).
+    # Falls back to gls (coreutils) on macOS / bsd ls otherwise.
+    if command -q eza
+        eza --color=always --git --icons=auto $argv
+    else if command -q gls
         gls --color="always" --ignore-backups --hide="*.bak" $argv
     else if $IS_MAC
         command ls -G $argv
@@ -102,6 +106,10 @@ function ls
         command ls --color="always" --ignore-backups --hide="*.bak" $argv
     end
 end
+
+abbr -a ll 'ls -lF'
+abbr -a la 'ls -laF'
+abbr -a lt 'ls --tree --level=2'
 
 set USE_MOSH false
 function ssh
@@ -279,6 +287,15 @@ set -xg NODE_NO_WARNINGS 1
 
 function ai_secrets_wrap
     envchain ai -- $argv
+end
+
+# Charm `mods`: pipe shell output through an LLM. Routes exclusively
+# through Venice (E2EE inference) per apps/mods/mods.yml. envchain ai
+# populates VENICE_INFERENCE_KEY from the macOS Keychain.
+#   git diff | mods 'review for issues'
+#   tail -200 build.log | mods -m coder 'what broke?'
+function mods
+    envchain ai -- command mods $argv
 end
 
 function cloudflare_secrets_wrap

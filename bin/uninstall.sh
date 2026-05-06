@@ -85,12 +85,13 @@ echo ":: Uninstalling dotfiles symlinks from $HOME..."
 echo "   (Backups, if any, will be restored from $SAFE_LINK_BACKUP_ROOT/<latest>/)"
 echo
 
-remove_dotfile_symlink "$HOME/.bashrc"      "$DOTFILES_DIR/.bashrc"
-remove_dotfile_symlink "$HOME/.vimrc"       "$DOTFILES_DIR/.vimrc"
-remove_dotfile_symlink "$HOME/.gitconfig"   "$DOTFILES_DIR/.gitconfig"
-remove_dotfile_symlink "$HOME/.npmrc"       "$DOTFILES_DIR/.npmrc"
-remove_dotfile_symlink "$HOME/.tmux.conf"   "$DOTFILES_DIR/.tmux.conf"
+remove_dotfile_symlink "$HOME/.bashrc" "$DOTFILES_DIR/.bashrc"
+remove_dotfile_symlink "$HOME/.vimrc" "$DOTFILES_DIR/.vimrc"
+remove_dotfile_symlink "$HOME/.gitconfig" "$DOTFILES_DIR/.gitconfig"
+remove_dotfile_symlink "$HOME/.npmrc" "$DOTFILES_DIR/.npmrc"
+remove_dotfile_symlink "$HOME/.tmux.conf" "$DOTFILES_DIR/.tmux.conf"
 remove_dotfile_symlink "$HOME/.config/fish/config.fish" "$DOTFILES_DIR/apps/fish/config.fish"
+remove_dotfile_symlink "$HOME/.config/mods/mods.yml" "$DOTFILES_DIR/apps/mods/mods.yml"
 remove_dotfile_symlink_dir "$HOME/.config/nvim" "$DOTFILES_DIR/apps/nvim"
 remove_dotfile_symlink "$HOME/.config/vagrant-templates/Vagrantfile" "$DOTFILES_DIR/ai/Vagrantfile"
 
@@ -106,6 +107,7 @@ if $IS_MAC; then
     remove_dotfile_symlink "$HOME/.aerospace.toml" "$DOTFILES_DIR/.aerospace.toml"
     remove_dotfile_symlink "$HOME/Library/com.googlecode.iterm2.plist" \
         "$DOTFILES_DIR/apps/com.googlecode.iterm2.plist"
+    remove_dotfile_symlink "$HOME/.config/borders/bordersrc" "$DOTFILES_DIR/apps/borders/bordersrc"
 
     # Unload + remove the ccr launch agent. launchctl unload is safe on a
     # missing label; we still prompt because it touches a running service.

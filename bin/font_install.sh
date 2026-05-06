@@ -20,10 +20,10 @@ fi
 mkdir -p "$FONT_DIR"
 
 for font in "${fonts[@]}"; do
-	url="$PREFIX$font$SUFFIX"
-	if ! wget -q "$url" -O "$FONT_DIR/$font.ttf"; then
-		echo "Warning: failed to download $font font" >&2
-	fi
+    url="$PREFIX$font$SUFFIX"
+    if ! wget -q "$url" -O "$FONT_DIR/$font.ttf"; then
+        echo "Warning: failed to download $font font" >&2
+    fi
 done
 
 echo -e "\033[1;31m Be sure to install the fira-code and Meslo fonts for your terminal of choice!\033[0m"

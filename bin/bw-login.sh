@@ -45,7 +45,7 @@ prompt_skippable() {
         trap 'stty echo 2>/dev/null; exit 143' TERM
         trap 'stty echo 2>/dev/null' EXIT
         stty -echo
-        IFS= read -r value || true  # allow EOF without triggering set -e
+        IFS= read -r value || true # allow EOF without triggering set -e
         stty echo
         trap - INT TERM EXIT
         printf '\n' >&2
@@ -64,8 +64,11 @@ api_login() {
         exit 0
     fi
     prompt_skippable "Bitwarden API client_secret" CLIENT_SECRET hidden
-    [ -n "${CLIENT_SECRET:-}" ] \
-        || { echo "client_secret required when client_id is set." >&2; exit 1; }
+    [ -n "${CLIENT_SECRET:-}" ] ||
+        {
+            echo "client_secret required when client_id is set." >&2
+            exit 1
+        }
 
     secret_set bw-api-credentials "$CLIENT_ID:$CLIENT_SECRET"
 
