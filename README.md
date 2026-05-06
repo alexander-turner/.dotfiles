@@ -42,7 +42,7 @@ Features (configurable by changing `setup.sh`):
     - `mods` (Charm) for piping shell output to an LLM, e.g. `<failing-cmd> 2>&1 | mods 'what broke?'`. Routes through Venice via `apps/mods/mods.yml`.
 11. Modern Unix toolkit installed via `Brewfile`:
     - `eza` — drop-in `ls` replacement with git-aware listing and tree view; the fish `ls` function prefers it when present.
-    - `ripgrep` (`rg`), `fd`, `bat` — faster grep / find / cat.
+    - `ripgrep` (`rg`), `fd`, `bat` — faster grep / find / cat. In interactive fish, `grep` dispatches to `rg` and `cat` to `bat`; bash scripts and subshells still get the real binaries. (`find` is intentionally not shadowed — the argument grammars don't line up.) Use `command grep` or `\grep` to bypass the wrapper.
     - `fzf` plus the [`PatrickF1/fzf.fish`](https://github.com/PatrickF1/fzf.fish) plugin: Ctrl-R history search, Ctrl-Alt-F file picker, etc., all with `bat` previews.
     - `git-delta` — paged, syntax-highlighted git diffs, wired up in `.gitconfig`.
     - `mise` — single tool for Node, Python, Ruby, Go versions; auto-activated in fish via `apps/fish/conf.d/mise.fish`.
