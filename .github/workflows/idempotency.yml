@@ -1,0 +1,86 @@
+name: Idempotency
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+# Verifies setup.sh --link-only is safely re-runnable. Running it twice in
+# an isolated $HOME must produce identical symlink sets and zero "Skipping"
+# / "Overwrite?" / "backed up to" output on the second pass. doctor.sh is
+# then asked to verify only the symlink section (other checks need
+# brew/fish, which we deliberately don't install in this fast smoke job).
+#
+# Runs on Ubuntu and macOS so the `if [ "$(uname)" = "Darwin" ]` branches
+# in setup.sh — aerospace + iTerm2 plist symlinks under ~/Library — are
+# also exercised.
+
+jobs:
+  link-only-idempotent:
+    name: setup.sh --link-only is idempotent (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run setup.sh --link-only twice in an isolated HOME
+        run: |
+          set -euo pipefail
+          export TEST_HOME="$RUNNER_TEMP/fakehome"
+          mkdir -p "$TEST_HOME"
+          # safe_link writes its backups under $HOME/.dotfiles-backup; isolating
+          # $HOME means the real runner home is untouched. setup.sh's tail-end
+          # call to doctor.sh emits FAILs for missing brew/fish/etc. — we
+          # inspect the output later, so capture here without exiting.
+          set +e
+          HOME="$TEST_HOME" bash setup.sh --link-only > run1.log 2>&1
+          rc1=$?
+          set -e
+          cat run1.log
+          if [ $rc1 -ne 0 ]; then
+            # setup.sh shouldn't return non-zero on --link-only even when
+            # doctor flags missing tools (we use `|| true` there). Anything
+            # else is a real failure.
+            echo "::error::setup.sh --link-only exited $rc1 on first run" >&2
+            exit $rc1
+          fi
+          ( cd "$TEST_HOME" && find . -type l | sort | xargs -I{} bash -c 'echo "{} -> $(readlink "{}")"' ) > links1.txt
+
+          set +e
+          HOME="$TEST_HOME" bash setup.sh --link-only > run2.log 2>&1
+          rc2=$?
+          set -e
+          cat run2.log
+          if [ $rc2 -ne 0 ]; then
+            echo "::error::setup.sh --link-only exited $rc2 on second run" >&2
+            exit $rc2
+          fi
+          ( cd "$TEST_HOME" && find . -type l | sort | xargs -I{} bash -c 'echo "{} -> $(readlink "{}")"' ) > links2.txt
+
+          # Symlink set must be identical between runs.
+          diff -u links1.txt links2.txt
+
+          # Second run must not have prompted, skipped, or backed anything up.
+          if grep -E "(already exists|Overwrite|Skipping|backed up to)" run2.log; then
+            echo "::error::setup.sh --link-only is not idempotent — see matches above" >&2
+            exit 1
+          fi
+
+      - name: Doctor reports symlinks healthy
+        run: |
+          set -uo pipefail
+          export HOME="$RUNNER_TEMP/fakehome"
+          # We tolerate FAILs from "Required commands" / "Brewfile" / "tmux"
+          # (brew/fish/nvim/zoxide aren't fully installed in this minimal job)
+          # but every Symlinks check must PASS.
+          out=$(bash bin/doctor.sh || true)
+          echo "$out"
+          symlinks_section=$(echo "$out" | awk '/=== Symlinks ===/{flag=1;next} /^=== /{flag=0} flag')
+          if echo "$symlinks_section" | grep -q "FAIL"; then
+            echo "::error::doctor.sh reported a symlink FAIL after setup.sh --link-only" >&2
+            exit 1
+          fi

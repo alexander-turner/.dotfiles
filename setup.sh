@@ -57,6 +57,7 @@ fi
 
 # macOS-only config links
 if [ "$(uname)" = "Darwin" ]; then
+    mkdir -p "$HOME/Library"
     safe_link "$DOTFILES_DIR/.aerospace.toml" ~/.aerospace.toml
     safe_link "$DOTFILES_DIR/apps/com.googlecode.iterm2.plist" ~/Library/com.googlecode.iterm2.plist
 fi
@@ -74,6 +75,7 @@ touch "$HOME"/.vimextras
 
 if [ "$LINK_ONLY" = true ]; then
     status_msg "Symlinks refreshed."
+    bash "$DOTFILES_DIR/bin/doctor.sh" --quiet || true
     exit 0
 fi
 
@@ -250,4 +252,5 @@ for directory in ~/.local/{share,state}/nvim ~/.cache/nvim; do
     cp -r "$directory"{,.bak} >/dev/null 2>&1 || true
 done
 
-status_msg "Setup complete."
+status_msg "Setup complete. Running doctor.sh..."
+bash "$DOTFILES_DIR/bin/doctor.sh" || true
