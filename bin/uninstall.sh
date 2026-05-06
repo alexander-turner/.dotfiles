@@ -31,11 +31,16 @@ if [[ "${1:-}" == "--yes" || "${1:-}" == "-y" ]]; then
 fi
 
 # Most recent backup dir. Stamps are UTC ISO 8601 (e.g. 20260506T143022Z),
-# so lexical sort == chronological sort.
+# so lexical sort == chronological sort. Filter to that pattern so a stray
+# non-stamp directory under ~/.dotfiles-backup (e.g. user notes) can't get
+# picked as "latest" just because it lex-sorts after the stamps.
 latest_backup_root() {
     [[ -d "$SAFE_LINK_BACKUP_ROOT" ]] || return 1
     local latest
-    latest="$(find "$SAFE_LINK_BACKUP_ROOT" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null | sort | tail -1)"
+    latest="$(find "$SAFE_LINK_BACKUP_ROOT" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null |
+        grep -E '^[0-9]{8}T[0-9]{6}Z$' |
+        sort |
+        tail -1)"
     [[ -n "$latest" ]] || return 1
     printf '%s\n' "$SAFE_LINK_BACKUP_ROOT/$latest"
 }
