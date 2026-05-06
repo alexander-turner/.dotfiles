@@ -6,9 +6,16 @@ To install:
 git clone https://github.com/alexander-turner/.dotfiles ~/.dotfiles && cd ~/.dotfiles && bash setup.sh
 ```
 
-`setup.sh` will (with warning) **overwrite** your existing `.bashrc`, `.vimrc`, `.gitconfig`, `.tmux.conf`, `.config/nvim`, and `fish` configurations, so back them up first if you want to retain their contents. The new files will be symlinked to the files in the repository, so edits to the originals are reflected immediately.
+`setup.sh` will (with warning) **overwrite** your existing `.bashrc`, `.vimrc`, `.gitconfig`, `.tmux.conf`, `.config/nvim`, and `fish` configurations. Before clobbering, the previous file is moved to `~/.dotfiles-backup/<UTC-timestamp>/<rel-path>/` — so a misclick on the y/N prompt is recoverable. The new files are symlinked to the files in the repository, so edits to the originals are reflected immediately.
 
-You can also run `bash setup.sh --link-only` to refresh symlinks without reinstalling packages.
+You can also run `bash setup.sh --link-only` to refresh symlinks without reinstalling packages. Both setup paths end by running `bin/doctor.sh`, which reports a green health summary (or tells you exactly what's still broken).
+
+To verify health at any time: `bash bin/doctor.sh` (or `--quiet` for failures-only). To reverse the install — removing only symlinks that point into this repo and restoring the most recent backup — run `bash bin/uninstall.sh` (add `--yes` for non-interactive). The dotfiles repo itself is left untouched.
+
+Two CI workflows guard the install:
+
+- `lint.yml` — shellcheck + fish syntax + stylua + yamllint + ruff, plus a `gitleaks` scan of the full git history (auto-fixes the formatters).
+- `idempotency.yml` — runs `setup.sh --link-only` twice on `ubuntu-latest` and `macos-latest`, asserts identical symlink set, no skip/overwrite/backup output on the second pass, and a clean `doctor.sh` symlink section.
 
 Features (configurable by changing `setup.sh`):
 

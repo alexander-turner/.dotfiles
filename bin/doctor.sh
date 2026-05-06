@@ -90,6 +90,8 @@ check_symlink "$HOME/.config/nvim" "$DOTFILES_DIR/apps/nvim" "nvim config"
 
 if $IS_MAC; then
     check_symlink "$HOME/.aerospace.toml" "$DOTFILES_DIR/.aerospace.toml" ".aerospace.toml"
+    check_symlink "$HOME/Library/com.googlecode.iterm2.plist" \
+        "$DOTFILES_DIR/apps/com.googlecode.iterm2.plist" "iTerm2 plist"
 fi
 
 # Pre-push hook is a relative symlink inside the repo.
@@ -159,6 +161,21 @@ if command -v envchain >/dev/null 2>&1; then
     pass "envchain installed"
 else
     skip "envchain" "not installed"
+fi
+
+# ── Brewfile ────────────────────────────────────────────────────────────────
+section "Brewfile"
+
+if command -v brew >/dev/null 2>&1; then
+    if (cd "$DOTFILES_DIR" && brew bundle check --no-upgrade --file=Brewfile >/dev/null 2>&1); then
+        pass "all Brewfile entries installed"
+    else
+        # Surface the first missing entries so the user knows what to install.
+        missing_summary="$(cd "$DOTFILES_DIR" && brew bundle check --no-upgrade --file=Brewfile 2>&1 | head -3 | tr '\n' '; ')"
+        fail "Brewfile" "missing entries (${missing_summary%; }) — run 'brew bundle --file=$DOTFILES_DIR/Brewfile'"
+    fi
+else
+    skip "Brewfile" "brew not installed"
 fi
 
 # ── tmux / TPM ──────────────────────────────────────────────────────────────

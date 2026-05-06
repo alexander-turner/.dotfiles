@@ -6,10 +6,14 @@ keeping `setup.sh`, `doctor.sh`, and CI honest with each other.
 ## Layout
 
 - `setup.sh` — top-level installer; idempotent, supports `--link-only`.
+  Always finishes by running `bin/doctor.sh` so the user sees a green
+  health summary (or knows exactly what's still broken).
 - `bin/lib/safe_link.sh` — the only place that creates user-facing symlinks.
   Backs up real files to `~/.dotfiles-backup/<UTC-timestamp>/` before
   overwriting.
 - `bin/doctor.sh` — read-only health check; mirrors what `setup.sh` builds.
+- `bin/uninstall.sh` — reverses `setup.sh`'s symlink creation, restoring
+  the most recent backup when one exists.
 - `apps/fish/config.fish`, `.bashrc` — interactive shell config. `.bashrc`
   hands off to fish for interactive use.
 - `Brewfile` — package manifest, gated by `if OS.mac?` for cask blocks.
@@ -18,8 +22,9 @@ keeping `setup.sh`, `doctor.sh`, and CI honest with each other.
 - `.github/workflows/lint.yml` — shellcheck + stylua + yamllint + ruff +
   gitleaks. Auto-fixes and pushes a `style:` commit.
 - `.github/workflows/idempotency.yml` — runs `setup.sh --link-only` twice
-  in an isolated `$HOME` and asserts identical symlink set + clean
-  doctor output.
+  on both `ubuntu-latest` and `macos-latest`, asserts identical symlink
+  set + clean doctor output. The macOS leg covers the `if [ "$(uname)"
+  = "Darwin" ]` branches that Ubuntu can't.
 
 ## Maintenance invariants
 
@@ -45,6 +50,24 @@ update the matching observer.
 A doctor check that requires an optional tool should `skip` (not `fail`)
 when the tool isn't installed — `doctor.sh` is meant to be safe to run on
 a partially-bootstrapped machine.
+
+### Uninstall upkeep
+
+`bin/uninstall.sh` is the inverse of `setup.sh` for symlinks in `$HOME`.
+**Every new `safe_link` in `setup.sh` whose target lives in `$HOME` must
+get a matching `remove_dotfile_symlink` call in `uninstall.sh`.** The
+mirror set is:
+
+- `safe_link "$DOTFILES_DIR/foo" "$HOME/.foo"` in `setup.sh` →
+  `remove_dotfile_symlink "$HOME/.foo" "$DOTFILES_DIR/foo"` in
+  `uninstall.sh`.
+- macOS-only links go inside `if $IS_MAC` in `uninstall.sh`, same as the
+  `if [ "$(uname)" = "Darwin" ]` block in `setup.sh`.
+- Loops over a directory (e.g. `for aider_file in ...`) should iterate
+  the same source list in both files — don't hard-code the names.
+
+`uninstall.sh` MUST NOT touch the in-repo `.hooks/pre-push` symlink (that
+one's repo plumbing, not a user dotfile).
 
 ### Idempotency upkeep
 
@@ -118,9 +141,11 @@ real dir → prompt, missing → create.
 ## Local quick reference
 
 ```bash
-bash setup.sh --link-only       # refresh symlinks only
+bash setup.sh --link-only       # refresh symlinks only (also runs doctor)
 bash bin/doctor.sh              # health check
 bash bin/doctor.sh --quiet      # show only failures/skips
+bash bin/uninstall.sh           # remove $HOME symlinks, restore backups
+bash bin/uninstall.sh --yes     # ... non-interactive
 bash bin/lint.sh                # run all linters locally
 bash bin/lint.sh --fix          # auto-fix what we can
 bwseed                          # force Bitwarden → envchain refresh
