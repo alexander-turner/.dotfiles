@@ -39,7 +39,7 @@ Features (configurable by changing `setup.sh`):
     - Aider for CLI coding,
     - VSCodium with Roo Cline extension for privacy-first AI pair programming (use also with confidential cloud computing, like via [`redpill.ai`](https://redpill.ai)),
     - `claude-code-router` (`ccr`) installed via pnpm and supervised by `launchagents/com.turntrout.ccr.plist`, so the private Claude wrappers route through [Venice](https://venice.ai) without the daemon dying across reboots. Store your Venice API key in Bitwarden as `envchain/ai/VENICE_INFERENCE_KEY` (the standard `envchain/<namespace>/<VAR>` convention) — `bwseed` then pulls it into envchain on every machine.
-    - `wut` command to explain shell output.
+    - `mods` (Charm) for piping shell output to an LLM, e.g. `<failing-cmd> 2>&1 | mods 'what broke?'`. Routes through Venice via `apps/mods/mods.yml`.
 11. Modern Unix toolkit installed via `Brewfile`:
     - `eza` — drop-in `ls` replacement with git-aware listing and tree view; the fish `ls` function prefers it when present.
     - `ripgrep` (`rg`), `fd`, `bat` — faster grep / find / cat.
@@ -52,7 +52,7 @@ Features (configurable by changing `setup.sh`):
 
 12. AI tooling routed through Venice (E2EE inference):
     - `mods` (Charm) for piping shell output through an LLM (`git diff | mods 'review for issues'`); configured in `apps/mods/mods.yml`.
-    - `aider`, `claude-code-router`, VSCodium + Roo Cline, the `wut` shell-output explainer.
+    - `aider`, `claude-code-router`, VSCodium + Roo Cline.
     - `AGENTS.md` symlinks to `CLAUDE.md` so Cursor/Aider/OpenCode pick up the same project context Claude Code uses.
     - `.mcp.json` configures the filesystem MCP server scoped to `~/.dotfiles` for Claude Code sessions in this repo.
     - `.claude/hooks/notify.sh` fires cross-platform desktop notifications when Claude Code needs input.
