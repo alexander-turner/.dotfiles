@@ -235,8 +235,24 @@ function rm
     trash-put $argv
 end
 
+# Interactive shadows: prefer ripgrep / bat when present. Bash scripts and
+# subshells still get the real binaries (fish functions don't propagate).
+# Escape hatch when a pasted invocation needs the real grep/cat: prefix
+# with `command` (`command grep -P ...`) or backslash (`\grep`).
 function grep
-    command grep $argv --exclude="*~" --color=auto
+    if command -q rg
+        rg $argv
+    else
+        command grep $argv --exclude="*~" --color=auto
+    end
+end
+
+function cat
+    if command -q bat
+        bat $argv
+    else
+        command cat $argv
+    end
 end
 
 abbr pytest_diff 'pytest -vv --tb=short'
