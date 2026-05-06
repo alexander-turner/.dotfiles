@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Shared helpers for the bw-* scripts in this directory. Source from a
 # script via:
 #
@@ -68,6 +69,7 @@ bw_ensure_session() {
 
 # Echo the id of the `envchain` folder. If $1 == "--create", create it
 # when missing; otherwise return 1 with a message if missing.
+# shellcheck disable=SC2119  # callers intentionally invoke without args
 bw_envchain_folder_id() {
     local fid
     fid=$(bw list folders --session "$BW_SESSION" \
