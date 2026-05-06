@@ -1,7 +1,28 @@
 #!/bin/bash
+# Watches for ProtonVPN and relaunches it when it stops (macOS only).
+set -euo pipefail
+
+if [ "$(uname)" != "Darwin" ]; then
+    echo "watch-protonvpn.sh: only supported on macOS" >&2
+    exit 1
+fi
+
+log() { logger -t watch-protonvpn "$*"; }
+
+sleep_pid=""
+# kill 0 would signal the entire process group, so guard on non-empty PID.
+cleanup() { log "watcher stopped"; [ -n "$sleep_pid" ] && kill "$sleep_pid" 2>/dev/null; exit 0; }
+trap cleanup INT TERM
+
+log "watcher started"
 while true; do
     if ! pgrep -x "ProtonVPN" > /dev/null; then
-        open -a "ProtonVPN"
+        if [ -d "/Applications/ProtonVPN.app" ]; then
+            log "ProtonVPN not running; relaunching"
+            open -a "ProtonVPN"
+        fi
     fi
-    sleep 30
+    # Background sleep so the trap fires immediately; track PID to kill it cleanly.
+    # `|| true` so a signal-killed wait doesn't trigger set -e.
+    sleep 30 & sleep_pid=$!; wait "$sleep_pid" || true
 done

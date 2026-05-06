@@ -4,7 +4,7 @@
 #   --ci: CI mode - fail if tools missing, no colors
 #   --fix: Auto-fix issues where possible (shellcheck, stylua)
 
-set -e
+set -euo pipefail
 
 CI_MODE=false
 FIX_MODE=false
@@ -101,7 +101,7 @@ check_stylua() {
 check_yaml() {
     require_or_skip yamllint "YAML validation" || return 0
     echo -n "YAML validation: "
-    YAML_FILES=$(find . -name '*.yml' -o -name '*.yaml' | grep -v '^./node_modules' || true)
+    YAML_FILES=$(find . \( -name '*.yml' -o -name '*.yaml' \) -not -path '*/node_modules/*' || true)
     if [ -z "$YAML_FILES" ]; then
         echo -e "${GREEN}no files${NC}"
         return 0
@@ -126,7 +126,23 @@ check_toml() {
         fi
     fi
     echo -n "TOML validation: "
-    if ! find . -name '*.toml' -exec python3 -c "import sys, tomllib; exec('with open(sys.argv[1],\"rb\") as f: tomllib.load(f)')" {} \;; then
+    TOML_FILES=$(find . -name '*.toml' -not -path './.git/*' -not -path '*/node_modules/*' || true)
+    if [ -z "$TOML_FILES" ]; then
+        echo -e "${GREEN}no files${NC}"
+        return 0
+    fi
+    local toml_failed=0
+    while IFS= read -r f; do
+        if ! python3 -c "
+import sys, tomllib
+with open(sys.argv[1], 'rb') as fp:
+    tomllib.load(fp)
+" "$f"; then
+            echo -e "\n  ${RED}Invalid: $f${NC}"
+            toml_failed=1
+        fi
+    done <<< "$TOML_FILES"
+    if [ $toml_failed -ne 0 ]; then
         echo -e "${RED}failed${NC}"
         return 1
     fi
@@ -138,7 +154,7 @@ check_json() {
     require_or_skip python3 "JSON validation" || return 0
     echo -n "JSON validation: "
     # Exclude JSONC files (VSCode/VSCodium settings allow trailing commas)
-    JSON_FILES=$(find . -name '*.json' -not -path './node_modules/*' -not -path './.git/*' -not -path './apps/vscodium/*' || true)
+    JSON_FILES=$(find . -name '*.json' -not -path '*/node_modules/*' -not -path './.git/*' -not -path './apps/vscodium/*' || true)
     if [ -z "$JSON_FILES" ]; then
         echo -e "${GREEN}no files${NC}"
         return 0
@@ -161,7 +177,7 @@ check_json() {
 check_python() {
     require_or_skip ruff "Python lint" || return 0
     echo -n "Python lint: "
-    PY_FILES=$(find . -name '*.py' -not -path './.git/*' -not -path './node_modules/*' || true)
+    PY_FILES=$(find . -name '*.py' -not -path './.git/*' -not -path '*/node_modules/*' || true)
     if [ -z "$PY_FILES" ]; then
         echo -e "${GREEN}no files${NC}"
         return 0

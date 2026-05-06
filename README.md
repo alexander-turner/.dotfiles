@@ -25,16 +25,15 @@ Features (configurable by changing `setup.sh`):
 5. Installs a bunch of nice shortcuts, including `git` aliases (e.g. `git add` -> `ga`).
 6. Overrides `rm` in favor of the reversible `tp` (`trash-put`) command. No more accidentally permanently deleting crucial files!
 7. Installs `tmux` with the `tmux-restore` and `tmux-continuum` plugins. Basically, this means that your `tmux` sessions will be saved and restored automatically. No more losing your work when your computer crashes!
-8. Installs `AutoRaise`, which automatically focuses the window under the cursor (after a delay).
-9. Automatically uses `mosh` instead of `ssh`. `mosh` is a more robust version of `ssh` which can handle network changes and disconnections more gracefully. It generally presents a lower-latency user experience.
-10. Installs `envchain` (OS Keychain at runtime) plus the [Bitwarden CLI](https://bitwarden.com/help/cli/) for cross-machine secret sync. API keys live encrypted in your Bitwarden vault; a background sync at shell startup pulls updates into envchain so wrappers like `npm`, `rclone`, `twine`, and `aider_redpill` stay zero-prompt at runtime.
-11. Configures open source AI-powered development tools:
+8. Installs `mosh` alongside `ssh`. `mosh` is a more robust version of `ssh` that handles network changes and disconnections more gracefully. Set `USE_MOSH=true` in `config.fish` to use it by default.
+9. Installs `envchain` (OS Keychain at runtime) plus the [Bitwarden CLI](https://bitwarden.com/help/cli/) for cross-machine secret sync. API keys live encrypted in your Bitwarden vault; a background sync at shell startup pulls updates into envchain so wrappers like `npm`, `rclone`, `twine`, and `aider_redpill` stay zero-prompt at runtime.
+10. Configures open source AI-powered development tools:
     - Automatic commit message generation,
     - Aider for CLI coding,
     - VSCodium with Roo Cline extension for privacy-first AI pair programming (use also with confidential cloud computing, like via [`redpill.ai`](https://redpill.ai)),
     - `claude-code-router` (`ccr`) installed via pnpm and supervised by `launchagents/com.turntrout.ccr.plist`, so the private Claude wrappers route through [Venice](https://venice.ai) without the daemon dying across reboots. Store your Venice API key in Bitwarden as `envchain/ai/VENICE_INFERENCE_KEY` (the standard `envchain/<namespace>/<VAR>` convention) — `bwseed` then pulls it into envchain on every machine.
     - `wut` command to explain shell output.
-12. Most importantly, the `goosesay` command. A variant on the classic `cowsay` (which renders text inside a cow's speech bubble), `goosesay` goosens up your terminal just the right amount. For example:
+11. Most importantly, the `goosesay` command. A variant on the classic `cowsay` (which renders text inside a cow's speech bubble), `goosesay` goosens up your terminal just the right amount. For example:
 
 ```plaintext
 echo "Never gonna give you up" | goosesay
@@ -136,4 +135,4 @@ Values pipe stdin→stdin from envchain into `bw create item`; nothing is logged
 
 ## Other notes
 
-- To disable parenthesis matching in `nvim`, delete the `mini.pairs` plugin from `~/.local/share/nvim/lazy/LazyVim/lua/azyvim/plugins/coding.lua`.
+- To disable parenthesis matching in `nvim`, delete the `mini.pairs` plugin from `~/.local/share/nvim/lazy/LazyVim/lua/lazyvim/plugins/coding.lua`.

@@ -58,29 +58,8 @@ set hidden
 " Set up keybindings
 nnoremap <F9> :!%:p<Enter>
 
-" #### LEADER COMMANDS ####
-" NORMAL MODE
-" nnoremap <leader>f :HopWord<CR>
-" nnoremap <leader>q :bdelete<CR>
-"
-" " open config file for filetype
-" nnoremap <leader>c :e ~/.config/nvim/ftplugin/<C-R>=&filetype<CR>.vim<CR>
-"
-" " Copy whole file
-" nnoremap <leader>y
-"
-" " VISUAL MODE
-" " in visual mode, select a word
-" " h: replace all with prompt // H: replace all without prompt
-" vnoremap <leader>h "hy:%s/<C-r>h//gc<left><left><left>
-" vnoremap <leader>H "hy:%s/<C-r>h//g<left><left>
-"
-" " sort selected lines
-" vnoremap <leader>s :sort<CR>
-"
 " copy selected text to clipboard
 vnoremap <leader>y "+y
-" set clipboard+=unnamedplus
 
 
 " Fix issue where visual mode highlighting was invisible

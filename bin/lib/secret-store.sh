@@ -38,8 +38,10 @@ secret_store_init() {
         # "not found" (silent) and "D-Bus broken" (prints an error). So
         # consider the daemon healthy iff the lookup either succeeded (rc 0,
         # value on stdout) or failed silently (rc 1, no output at all).
+        # A 3-second timeout prevents a hung D-Bus daemon from blocking
+        # every new shell.
         local probe_output probe_rc
-        probe_output=$(secret-tool lookup service __dotfiles_probe__ \
+        probe_output=$(timeout 3 secret-tool lookup service __dotfiles_probe__ \
             account "$USER" 2>&1)
         probe_rc=$?
         if [ "$probe_rc" -eq 0 ] \

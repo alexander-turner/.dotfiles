@@ -34,6 +34,8 @@ end
 # No default greeting
 set fish_greeting ''
 
+set -gx DOTFILES_DIR "$HOME/.dotfiles"
+
 # These elements don't scale with font size
 set --universal tide_right_prompt_prefix ''
 set --universal tide_left_prompt_suffix ''
@@ -95,7 +97,7 @@ function ls
     if command -q gls
         gls --color="always" --ignore-backups --hide="*.bak" $argv
     else if $IS_MAC
-        command ls $argv
+        command ls -G $argv
     else
         command ls --color="always" --ignore-backups --hide="*.bak" $argv
     end
@@ -120,7 +122,7 @@ if $IS_MAC
 end
 
 function flash
-    sh ~/.dotfiles/bin/keyboard_flash.sh
+    sh "$DOTFILES_DIR/bin/keyboard_flash.sh"
 end
 
 function pytest
@@ -138,12 +140,12 @@ function yank
         set -l tmp (mktemp)
         cat >$tmp
         set -l data (base64 < $tmp | tr -d '\n')
-        rm $tmp &>/dev/null
+        command rm $tmp &>/dev/null
         printf '\033]52;c;%s\a' $data
     else if $IS_MAC
         pbcopy
     else
-        clip
+        xclip -selection clipboard
     end
 end
 
@@ -195,7 +197,7 @@ function push
 
     # Find git root directory
     set -l git_root (git rev-parse --show-toplevel 2>/dev/null)
-    if test $status -eq 0
+    if test $push_status -eq 0; and test -n "$git_root"
         set -l post_push_hook "$git_root/.git/hooks/post-push"
 
         # Check if post-push hook exists and is executable
@@ -260,10 +262,10 @@ end
 abbr -a fxtra editfishextras
 
 # Only load iTerm2 integration when already inside tmux, not during tmux startup
-if test -e {$HOME}/.iterm2_shell_integration.fish
+if test -e $HOME/.iterm2_shell_integration.fish
     # Only load if TMUX variable is already set (we're inside a running tmux session)
     if set -q TMUX
-        source {$HOME}/.iterm2_shell_integration.fish
+        source $HOME/.iterm2_shell_integration.fish
     end
 end
 
@@ -304,7 +306,7 @@ end
 # Aider via Redpill: envchain populates REDPILL_API_KEY into the child
 # process; the shim script remaps it onto OPENAI_API_KEY and execs aider.
 function aider_redpill
-    envchain ai -- $HOME/.dotfiles/bin/aider-redpill-shim.sh (type -p aider) --edit-format editor-diff $argv
+    envchain ai -- "$DOTFILES_DIR/bin/aider-redpill-shim.sh" (type -p aider) --edit-format editor-diff $argv
 end
 
 # ── Bitwarden sync helpers ────────────────────────────────────────────────
@@ -313,11 +315,11 @@ end
 # Auto-sync on shell startup is throttled by ~/.cache/bw-envchain-sync.stamp.
 
 function bwseed --description 'Refresh envchain from Bitwarden vault'
-    bash $HOME/.dotfiles/bin/bw-seed-envchain.sh $argv
+    bash "$DOTFILES_DIR/bin/bw-seed-envchain.sh" $argv
 end
 
 function bwadd --description 'Add a new secret to Bitwarden + envchain'
-    bash $HOME/.dotfiles/bin/bw-add-secret.sh $argv
+    bash "$DOTFILES_DIR/bin/bw-add-secret.sh" $argv
 end
 
 function _bw_envchain_autosync
@@ -332,7 +334,7 @@ function _bw_envchain_autosync
     if test (math (date +%s) - $mtime) -lt $interval
         return 0
     end
-    fish -c "if bash $HOME/.dotfiles/bin/bw-seed-envchain.sh --quiet >/dev/null 2>&1; touch $stamp; end" &
+    fish -c "if bash '$DOTFILES_DIR/bin/bw-seed-envchain.sh' --quiet >/dev/null 2>&1; touch '$stamp'; end" &
     disown
 end
 

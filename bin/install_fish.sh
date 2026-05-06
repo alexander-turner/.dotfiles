@@ -35,7 +35,7 @@ else
 fi
 
 # Set Fish as the default shell (skip if already set)
-FISH_PATH=$(which fish)
+FISH_PATH=$(command -v fish)
 grep -qxF "$FISH_PATH" /etc/shells || echo "$FISH_PATH" | sudo tee -a /etc/shells >/dev/null
 
 # Detect the user's actual login shell from the password DB rather than $SHELL
@@ -50,7 +50,14 @@ fi
 if [ -n "$current_login_shell" ] && [ "$current_login_shell" = "$FISH_PATH" ]; then
     echo ":: Login shell already set to $FISH_PATH; skipping chsh."
 else
-    chsh -s "$FISH_PATH" || echo ":: chsh failed — set fish as login shell manually with 'chsh -s $FISH_PATH'." >&2
+    # When running as root (via sudo), pass $REAL_USER so we change the right
+    # user's shell. As a non-root user, passing a username argument causes PAM
+    # to reject the call on many Linux distros, so omit it in that case.
+    if [ "$(id -u)" -eq 0 ]; then
+        chsh -s "$FISH_PATH" "$REAL_USER" || echo ":: chsh failed — set fish as login shell manually with 'chsh -s $FISH_PATH'." >&2
+    else
+        chsh -s "$FISH_PATH" || echo ":: chsh failed — set fish as login shell manually with 'chsh -s $FISH_PATH'." >&2
+    fi
 fi
 
 # Skip fisher/tide install if tide is already present
@@ -72,9 +79,11 @@ FISH_SCRIPT
 fi
 
 # Drop `jobs` from tide's right prompt: the bundled _tide_item_jobs trips on
-# non-numeric values from background daemons (e.g. tailscaled). Run on every
-# setup so a re-run can't reintroduce it via `tide configure` defaults.
-fish -c '_tide_find_and_remove jobs _tide_right_items' 2>/dev/null || true
+# non-numeric values from background daemons (e.g. tailscaled). Strip from
+# both the canonical config (tide_right_prompt_items) and the runtime list
+# (_tide_right_items) — otherwise _tide_remove_unusable_items rebuilds the
+# runtime list from the canonical one on the next prompt and reintroduces it.
+fish -c '_tide_find_and_remove jobs tide_right_prompt_items; _tide_find_and_remove jobs _tide_right_items' 2>/dev/null || true
 
 # Resolve DOTFILES_DIR from this script's location (bin/ is one level down)
 DOTFILES_DIR="$(cd "$(dirname "$0")/.." && pwd)"
