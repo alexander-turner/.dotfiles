@@ -37,6 +37,7 @@ bw_ensure_session                             || exit 1
 
 bw sync --session "$BW_SESSION" >/dev/null 2>&1 || true
 
+# shellcheck disable=SC2119  # no args = lookup-only mode
 folder_id=$(bw_envchain_folder_id) || exit 0  # nothing to seed yet
 
 # seed_one: parse `envchain/<ns>/<VAR>`, fetch the password, pipe it into
