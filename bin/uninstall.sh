@@ -35,7 +35,7 @@ fi
 latest_backup_root() {
     [[ -d "$SAFE_LINK_BACKUP_ROOT" ]] || return 1
     local latest
-    latest="$(find "$SAFE_LINK_BACKUP_ROOT" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null | sort | tail -1)"
+    latest="$(find "$SAFE_LINK_BACKUP_ROOT" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sed 's|.*/||' | sort | tail -1)"
     [[ -n "$latest" ]] || return 1
     printf '%s\n' "$SAFE_LINK_BACKUP_ROOT/$latest"
 }

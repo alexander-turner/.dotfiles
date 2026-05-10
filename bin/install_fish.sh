@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 command_exists() {
     command -v "$1" >/dev/null 2>&1
@@ -110,9 +111,15 @@ fi
 
 # Always symlink key config files so changes in dotfiles repo are reflected.
 # Done after the copy so cp doesn't try to write through symlinks back to the source.
+# ln -sf is used directly (not safe_link) because cp -rf above just populated these
+# as plain files copied verbatim from the repo — prompting to overwrite would be wrong
+# here, and there is no user data at risk.
 ln -sf "$DOTFILES_DIR"/apps/fish/config.fish "$FISH_CONFIG_DIR/config.fish"
 ln -sf "$DOTFILES_DIR"/apps/fish/functions/fish_prompt.fish "$FISH_CONFIG_DIR/functions/fish_prompt.fish"
 # Clear any stale dangling symlink left by older versions of this script.
-[ -L "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish" ] && [ ! -e "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish" ] && rm -f "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish"
+if [ -L "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish" ] && \
+   [ ! -e "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish" ]; then
+    rm -f "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish"
+fi
 
 fish "$DOTFILES_DIR"/bin/install_fish_plugins.fish >/dev/null

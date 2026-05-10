@@ -224,7 +224,7 @@ if command_exists crontab && command_exists trash-empty; then
     if ! crontab -l 2>/dev/null | grep -q "trash-empty"; then
         (
             crontab -l 2>/dev/null
-            echo "@daily $(which trash-empty) 30"
+            echo "@daily $(command -v trash-empty) 30"
         ) | crontab -
     fi
 fi
