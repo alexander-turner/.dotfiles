@@ -94,6 +94,17 @@ if $IS_MAC; then
         "$DOTFILES_DIR/apps/com.googlecode.iterm2.plist" "iTerm2 plist"
 fi
 
+check_symlink "$HOME/.config/vagrant-templates/Vagrantfile" \
+    "$DOTFILES_DIR/ai/Vagrantfile" "vagrant-templates/Vagrantfile"
+
+# Aider dotfiles are optional (only linked when .aider* files exist in the repo).
+for aider_file in "$DOTFILES_DIR"/.aider*; do
+    if [ -f "$aider_file" ]; then
+        name="$(basename "$aider_file")"
+        check_symlink "$HOME/$name" "$aider_file" "$name"
+    fi
+done
+
 # Pre-push hook is a relative symlink inside the repo.
 if [[ -L "$DOTFILES_DIR/.hooks/pre-push" ]]; then
     target="$(readlink "$DOTFILES_DIR/.hooks/pre-push")"
