@@ -43,9 +43,9 @@ grep -qxF "$FISH_PATH" /etc/shells || echo "$FISH_PATH" | sudo tee -a /etc/shell
 # ($SHELL reflects the parent process and can be misleading inside tmux/scripts).
 current_login_shell=""
 if [ "$(uname)" = "Darwin" ] && command_exists dscl; then
-    current_login_shell=$(dscl . -read "/Users/${REAL_USER}" UserShell 2>/dev/null | awk '{print $2}')
+    current_login_shell=$(dscl . -read "/Users/${REAL_USER}" UserShell 2>/dev/null | awk '{print $2}') || true
 elif command_exists getent; then
-    current_login_shell=$(getent passwd "$REAL_USER" | cut -d: -f7)
+    current_login_shell=$(getent passwd "$REAL_USER" | cut -d: -f7) || true
 fi
 
 if [ -n "$current_login_shell" ] && [ "$current_login_shell" = "$FISH_PATH" ]; then
@@ -98,7 +98,7 @@ if [ "$tide_already_configured" = "1" ]; then
     echo ":: tide already configured; leaving existing settings untouched."
 else
     # See if user wants preset settings
-    read -rp "Accept preset tide settings? (Y/n) " answer
+    read -rp "Accept preset tide settings? (Y/n) " answer || true
 
     if [ -z "$answer" ] || echo "$answer" | grep -iq "^y"; then
         # Copy preset config files into existing fish config directory
