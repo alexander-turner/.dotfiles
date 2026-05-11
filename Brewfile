@@ -64,11 +64,11 @@ if OS.mac?
   cask "quitter"
   cask "jettison"
   cask "brave-browser"
-  cask "protonvpn"
   cask "stretchly", args: { no_quarantine: true }
   cask "tor-browser"
   cask "vscodium"
   cask "duplicati"
   cask "ente"
   cask "lookaway"
+  cask "mullvad-vpn"
 end
