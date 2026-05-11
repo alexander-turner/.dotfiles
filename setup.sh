@@ -231,7 +231,7 @@ fi
 
 status_msg "Setting up tmux..."
 # Tmux plugin manager setup (must come after tmux is installed)
-TPM_DIR=~/.tmux/plugins/tpm
+TPM_DIR="$HOME/.tmux/plugins/tpm"
 if [ ! -d "$TPM_DIR/.git" ]; then
     rm -rf "$TPM_DIR"
     git clone --quiet https://github.com/tmux-plugins/tpm "$TPM_DIR" >/dev/null
