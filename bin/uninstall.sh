@@ -126,6 +126,14 @@ if $IS_MAC; then
     fi
 fi
 
+# Remove trash-empty cron job if present
+if command -v crontab >/dev/null 2>&1; then
+    if crontab -l 2>/dev/null | grep -q "trash-empty"; then
+        crontab -l 2>/dev/null | grep -v "trash-empty" | crontab -
+        echo "  removed trash-empty cron job"
+    fi
+fi
+
 echo
 echo ":: Uninstall complete. The dotfiles repo at $DOTFILES_DIR is untouched."
 echo "   Run 'bash $DOTFILES_DIR/setup.sh' to reinstall."

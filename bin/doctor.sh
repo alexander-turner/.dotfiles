@@ -129,7 +129,7 @@ check_command() {
     fi
 }
 
-for cmd in git fish nvim tmux brew zoxide; do
+for cmd in git fish nvim tmux brew zoxide gh; do
     check_command "$cmd"
 done
 
@@ -199,6 +199,19 @@ else
     fail "TPM" "$TPM_DIR is not a git checkout (run setup.sh)"
 fi
 
+# ── cron jobs ───────────────────────────────────────────────────────────────
+section "cron"
+
+if command -v crontab >/dev/null 2>&1 && command -v trash-empty >/dev/null 2>&1; then
+    if crontab -l 2>/dev/null | grep -q "trash-empty"; then
+        pass "trash-empty cron job"
+    else
+        fail "trash-empty cron" "not scheduled (run setup.sh)"
+    fi
+else
+    skip "trash-empty cron" "crontab or trash-empty not available"
+fi
+
 # ── macOS launchd agents ────────────────────────────────────────────────────
 if $IS_MAC; then
     section "launchd agents"
@@ -211,6 +224,13 @@ if $IS_MAC; then
         fi
     else
         skip "ccr launch agent" "$CCR_PLIST not present"
+    fi
+
+    TAILSCALE_PLIST="/Library/LaunchDaemons/com.$USER.tailscaled.plist"
+    if [[ -f "$TAILSCALE_PLIST" ]]; then
+        pass "Tailscale daemon plist installed"
+    else
+        skip "Tailscale daemon" "plist not at $TAILSCALE_PLIST (run setup.sh to install)"
     fi
 fi
 

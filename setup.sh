@@ -58,8 +58,8 @@ fi
 # macOS-only config links
 if [ "$(uname)" = "Darwin" ]; then
     mkdir -p "$HOME/Library"
-    safe_link "$DOTFILES_DIR/.aerospace.toml" ~/.aerospace.toml
-    safe_link "$DOTFILES_DIR/apps/com.googlecode.iterm2.plist" ~/Library/com.googlecode.iterm2.plist
+    safe_link "$DOTFILES_DIR/.aerospace.toml" "$HOME/.aerospace.toml"
+    safe_link "$DOTFILES_DIR/apps/com.googlecode.iterm2.plist" "$HOME/Library/com.googlecode.iterm2.plist"
 fi
 
 # Vagrant templates
@@ -166,7 +166,7 @@ if [ "$(uname)" = "Darwin" ]; then
     # so the background launchd job can run sudo without prompting.
     SUDOERS_TEMPLATE="$DOTFILES_DIR/etc/sudoers.d/brew-autoupdate.template"
     SUDOERS_DEST="/etc/sudoers.d/brew-autoupdate"
-    if [ -f "$SUDOERS_TEMPLATE" ]; then
+    if [ -f "$SUDOERS_TEMPLATE" ] && [ ! -f "$SUDOERS_DEST" ]; then
         SUDOERS_RENDERED="$(mktemp)"
         sed "s/__USERNAME__/$USER/g" "$SUDOERS_TEMPLATE" >"$SUDOERS_RENDERED"
         if sudo visudo -cf "$SUDOERS_RENDERED" >/dev/null; then
@@ -219,19 +219,20 @@ fi
 # Install CLI tools via uv (not in Brewfile -- they're Python packages)
 uv tool install --quiet trash-cli
 
-# Clear trash which is over 30 days old, daily
+# Clear trash which is over 30 days old, monthly
 if command_exists crontab && command_exists trash-empty; then
-    if ! crontab -l 2>/dev/null | grep -q "trash-empty"; then
+    CRON_ENTRY="@monthly $(command -v trash-empty) 30"
+    if [ "$(crontab -l 2>/dev/null | grep "trash-empty" || true)" != "$CRON_ENTRY" ]; then
         (
-            crontab -l 2>/dev/null
-            echo "@daily $(command -v trash-empty) 30"
+            crontab -l 2>/dev/null | grep -v "trash-empty"
+            echo "$CRON_ENTRY"
         ) | crontab -
     fi
 fi
 
 status_msg "Setting up tmux..."
 # Tmux plugin manager setup (must come after tmux is installed)
-TPM_DIR=~/.tmux/plugins/tpm
+TPM_DIR="$HOME/.tmux/plugins/tpm"
 if [ ! -d "$TPM_DIR/.git" ]; then
     rm -rf "$TPM_DIR"
     git clone --quiet https://github.com/tmux-plugins/tpm "$TPM_DIR" >/dev/null
@@ -243,7 +244,7 @@ if command_exists pnpm; then
     pnpm setup >/dev/null
     pnpm install -g prettier
 fi
-if [ "$(uname)" != "Darwin" ]; then
+if [ "$(uname)" != "Darwin" ] && ! command_exists xmllint; then
     sudo apt-get install -y libxml2-utils
 fi
 
