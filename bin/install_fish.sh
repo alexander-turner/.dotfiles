@@ -32,11 +32,7 @@ REAL_USER="${SUDO_USER:-$USER}"
 # sudo password prompt on every re-run when ownership is already correct).
 if [ -d "$HOME/.config/fish" ] && \
    find "$HOME/.config/fish" ! -user "$REAL_USER" -print -quit 2>/dev/null | grep -q .; then
-    if command_exists sudo; then
-        sudo chown -R "$REAL_USER" "$HOME/.config/fish" 2>/dev/null || true
-    else
-        chown -R "$REAL_USER" "$HOME/.config/fish" 2>/dev/null || true
-    fi
+    sudo chown -R "$REAL_USER" "$HOME/.config/fish" || true
 fi
 
 # Set Fish as the default shell (skip if already set)
@@ -45,14 +41,13 @@ grep -qxF "$FISH_PATH" /etc/shells || echo "$FISH_PATH" | sudo tee -a /etc/shell
 
 # Detect the user's actual login shell from the password DB rather than $SHELL
 # ($SHELL reflects the parent process and can be misleading inside tmux/scripts).
-current_login_shell=""
-if [ "$(uname)" = "Darwin" ] && command_exists dscl; then
-    current_login_shell=$(dscl . -read "/Users/${REAL_USER}" UserShell 2>/dev/null | awk '{print $2}') || true
-elif command_exists getent; then
-    current_login_shell=$(getent passwd "$REAL_USER" | cut -d: -f7) || true
+if [ "$(uname)" = "Darwin" ]; then
+    current_login_shell=$(dscl . -read "/Users/${REAL_USER}" UserShell | awk '{print $2}')
+else
+    current_login_shell=$(getent passwd "$REAL_USER" | cut -d: -f7)
 fi
 
-if [ -n "$current_login_shell" ] && [ "$current_login_shell" = "$FISH_PATH" ]; then
+if [ "$current_login_shell" = "$FISH_PATH" ]; then
     echo ":: Login shell already set to $FISH_PATH; skipping chsh."
 else
     # When running as root (via sudo), pass $REAL_USER so we change the right
