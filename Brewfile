@@ -30,8 +30,9 @@ brew "bottom"     # htop/btop replacement; binary is `btm`
 brew "mise"
 brew "carapace"
 
-# Charm AI: pipe shell output through an LLM (configured for Redpill, see
-# apps/mods/mods.yml). Wrapped by `mods` fish function in config.fish.
+# Charm AI: pipe shell output through an LLM. Routes through Venice (E2EE
+# inference) only — see apps/mods/mods.yml. Wrapped by `mods` fish function
+# in config.fish so envchain ai populates VENICE_INFERENCE_KEY.
 brew "charmbracelet/tap/mods"
 
 # Fonts
