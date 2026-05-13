@@ -1,0 +1,47 @@
+# mods config — see https://github.com/charmbracelet/mods
+#
+# Intended invocation: through the `mods` fish function in
+# apps/fish/config.fish, which wraps `command mods` in `envchain ai -- ...`.
+# That populates VENICE_INFERENCE_KEY from the macOS Keychain (Bitwarden
+# is the cross-machine source of truth — see README).
+#
+# Routing policy: Venice only. Venice provides end-to-end encryption
+# between client and inference, so prompts/outputs aren't inspectable by
+# the provider. Redpill's TEE is a weaker guarantee — not used here.
+
+default-model: qwen-2.5-coder-32b
+default-api: venice
+ask-model: false
+format: false
+format-as: markdown
+quiet: false
+status-text: Generating
+no-limit: false
+word-wrap: 80
+include-prompt: 0
+include-prompt-args: false
+max-input-chars: 392000
+max-retries: 5
+fanciness: 10
+temp: 0.7
+topp: 1.0
+http-proxy: ""
+
+apis:
+  venice:
+    base-url: https://api.venice.ai/api/v1
+    api-key-env: VENICE_INFERENCE_KEY
+    models:
+      qwen-2.5-coder-32b:
+        aliases: ["qwen", "coder"]
+        max-input-chars: 32000
+        fallback: llama-3.3-70b
+      llama-3.3-70b:
+        aliases: ["llama", "default"]
+        max-input-chars: 128000
+      mistral-31-24b:
+        aliases: ["mistral"]
+        max-input-chars: 128000
+      venice-uncensored-1.1:
+        aliases: ["uncensored"]
+        max-input-chars: 32000

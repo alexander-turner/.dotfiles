@@ -17,17 +17,39 @@ brew "zoxide"
 brew "shellcheck"
 brew "fish-lsp"
 
+# Modern Unix toolkit
+brew "fzf"
+brew "ripgrep"
+brew "fd"
+brew "bat"
+brew "eza"
+brew "git-delta"
+brew "tokei"      # LOC counter
+brew "dust"       # du replacement (du -h with bars)
+brew "bottom"     # htop/btop replacement; binary is `btm`
+brew "mise"
+brew "carapace"
+
+# Charm AI: pipe shell output through an LLM (configured for Redpill, see
+# apps/mods/mods.yml). Wrapped by `mods` fish function in config.fish.
+brew "charmbracelet/tap/mods"
+
 # Fonts
 cask "font-fira-code-nerd-font"
 
-# Formatters (conform.nvim)
+# Formatters (conform.nvim, lint.sh)
 brew "stylua"
 brew "ruff"
+brew "shfmt"
 
 # macOS-only
 if OS.mac?
   tap "yakitrak/yakitrak"
   tap "rishikanthc/scriberr"
+  tap "felixkratz/formulae"
+
+  # Active-window border for keyboard-driven WMs (pairs with Aerospace).
+  brew "borders"
 
   # Formulae
   brew "coreutils"

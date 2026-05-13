@@ -19,12 +19,12 @@ set -uo pipefail
 
 VERBOSE=false
 case "${1:-}" in
-    --verbose) VERBOSE=true ;;
-    --quiet | "") ;;
-    *)
-        printf "doctor.sh: unknown flag %q\n" "$1" >&2
-        exit 2
-        ;;
+--verbose) VERBOSE=true ;;
+--quiet | "") ;;
+*)
+    printf "doctor.sh: unknown flag %q\n" "$1" >&2
+    exit 2
+    ;;
 esac
 
 DOTFILES_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -92,12 +92,14 @@ check_symlink "$HOME/.gitconfig" "$DOTFILES_DIR/.gitconfig" ".gitconfig"
 check_symlink "$HOME/.tmux.conf" "$DOTFILES_DIR/.tmux.conf" ".tmux.conf"
 check_symlink "$HOME/.npmrc" "$DOTFILES_DIR/.npmrc" ".npmrc"
 check_symlink "$HOME/.config/fish/config.fish" "$DOTFILES_DIR/apps/fish/config.fish" "fish config"
+check_symlink "$HOME/.config/mods/mods.yml" "$DOTFILES_DIR/apps/mods/mods.yml" "mods config"
 check_symlink "$HOME/.config/nvim" "$DOTFILES_DIR/apps/nvim" "nvim config"
 
 if $IS_MAC; then
     check_symlink "$HOME/.aerospace.toml" "$DOTFILES_DIR/.aerospace.toml" ".aerospace.toml"
     check_symlink "$HOME/Library/com.googlecode.iterm2.plist" \
         "$DOTFILES_DIR/apps/com.googlecode.iterm2.plist" "iTerm2 plist"
+    check_symlink "$HOME/.config/borders/bordersrc" "$DOTFILES_DIR/apps/borders/bordersrc" "borders config"
 fi
 
 check_symlink "$HOME/.config/vagrant-templates/Vagrantfile" \
@@ -135,9 +137,14 @@ check_command() {
     fi
 }
 
-for cmd in git fish nvim tmux brew zoxide gh; do
+for cmd in git fish nvim tmux brew zoxide gh fzf rg fd bat eza delta tokei dust btm mise carapace shfmt mods; do
     check_command "$cmd"
 done
+
+if $IS_MAC; then
+    # Borders ships its binary as `borders`. Skip on Linux.
+    check_command borders
+fi
 
 # ── Login shell ─────────────────────────────────────────────────────────────
 section "Login shell"

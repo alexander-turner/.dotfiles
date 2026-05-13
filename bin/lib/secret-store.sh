@@ -45,8 +45,8 @@ secret_store_init() {
         probe_output=$(timeout 3 secret-tool lookup service __dotfiles_probe__ \
             account "$USER" 2>&1)
         probe_rc=$?
-        if [ "$probe_rc" -eq 0 ] \
-            || { [ "$probe_rc" -eq 1 ] && [ -z "$probe_output" ]; }; then
+        if [ "$probe_rc" -eq 0 ] ||
+            { [ "$probe_rc" -eq 1 ] && [ -z "$probe_output" ]; }; then
             SECRET_STORE_BACKEND="secret-tool"
             return 0
         fi
@@ -60,9 +60,9 @@ secret_store_init() {
 secret_store_required_cmd() {
     secret_store_init
     case "$SECRET_STORE_BACKEND" in
-        security)    printf 'security\n' ;;
-        secret-tool) printf 'secret-tool\n' ;;
-        file)        printf '\n' ;;
+    security) printf 'security\n' ;;
+    secret-tool) printf 'secret-tool\n' ;;
+    file) printf '\n' ;;
     esac
 }
 
@@ -92,17 +92,17 @@ secret_set() {
     secret_store_init
     local service="$1" value="$2"
     case "$SECRET_STORE_BACKEND" in
-        security)
-            security add-generic-password \
-                -s "$service" -a "$USER" -U -w "$value" >/dev/null
-            ;;
-        secret-tool)
-            printf '%s' "$value" | secret-tool store \
-                --label="$service" service "$service" account "$USER"
-            ;;
-        file)
-            _secret_set_file "$service" "$value"
-            ;;
+    security)
+        security add-generic-password \
+            -s "$service" -a "$USER" -U -w "$value" >/dev/null
+        ;;
+    secret-tool)
+        printf '%s' "$value" | secret-tool store \
+            --label="$service" service "$service" account "$USER"
+        ;;
+    file)
+        _secret_set_file "$service" "$value"
+        ;;
     esac
 }
 
@@ -111,17 +111,17 @@ secret_get() {
     secret_store_init
     local service="$1"
     case "$SECRET_STORE_BACKEND" in
-        security)
-            security find-generic-password -s "$service" -a "$USER" -w \
-                2>/dev/null
-            ;;
-        secret-tool)
-            secret-tool lookup service "$service" account "$USER" \
-                2>/dev/null
-            ;;
-        file)
-            _secret_get_file "$service"
-            ;;
+    security)
+        security find-generic-password -s "$service" -a "$USER" -w \
+            2>/dev/null
+        ;;
+    secret-tool)
+        secret-tool lookup service "$service" account "$USER" \
+            2>/dev/null
+        ;;
+    file)
+        _secret_get_file "$service"
+        ;;
     esac
 }
 
@@ -130,16 +130,16 @@ secret_delete() {
     secret_store_init
     local service="$1"
     case "$SECRET_STORE_BACKEND" in
-        security)
-            security delete-generic-password -s "$service" -a "$USER" \
-                >/dev/null 2>&1
-            ;;
-        secret-tool)
-            secret-tool clear service "$service" account "$USER" \
-                2>/dev/null
-            ;;
-        file)
-            _secret_delete_file "$service"
-            ;;
+    security)
+        security delete-generic-password -s "$service" -a "$USER" \
+            >/dev/null 2>&1
+        ;;
+    secret-tool)
+        secret-tool clear service "$service" account "$USER" \
+            2>/dev/null
+        ;;
+    file)
+        _secret_delete_file "$service"
+        ;;
     esac
 }

@@ -11,13 +11,13 @@ source "$HOOK_DIR/lib-checks.sh"
 FAILED=0
 
 run_check() {
-  local name="$1" cmd="$2"
-  local output
-  if ! output=$($cmd 2>&1); then
-    echo "=== $name FAILED ===" >&2
-    echo "$output" >&2
-    FAILED=1
-  fi
+    local name="$1" cmd="$2"
+    local output
+    if ! output=$($cmd 2>&1); then
+        echo "=== $name FAILED ===" >&2
+        echo "$output" >&2
+        FAILED=1
+    fi
 }
 
 # Node.js checks
@@ -29,16 +29,16 @@ has_script check && run_check "typecheck" "pnpm check"
 PROJ_HASH=$(printf '%s' "$PROJECT_DIR" | (sha256sum 2>/dev/null || shasum -a 256) | cut -c1-16)
 RETRY_DIR="/tmp/claude-stop-$(id -u)"
 if [[ ! -f "${RETRY_DIR}/attempts-${PROJ_HASH}" ]]; then
-  # No active retry counter means either first push or stop hook already passed
-  has_script test && run_check "tests" "pnpm test"
+    # No active retry counter means either first push or stop hook already passed
+    has_script test && run_check "tests" "pnpm test"
 fi
 
 # Python checks
 if [[ -f pyproject.toml ]] || [[ -f uv.lock ]]; then
-  PREFIX=""
-  [[ -f uv.lock ]] && exists uv && PREFIX="uv run "
+    PREFIX=""
+    [[ -f uv.lock ]] && exists uv && PREFIX="uv run "
 
-  { exists ruff || [[ -n "$PREFIX" ]]; } && run_check "ruff" "${PREFIX}ruff check ."
+    { exists ruff || [[ -n "$PREFIX" ]]; } && run_check "ruff" "${PREFIX}ruff check ."
 fi
 
 exit $FAILED

@@ -30,8 +30,8 @@ fi
 REAL_USER="${SUDO_USER:-$USER}"
 # Only chown if something inside is owned by another user (avoids a spurious
 # sudo password prompt on every re-run when ownership is already correct).
-if [ -d "$HOME/.config/fish" ] && \
-   find "$HOME/.config/fish" ! -user "$REAL_USER" -print -quit 2>/dev/null | grep -q .; then
+if [ -d "$HOME/.config/fish" ] &&
+    find "$HOME/.config/fish" ! -user "$REAL_USER" -print -quit 2>/dev/null | grep -q .; then
     sudo chown -R "$REAL_USER" "$HOME/.config/fish" || true
 fi
 
@@ -116,8 +116,8 @@ fi
 ln -sf "$DOTFILES_DIR"/apps/fish/config.fish "$FISH_CONFIG_DIR/config.fish"
 ln -sf "$DOTFILES_DIR"/apps/fish/functions/fish_prompt.fish "$FISH_CONFIG_DIR/functions/fish_prompt.fish"
 # Clear any stale dangling symlink left by older versions of this script.
-if [ -L "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish" ] && \
-   [ ! -e "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish" ]; then
+if [ -L "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish" ] &&
+    [ ! -e "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish" ]; then
     rm -f "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish"
 fi
 
