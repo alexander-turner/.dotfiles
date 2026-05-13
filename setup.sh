@@ -199,11 +199,7 @@ if [ "$(uname)" = "Darwin" ]; then
 
     # Install wally-cli for keyboard flashing
     if ! command_exists wally-cli; then
-        if command_exists go; then
-            go install github.com/zsa/wally-cli@latest >/dev/null
-        else
-            status_msg "WARN: Go not found, skipping wally-cli install. Install Go first."
-        fi
+        go install github.com/zsa/wally-cli@latest >/dev/null
     fi
 
     # iTerm2 shell integration
