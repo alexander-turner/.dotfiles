@@ -179,9 +179,6 @@ if [ "$(uname)" = "Darwin" ]; then
     brew tap homebrew/autoupdate 2>/dev/null || true
     brew autoupdate start 604800 --upgrade --cleanup --sudo >/dev/null 2>&1 || true
 
-    # OrbStack: lightweight Docker alternative for macOS
-    brew_quiet_install --cask orbstack
-
     # Tailscale VPN daemon
     TAILSCALE_PLIST_DEST="/Library/LaunchDaemons/com.$USER.tailscaled.plist"
     sed "s/__USERNAME__/$USER/g" "$DOTFILES_DIR/launchagents/com.tailscaled.plist.template" |

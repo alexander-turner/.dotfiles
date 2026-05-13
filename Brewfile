@@ -50,7 +50,6 @@ if OS.mac?
   brew "rishikanthc/scriberr/scriberr"
 
   # Casks
-  cask "orbstack"
   cask "hiddenbar"
   cask "bitwarden"
   cask "obsidian"
