@@ -28,11 +28,15 @@ fi
 # Set the correct permissions for the Fish configuration directory
 # Use SUDO_USER when running under sudo so we don't chown everything to root
 REAL_USER="${SUDO_USER:-$USER}"
-# Use sudo if available so we can fix root-owned files from prior sudo runs
-if command_exists sudo; then
-    sudo chown -R "$REAL_USER" "$HOME/.config/fish" 2>/dev/null || true
-else
-    chown -R "$REAL_USER" "$HOME/.config/fish" 2>/dev/null || true
+# Only chown if something inside is owned by another user (avoids a spurious
+# sudo password prompt on every re-run when ownership is already correct).
+if [ -d "$HOME/.config/fish" ] && \
+   find "$HOME/.config/fish" ! -user "$REAL_USER" -print -quit 2>/dev/null | grep -q .; then
+    if command_exists sudo; then
+        sudo chown -R "$REAL_USER" "$HOME/.config/fish" 2>/dev/null || true
+    else
+        chown -R "$REAL_USER" "$HOME/.config/fish" 2>/dev/null || true
+    fi
 fi
 
 # Set Fish as the default shell (skip if already set)
