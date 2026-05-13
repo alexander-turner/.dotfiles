@@ -7,8 +7,9 @@
 # isn't installed — `doctor.sh` is meant to be safe to run anywhere.
 #
 # Usage:
-#   bash bin/doctor.sh           # run all checks, exit 1 on failure
-#   bash bin/doctor.sh --quiet   # only print failing/skipped checks
+#   bash bin/doctor.sh             # only print failing/skipped checks + summary
+#   bash bin/doctor.sh --verbose   # also print every passing check
+#   bash bin/doctor.sh --quiet     # alias of the default (kept for compat)
 #
 # Maintenance invariant: every new feature added to setup.sh that creates a
 # symlink, daemon, or external dependency MUST add a matching check here.
@@ -16,10 +17,15 @@
 
 set -uo pipefail
 
-QUIET=false
-if [[ "${1:-}" == "--quiet" ]]; then
-    QUIET=true
-fi
+VERBOSE=false
+case "${1:-}" in
+    --verbose) VERBOSE=true ;;
+    --quiet | "") ;;
+    *)
+        printf "doctor.sh: unknown flag %q\n" "$1" >&2
+        exit 2
+        ;;
+esac
 
 DOTFILES_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 IS_MAC=false
@@ -40,7 +46,7 @@ SKIP=0
 
 pass() {
     PASS=$((PASS + 1))
-    [[ "$QUIET" == true ]] || printf "  ${GREEN}PASS${NC} %s\n" "$1"
+    [[ "$VERBOSE" == true ]] && printf "  ${GREEN}PASS${NC} %s\n" "$1"
 }
 fail() {
     FAIL=$((FAIL + 1))
@@ -49,11 +55,11 @@ fail() {
 }
 skip() {
     SKIP=$((SKIP + 1))
-    [[ "$QUIET" == true ]] || printf "  ${YELLOW}SKIP${NC} %s (%s)\n" "$1" "$2"
+    printf "  ${YELLOW}SKIP${NC} %s (%s)\n" "$1" "$2"
 }
 
 section() {
-    [[ "$QUIET" == true ]] || printf "\n${YELLOW}=== %s ===${NC}\n" "$1"
+    [[ "$VERBOSE" == true ]] && printf "\n${YELLOW}=== %s ===${NC}\n" "$1"
 }
 
 # ── Symlinks ────────────────────────────────────────────────────────────────
