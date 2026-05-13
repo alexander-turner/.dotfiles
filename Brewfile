@@ -64,7 +64,6 @@ if OS.mac?
   cask "quitter"
   cask "jettison"
   cask "brave-browser"
-  cask "stretchly", args: { no_quarantine: true }
   cask "tor-browser"
   cask "vscodium"
   cask "duplicati"
