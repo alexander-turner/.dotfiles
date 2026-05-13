@@ -99,6 +99,7 @@ if [ "$(uname)" = "Darwin" ]; then
 else
     if [ -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
         eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        # shellcheck disable=SC2016 # literal string, expanded at shell startup
         BREW_EVAL_LINE='eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"'
         if ! grep -qxF "$BREW_EVAL_LINE" "$HOME/.profile" 2>/dev/null; then
             echo "$BREW_EVAL_LINE" >>"$HOME/.profile"
@@ -249,9 +250,20 @@ tmux source ~/.tmux.conf >/dev/null 2>&1 || true
 ~/.tmux/plugins/tpm/bin/install_plugins >/dev/null
 
 if command_exists pnpm; then
-    if [ ! -d "${PNPM_HOME:-$HOME/.local/share/pnpm}" ]; then
-        pnpm setup >/dev/null
+    if [ "$(uname)" = "Darwin" ]; then
+        export PNPM_HOME="${PNPM_HOME:-$HOME/Library/pnpm}"
+    else
+        export PNPM_HOME="${PNPM_HOME:-$HOME/.local/share/pnpm}"
     fi
+    mkdir -p "$PNPM_HOME/bin"
+    case ":$PATH:" in
+        *":$PNPM_HOME/bin:"*) ;;
+        *) export PATH="$PNPM_HOME/bin:$PATH" ;;
+    esac
+    case ":$PATH:" in
+        *":$PNPM_HOME:"*) ;;
+        *) export PATH="$PNPM_HOME:$PATH" ;;
+    esac
     pnpm install -g prettier
 fi
 if [ "$(uname)" != "Darwin" ] && ! command_exists xmllint; then
