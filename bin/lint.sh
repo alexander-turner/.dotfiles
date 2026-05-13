@@ -10,8 +10,8 @@ CI_MODE=false
 FIX_MODE=false
 for arg in "$@"; do
     case "$arg" in
-        --ci) CI_MODE=true ;;
-        --fix) FIX_MODE=true ;;
+    --ci) CI_MODE=true ;;
+    --fix) FIX_MODE=true ;;
     esac
 done
 
@@ -30,7 +30,7 @@ FAILED=0
 require_or_skip() {
     local cmd="$1"
     local name="$2"
-    if ! command -v "$cmd" &> /dev/null; then
+    if ! command -v "$cmd" &>/dev/null; then
         if [[ "$CI_MODE" == true ]]; then
             echo -e "${RED}$name: missing (required in CI)${NC}"
             FAILED=1
@@ -41,6 +41,26 @@ require_or_skip() {
         fi
     fi
     return 0
+}
+
+# shfmt — formats shell scripts. Same set of files shellcheck inspects.
+# Flags: -i 4 (4-space indent, matches existing style); no -ci (the repo
+# uses un-indented case bodies).
+check_shfmt() {
+    require_or_skip shfmt "Shfmt" || return 0
+    echo -n "Shfmt: "
+    local shfmt_targets=(setup.sh bin/*.sh bin/lib/*.sh .hooks/*.sh .hooks/pre-push .hooks/pre-commit .hooks/commit-msg .claude/hooks/*.sh .bashrc)
+    if [[ "$FIX_MODE" == true ]]; then
+        shfmt -w -i 4 "${shfmt_targets[@]}" 2>/dev/null || true
+        echo -e "${GREEN}fixed${NC}"
+    else
+        if shfmt -d -i 4 "${shfmt_targets[@]}" 2>/dev/null; then
+            echo -e "${GREEN}passed${NC}"
+        else
+            echo -e "${RED}failed${NC}"
+            return 1
+        fi
+    fi
 }
 
 # Shellcheck
@@ -58,8 +78,8 @@ check_shellcheck() {
             echo -e "${GREEN}passed${NC}"
         fi
     else
-        if shellcheck -e SC2016 setup.sh bin/*.sh bin/lib/*.sh .hooks/*.sh .hooks/pre-push .hooks/pre-commit .hooks/commit-msg .claude/hooks/*.sh 2>/dev/null && \
-           shellcheck -s bash -e SC2148 -e SC1090 -e SC1091 -e SC2015 .bashrc 2>/dev/null; then
+        if shellcheck -e SC2016 setup.sh bin/*.sh bin/lib/*.sh .hooks/*.sh .hooks/pre-push .hooks/pre-commit .hooks/commit-msg .claude/hooks/*.sh 2>/dev/null &&
+            shellcheck -s bash -e SC2148 -e SC1090 -e SC1091 -e SC2015 .bashrc 2>/dev/null; then
             echo -e "${GREEN}passed${NC}"
         else
             echo -e "${RED}failed${NC}"
@@ -141,7 +161,7 @@ with open(sys.argv[1], 'rb') as fp:
             echo -e "\n  ${RED}Invalid: $f${NC}"
             toml_failed=1
         fi
-    done <<< "$TOML_FILES"
+    done <<<"$TOML_FILES"
     if [ $toml_failed -ne 0 ]; then
         echo -e "${RED}failed${NC}"
         return 1
@@ -165,7 +185,7 @@ check_json() {
             echo -e "\n  ${RED}Invalid: $f${NC}"
             json_failed=1
         fi
-    done <<< "$JSON_FILES"
+    done <<<"$JSON_FILES"
     if [ $json_failed -ne 0 ]; then
         echo -e "${RED}failed${NC}"
         return 1
@@ -197,6 +217,7 @@ check_python() {
 
 # Run all checks
 echo "Running lint checks..."
+check_shfmt || FAILED=1
 check_shellcheck || FAILED=1
 check_fish || FAILED=1
 check_stylua || FAILED=1

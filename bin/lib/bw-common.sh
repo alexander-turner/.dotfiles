@@ -72,8 +72,8 @@ bw_ensure_session() {
 # shellcheck disable=SC2119  # callers intentionally invoke without args
 bw_envchain_folder_id() {
     local fid
-    fid=$(bw list folders --session "$BW_SESSION" \
-        | jq -r '.[] | select(.name=="envchain") | .id' | head -n1)
+    fid=$(bw list folders --session "$BW_SESSION" |
+        jq -r '.[] | select(.name=="envchain") | .id' | head -n1)
     if [ -n "$fid" ]; then
         printf '%s\n' "$fid"
         return 0
@@ -82,16 +82,16 @@ bw_envchain_folder_id() {
         echo "No 'envchain' folder in vault." >&2
         return 1
     fi
-    bw get template folder \
-        | jq '.name="envchain"' \
-        | bw encode \
-        | bw create folder --session "$BW_SESSION" \
-        | jq -r '.id'
+    bw get template folder |
+        jq '.name="envchain"' |
+        bw encode |
+        bw create folder --session "$BW_SESSION" |
+        jq -r '.id'
 }
 
 # Return 0 if an item with the given name exists in the given folder.
 bw_item_exists() {
     local folder_id="$1" name="$2"
-    bw list items --folderid "$folder_id" --session "$BW_SESSION" \
-        | jq -e --arg n "$name" '.[] | select(.name==$n)' >/dev/null
+    bw list items --folderid "$folder_id" --session "$BW_SESSION" |
+        jq -e --arg n "$name" '.[] | select(.name==$n)' >/dev/null
 }
