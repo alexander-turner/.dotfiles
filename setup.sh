@@ -216,8 +216,13 @@ else # Assume linux
     sudo apt-get install -y -qq python3-pynvim pipx cron libsecret-tools
 fi
 
-# Install CLI tools via uv (not in Brewfile -- they're Python packages)
-uv tool install --quiet trash-cli
+# Install CLI tools via uv (not in Brewfile -- they're Python packages).
+# Skip if trash-* binaries are already on PATH (e.g. from a prior uv install or
+# GNU trash-cli); uv tool install would otherwise abort with "Executables
+# already exist".
+if ! command_exists trash-put; then
+    uv tool install --quiet trash-cli
+fi
 
 # Clear trash which is over 30 days old, monthly
 if command_exists crontab && command_exists trash-empty; then
