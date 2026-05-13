@@ -182,11 +182,17 @@ if [ "$(uname)" = "Darwin" ]; then
     # OrbStack: lightweight Docker alternative for macOS
     brew_quiet_install --cask orbstack
 
-    # Tailscale VPN daemon
+    # Tailscale VPN daemon — only touch the system plist when missing or
+    # out of date, otherwise re-runs prompt for sudo every time.
     TAILSCALE_PLIST_DEST="/Library/LaunchDaemons/com.$USER.tailscaled.plist"
-    sed "s/__USERNAME__/$USER/g" "$DOTFILES_DIR/launchagents/com.tailscaled.plist.template" |
-        sudo tee "$TAILSCALE_PLIST_DEST" >/dev/null
-    sudo launchctl load "$TAILSCALE_PLIST_DEST" 2>/dev/null || true
+    TAILSCALE_PLIST_RENDERED="$(mktemp)"
+    sed "s/__USERNAME__/$USER/g" "$DOTFILES_DIR/launchagents/com.tailscaled.plist.template" \
+        >"$TAILSCALE_PLIST_RENDERED"
+    if [ ! -f "$TAILSCALE_PLIST_DEST" ] || ! cmp -s "$TAILSCALE_PLIST_RENDERED" "$TAILSCALE_PLIST_DEST"; then
+        sudo install -o root -g wheel -m 0644 "$TAILSCALE_PLIST_RENDERED" "$TAILSCALE_PLIST_DEST"
+        sudo launchctl load "$TAILSCALE_PLIST_DEST" 2>/dev/null || true
+    fi
+    rm -f "$TAILSCALE_PLIST_RENDERED"
 
     # claude-code-router (ccr): backs claude-{fast,private,think} wrappers.
     # Supervised by launchd so it's running before any wrapper invocation
