@@ -99,6 +99,7 @@ if [ "$(uname)" = "Darwin" ]; then
 else
     if [ -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
         eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        # shellcheck disable=SC2016 # literal string, expanded at shell startup
         BREW_EVAL_LINE='eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"'
         if ! grep -qxF "$BREW_EVAL_LINE" "$HOME/.profile" 2>/dev/null; then
             echo "$BREW_EVAL_LINE" >>"$HOME/.profile"
