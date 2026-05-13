@@ -198,14 +198,14 @@ if [ "$(uname)" = "Darwin" ]; then
     launchctl load "$CCR_PLIST_DEST" 2>/dev/null || true
 
     # Install wally-cli for keyboard flashing
-    if command_exists go; then
+    if ! command_exists wally-cli; then
         go install github.com/zsa/wally-cli@latest >/dev/null
-    else
-        status_msg "WARN: Go not found, skipping wally-cli install. Install Go first."
     fi
 
     # iTerm2 shell integration
-    curl -fsSL https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash >/dev/null
+    if [ ! -f "$HOME/.iterm2_shell_integration.bash" ]; then
+        curl -fsSL https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash >/dev/null
+    fi
 
 else # Assume linux
     status_msg "Installing Linux packages..."
@@ -217,7 +217,9 @@ else # Assume linux
 fi
 
 # Install CLI tools via uv (not in Brewfile -- they're Python packages)
-uv tool install --quiet trash-cli
+if ! command_exists trash-put; then
+    uv tool install --quiet trash-cli
+fi
 
 # Clear trash which is over 30 days old, monthly
 if command_exists crontab && command_exists trash-empty; then
@@ -241,7 +243,9 @@ tmux source ~/.tmux.conf >/dev/null 2>&1 || true
 ~/.tmux/plugins/tpm/bin/install_plugins >/dev/null
 
 if command_exists pnpm; then
-    pnpm setup >/dev/null
+    if [ ! -d "${PNPM_HOME:-$HOME/.local/share/pnpm}" ]; then
+        pnpm setup >/dev/null
+    fi
     pnpm install -g prettier
 fi
 if [ "$(uname)" != "Darwin" ] && ! command_exists xmllint; then
