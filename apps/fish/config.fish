@@ -103,7 +103,11 @@ function crontab
 end
 
 function ls
-    if command -q gls
+    # eza is a drop-in for the most common ls flags (-l, -a, -A, -F).
+    # Falls back to gls (coreutils) on macOS / bsd ls otherwise.
+    if command -q eza
+        eza --color=always --git --icons=auto $argv
+    else if command -q gls
         gls --color="always" --ignore-backups --hide="*.bak" $argv
     else if $IS_MAC
         command ls -G $argv
@@ -111,6 +115,10 @@ function ls
         command ls --color="always" --ignore-backups --hide="*.bak" $argv
     end
 end
+
+abbr -a ll 'ls -lF'
+abbr -a la 'ls -laF'
+abbr -a lt 'ls --tree --level=2'
 
 set USE_MOSH false
 function ssh
@@ -236,8 +244,24 @@ function rm
     trash-put $argv
 end
 
+# Interactive shadows: prefer ripgrep / bat when present. Bash scripts and
+# subshells still get the real binaries (fish functions don't propagate).
+# Escape hatch when a pasted invocation needs the real grep/cat: prefix
+# with `command` (`command grep -P ...`) or backslash (`\grep`).
 function grep
-    command grep $argv --exclude="*~" --color=auto
+    if command -q rg
+        rg $argv
+    else
+        command grep $argv --exclude="*~" --color=auto
+    end
+end
+
+function cat
+    if command -q bat
+        bat $argv
+    else
+        command cat $argv
+    end
 end
 
 abbr pytest_diff 'pytest -vv --tb=short'
@@ -281,6 +305,15 @@ set -xg NODE_NO_WARNINGS 1
 
 function ai_secrets_wrap
     envchain ai -- $argv
+end
+
+# Charm `mods`: pipe shell output through an LLM. Routes exclusively
+# through Venice (E2EE inference) per apps/mods/mods.yml. envchain ai
+# populates VENICE_INFERENCE_KEY from the macOS Keychain.
+#   git diff | mods 'review for issues'
+#   tail -200 build.log | mods -m coder 'what broke?'
+function mods
+    envchain ai -- command mods $argv
 end
 
 function cloudflare_secrets_wrap

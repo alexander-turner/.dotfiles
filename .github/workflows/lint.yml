@@ -36,6 +36,9 @@ jobs:
           unzip stylua.zip
           sudo mv stylua /usr/local/bin/
 
+      - name: Install shfmt
+        run: sudo apt-get install -y shfmt
+
       - name: Install Python tools
         run: pip install yamllint toml ruff
 

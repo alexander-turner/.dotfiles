@@ -16,11 +16,23 @@ keeping `setup.sh`, `doctor.sh`, and CI honest with each other.
   the most recent backup when one exists.
 - `apps/fish/config.fish`, `.bashrc` — interactive shell config. `.bashrc`
   hands off to fish for interactive use.
+- `apps/fish/conf.d/*.fish` — auto-sourced activation snippets (mise,
+  carapace).
+- `apps/mods/mods.yml` — Charm `mods` config; routes through Venice
+  (E2EE) only. Wrapped by the `mods` fish function.
+- `apps/borders/bordersrc` — JankyBorders config; spawned by Aerospace's
+  `after-startup-command`.
+- `AGENTS.md` — symlink to `CLAUDE.md`. Lets Cursor / Aider / OpenCode
+  pick up the same project context Claude Code uses.
+- `.mcp.json` — Claude Code MCP server config; currently registers the
+  filesystem MCP scoped to `~/.dotfiles`.
+- `.claude/hooks/notify.sh` — cross-platform desktop notification for
+  the Notification lifecycle hook.
 - `Brewfile` — package manifest, gated by `if OS.mac?` for cask blocks.
 - `launchagents/`, `etc/sudoers.d/` — `__USERNAME__` templates rendered
   during install.
-- `.github/workflows/lint.yml` — shellcheck + stylua + yamllint + ruff +
-  gitleaks. Auto-fixes and pushes a `style:` commit.
+- `.github/workflows/lint.yml` — shellcheck + shfmt + stylua + yamllint
+  + ruff + gitleaks. Auto-fixes and pushes a `style:` commit.
 - `.github/workflows/idempotency.yml` — runs `setup.sh --link-only` twice
   on both `ubuntu-latest` and `macos-latest`, asserts identical symlink
   set + clean doctor output. The macOS leg covers the `if [ "$(uname)"
@@ -34,8 +46,8 @@ update the matching observer.
 ### Doctor upkeep
 
 `doctor.sh` is the contract for "this dotfiles install is healthy."
-**Every new symlink, daemon, or required external dependency added to
-`setup.sh` must get a corresponding check in `doctor.sh`.** Concretely:
+Every new symlink, daemon, or required external dependency added to
+`setup.sh` must get a corresponding check in `doctor.sh`. Concretely:
 
 - New `safe_link` call in `setup.sh` → new `check_symlink` line in
   `doctor.sh`'s "Symlinks" section.
@@ -54,8 +66,8 @@ a partially-bootstrapped machine.
 ### Uninstall upkeep
 
 `bin/uninstall.sh` is the inverse of `setup.sh` for symlinks in `$HOME`.
-**Every new `safe_link` in `setup.sh` whose target lives in `$HOME` must
-get a matching `remove_dotfile_symlink` call in `uninstall.sh`.** The
+Every new `safe_link` in `setup.sh` whose target lives in `$HOME` must
+get a matching `remove_dotfile_symlink` call in `uninstall.sh`. The
 mirror set is:
 
 - `safe_link "$DOTFILES_DIR/foo" "$HOME/.foo"` in `setup.sh` →
@@ -104,6 +116,17 @@ real dir → prompt, missing → create.
 - Public files must not contain credentials. The lint workflow runs
   `gitleaks` against the full git history on every PR — if it flags
   something, rotate the secret first, then fix the commit.
+
+### AI provider routing
+
+- Inference flows through Venice only for new tooling — Venice
+  provides end-to-end encryption between client and inference, so
+  prompts/outputs are not visible to the provider. Redpill's TEE is a
+  weaker guarantee and is not used for new wrappers.
+- `apps/mods/mods.yml` lists Venice models only (qwen-2.5-coder,
+  llama-3.3, mistral, etc.). The `mods` fish function wraps invocations
+  in `envchain ai` so `VENICE_INFERENCE_KEY` is populated from the
+  Keychain.
 
 ### Cross-platform
 

@@ -32,7 +32,14 @@ safe_link() {
     fi
     # Target exists and is a real file (not a symlink) — prompt before clobbering
     if [ -e "$target_file" ] && [ ! -L "$target_file" ]; then
-        read -rp "$(basename "$target_file") already exists (not a symlink). Overwrite? (y/N) " choice
+        # When stdin isn't a TTY (CI / piped invocation / closed stdin), skip
+        # silently rather than blocking on read or tripping `set -e` on EOF.
+        if [ ! -t 0 ]; then
+            echo "Skipping $(basename "$target_file") (real file present, non-interactive)"
+            return 0
+        fi
+        local choice=""
+        read -rp "$(basename "$target_file") already exists (not a symlink). Overwrite? (y/N) " choice || true
         case "$choice" in
         y | Y)
             _safe_link_backup "$target_file"
