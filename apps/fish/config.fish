@@ -19,6 +19,15 @@ function tmux-prune --description 'Kill detached, auto-numbered tmux sessions'
     echo "Pruned $killed detached auto-numbered session(s)."
 end
 
+# Put homebrew on PATH before anything that needs it (e.g. the tmux auto-launch
+# below). Cold-start login fish from `/usr/bin/login` only has the path_helper
+# defaults on PATH, which don't include /opt/homebrew/bin.
+if test (uname) = Darwin; and test -x /opt/homebrew/bin/brew
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+else if test -d /home/linuxbrew/.linuxbrew
+    fish_add_path /home/linuxbrew/.linuxbrew/bin /home/linuxbrew/.linuxbrew/sbin
+end
+
 # Auto-launch tmux if not already inside a tmux session.
 # First iTerm2 window after reboot: no server -> start one, attach to `main`
 # (continuum-restore fires here). Subsequent windows: server is up, so spawn a
@@ -240,13 +249,6 @@ end
 # Printing helpers 
 function echo_color
     echo (set_color $argv[1])$argv[2](set_color normal)
-end
-
-# Path homebrew
-if $IS_MAC
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-else
-    fish_add_path /home/linuxbrew/.linuxbrew/bin /home/linuxbrew/.linuxbrew/sbin
 end
 
 # Run extra commands
