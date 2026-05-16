@@ -120,9 +120,20 @@ brew_quiet_install() {
     brew install --quiet "$@"
 }
 
-# Install all brew packages from Brewfile
+# Install all brew packages from Brewfile. Retry on transient failure —
+# GitHub's HTTP/2 frontend occasionally drops `git clone` mid-tap, and a
+# second attempt almost always succeeds. doctor.sh at the end of setup
+# catches anything that's still missing after 3 tries.
 status_msg "Installing from Brewfile..."
-brew bundle --quiet --file="$DOTFILES_DIR/Brewfile" || true
+for attempt in 1 2 3; do
+    if brew bundle --quiet --file="$DOTFILES_DIR/Brewfile"; then
+        break
+    fi
+    if [ "$attempt" -lt 3 ]; then
+        status_msg "brew bundle failed (attempt $attempt/3); retrying in $((attempt * 10))s..."
+        sleep $((attempt * 10))
+    fi
+done
 
 # Bitwarden CLI bootstrap. Bitwarden is the cross-machine source of truth
 # for secrets; envchain is the local runtime cache. We use the personal
