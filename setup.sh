@@ -46,14 +46,18 @@ NEOVIM_CONFIG_DIR="$HOME/.config/nvim"
 if [ -L "$NEOVIM_CONFIG_DIR" ] && [ "$(readlink "$NEOVIM_CONFIG_DIR")" = "$DOTFILES_DIR/apps/nvim" ]; then
     : # already correct
 elif [ -e "$NEOVIM_CONFIG_DIR" ] && [ ! -L "$NEOVIM_CONFIG_DIR" ]; then
-    read -rp "nvim config dir exists (not a symlink). Overwrite? (y/N) " choice
-    case "$choice" in
-    y | Y)
-        rm -rf "$NEOVIM_CONFIG_DIR"
-        ln -s "$DOTFILES_DIR/apps/nvim" "$NEOVIM_CONFIG_DIR"
-        ;;
-    *) echo "Skipping nvim config" ;;
-    esac
+    if [ ! -t 0 ]; then
+        echo "Skipping nvim config (real directory present, non-interactive)"
+    else
+        read -rp "nvim config dir exists (not a symlink). Overwrite? (y/N) " choice
+        case "$choice" in
+        y | Y)
+            rm -rf "$NEOVIM_CONFIG_DIR"
+            ln -s "$DOTFILES_DIR/apps/nvim" "$NEOVIM_CONFIG_DIR"
+            ;;
+        *) echo "Skipping nvim config" ;;
+        esac
+    fi
 else
     rm -f "$NEOVIM_CONFIG_DIR"
     ln -s "$DOTFILES_DIR/apps/nvim" "$NEOVIM_CONFIG_DIR"
@@ -200,7 +204,7 @@ if [ "$(uname)" = "Darwin" ]; then
         >"$TAILSCALE_PLIST_RENDERED"
     if [ ! -f "$TAILSCALE_PLIST_DEST" ] || ! cmp -s "$TAILSCALE_PLIST_RENDERED" "$TAILSCALE_PLIST_DEST"; then
         sudo install -o root -g wheel -m 0644 "$TAILSCALE_PLIST_RENDERED" "$TAILSCALE_PLIST_DEST"
-        sudo launchctl load "$TAILSCALE_PLIST_DEST" 2>/dev/null || true
+        sudo launchctl bootstrap system "$TAILSCALE_PLIST_DEST" 2>/dev/null || true
     fi
     rm -f "$TAILSCALE_PLIST_RENDERED"
 
@@ -210,8 +214,8 @@ if [ "$(uname)" = "Darwin" ]; then
     CCR_PLIST_DEST="$HOME/Library/LaunchAgents/com.turntrout.ccr.plist"
     mkdir -p "$HOME/Library/LaunchAgents" "$HOME/Library/Logs/com.turntrout.ccr"
     safe_link "$DOTFILES_DIR/launchagents/com.turntrout.ccr.plist" "$CCR_PLIST_DEST"
-    launchctl unload "$CCR_PLIST_DEST" 2>/dev/null || true
-    launchctl load "$CCR_PLIST_DEST" 2>/dev/null || true
+    launchctl bootout "gui/$(id -u)" "$CCR_PLIST_DEST" 2>/dev/null || true
+    launchctl bootstrap "gui/$(id -u)" "$CCR_PLIST_DEST" 2>/dev/null || true
 
     # Install wally-cli for keyboard flashing
     if ! command_exists wally-cli; then

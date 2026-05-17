@@ -266,8 +266,12 @@ end
 
 abbr pytest_diff 'pytest -vv --tb=short'
 
-function grp # Recursively grep
-    grep $argv ** 2>/dev/null
+function grp --description 'Recursively grep from current directory'
+    if command -q rg
+        rg $argv
+    else
+        command grep -r --exclude="*~" --color=auto $argv .
+    end
 end
 
 # Printing helpers 

@@ -121,12 +121,12 @@ check_stylua() {
 check_yaml() {
     require_or_skip yamllint "YAML validation" || return 0
     echo -n "YAML validation: "
-    YAML_FILES=$(find . \( -name '*.yml' -o -name '*.yaml' \) -not -path '*/node_modules/*' || true)
-    if [ -z "$YAML_FILES" ]; then
+    if ! find . \( -name '*.yml' -o -name '*.yaml' \) -not -path '*/node_modules/*' -print -quit 2>/dev/null | grep -q .; then
         echo -e "${GREEN}no files${NC}"
         return 0
     fi
-    if echo "$YAML_FILES" | xargs yamllint -d "{extends: relaxed, rules: {line-length: disable}}" 2>/dev/null; then
+    if find . \( -name '*.yml' -o -name '*.yaml' \) -not -path '*/node_modules/*' -print0 |
+        xargs -0 yamllint -d "{extends: relaxed, rules: {line-length: disable}}" 2>/dev/null; then
         echo -e "${GREEN}passed${NC}"
     else
         echo -e "${RED}failed${NC}"
@@ -197,16 +197,17 @@ check_json() {
 check_python() {
     require_or_skip ruff "Python lint" || return 0
     echo -n "Python lint: "
-    PY_FILES=$(find . -name '*.py' -not -path './.git/*' -not -path '*/node_modules/*' || true)
-    if [ -z "$PY_FILES" ]; then
+    if ! find . -name '*.py' -not -path './.git/*' -not -path '*/node_modules/*' -print -quit 2>/dev/null | grep -q .; then
         echo -e "${GREEN}no files${NC}"
         return 0
     fi
     if [[ "$FIX_MODE" == true ]]; then
-        echo "$PY_FILES" | xargs ruff check --fix 2>/dev/null || true
+        find . -name '*.py' -not -path './.git/*' -not -path '*/node_modules/*' -print0 |
+            xargs -0 ruff check --fix 2>/dev/null || true
         echo -e "${GREEN}fixed${NC}"
     else
-        if echo "$PY_FILES" | xargs ruff check 2>/dev/null; then
+        if find . -name '*.py' -not -path './.git/*' -not -path '*/node_modules/*' -print0 |
+            xargs -0 ruff check 2>/dev/null; then
             echo -e "${GREEN}passed${NC}"
         else
             echo -e "${RED}failed${NC}"

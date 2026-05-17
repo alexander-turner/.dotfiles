@@ -144,6 +144,7 @@ done
 if $IS_MAC; then
     # Borders ships its binary as `borders`. Skip on Linux.
     check_command borders
+    check_command wally-cli
 fi
 
 # ── Login shell ─────────────────────────────────────────────────────────────
@@ -233,7 +234,7 @@ if $IS_MAC; then
         if launchctl list 2>/dev/null | grep -q com.turntrout.ccr; then
             pass "ccr launch agent loaded"
         else
-            fail "ccr launch agent" "plist symlinked but not loaded (launchctl load $CCR_PLIST)"
+            fail "ccr launch agent" "plist symlinked but not loaded (run: launchctl bootstrap gui/$(id -u) $CCR_PLIST)"
         fi
     else
         skip "ccr launch agent" "$CCR_PLIST not present"

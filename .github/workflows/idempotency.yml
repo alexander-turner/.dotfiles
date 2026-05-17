@@ -77,7 +77,7 @@ jobs:
           # We tolerate FAILs from "Required commands" / "Brewfile" / "tmux"
           # (brew/fish/nvim/zoxide aren't fully installed in this minimal job)
           # but every Symlinks check must PASS.
-          out=$(bash bin/doctor.sh || true)
+          out=$(bash bin/doctor.sh --verbose || true)
           echo "$out"
           symlinks_section=$(echo "$out" | awk '/=== Symlinks ===/{flag=1;next} /^=== /{flag=0} flag')
           if echo "$symlinks_section" | grep -q "FAIL"; then
