@@ -144,6 +144,13 @@ done
 if $IS_MAC; then
     # Borders ships its binary as `borders`. Skip on Linux.
     check_command borders
+    # wally-cli is installed on-demand (go install) and only needed for ZSA
+    # keyboard flashing — skip rather than fail when it's absent.
+    if command -v wally-cli >/dev/null 2>&1; then
+        pass "wally-cli"
+    else
+        skip "wally-cli" "not on PATH (run setup.sh or: go install github.com/zsa/wally-cli@latest)"
+    fi
 fi
 
 # ── Login shell ─────────────────────────────────────────────────────────────
@@ -233,7 +240,7 @@ if $IS_MAC; then
         if launchctl list 2>/dev/null | grep -q com.turntrout.ccr; then
             pass "ccr launch agent loaded"
         else
-            fail "ccr launch agent" "plist symlinked but not loaded (launchctl load $CCR_PLIST)"
+            fail "ccr launch agent" "plist symlinked but not loaded (run: launchctl bootstrap gui/$(id -u) $CCR_PLIST)"
         fi
     else
         skip "ccr launch agent" "$CCR_PLIST not present"
