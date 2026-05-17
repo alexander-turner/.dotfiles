@@ -146,13 +146,12 @@ check_toml() {
         fi
     fi
     echo -n "TOML validation: "
-    TOML_FILES=$(find . -name '*.toml' -not -path './.git/*' -not -path '*/node_modules/*' || true)
-    if [ -z "$TOML_FILES" ]; then
+    if ! find . -name '*.toml' -not -path './.git/*' -not -path '*/node_modules/*' -print -quit 2>/dev/null | grep -q .; then
         echo -e "${GREEN}no files${NC}"
         return 0
     fi
     local toml_failed=0
-    while IFS= read -r f; do
+    while IFS= read -r -d '' f; do
         if ! python3 -c "
 import sys, tomllib
 with open(sys.argv[1], 'rb') as fp:
@@ -161,7 +160,7 @@ with open(sys.argv[1], 'rb') as fp:
             echo -e "\n  ${RED}Invalid: $f${NC}"
             toml_failed=1
         fi
-    done <<<"$TOML_FILES"
+    done < <(find . -name '*.toml' -not -path './.git/*' -not -path '*/node_modules/*' -print0 2>/dev/null)
     if [ $toml_failed -ne 0 ]; then
         echo -e "${RED}failed${NC}"
         return 1
@@ -174,18 +173,17 @@ check_json() {
     require_or_skip python3 "JSON validation" || return 0
     echo -n "JSON validation: "
     # Exclude JSONC files (VSCode/VSCodium settings allow trailing commas)
-    JSON_FILES=$(find . -name '*.json' -not -path '*/node_modules/*' -not -path './.git/*' -not -path './apps/vscodium/*' || true)
-    if [ -z "$JSON_FILES" ]; then
+    if ! find . -name '*.json' -not -path '*/node_modules/*' -not -path './.git/*' -not -path './apps/vscodium/*' -print -quit 2>/dev/null | grep -q .; then
         echo -e "${GREEN}no files${NC}"
         return 0
     fi
     local json_failed=0
-    while IFS= read -r f; do
+    while IFS= read -r -d '' f; do
         if ! python3 -c "import json, sys; json.load(open(sys.argv[1]))" "$f" 2>/dev/null; then
             echo -e "\n  ${RED}Invalid: $f${NC}"
             json_failed=1
         fi
-    done <<<"$JSON_FILES"
+    done < <(find . -name '*.json' -not -path '*/node_modules/*' -not -path './.git/*' -not -path './apps/vscodium/*' -print0 2>/dev/null)
     if [ $json_failed -ne 0 ]; then
         echo -e "${RED}failed${NC}"
         return 1

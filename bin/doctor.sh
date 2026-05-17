@@ -144,7 +144,13 @@ done
 if $IS_MAC; then
     # Borders ships its binary as `borders`. Skip on Linux.
     check_command borders
-    check_command wally-cli
+    # wally-cli is installed on-demand (go install) and only needed for ZSA
+    # keyboard flashing — skip rather than fail when it's absent.
+    if command -v wally-cli >/dev/null 2>&1; then
+        pass "wally-cli"
+    else
+        skip "wally-cli" "not on PATH (run setup.sh or: go install github.com/zsa/wally-cli@latest)"
+    fi
 fi
 
 # ── Login shell ─────────────────────────────────────────────────────────────

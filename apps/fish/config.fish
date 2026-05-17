@@ -270,7 +270,8 @@ function grp --description 'Recursively grep from current directory'
     if command -q rg
         rg $argv
     else
-        command grep -r --exclude="*~" --color=auto $argv .
+        # grep -r with no path defaults to '.', matching rg's behaviour
+        command grep -r --exclude="*~" --color=auto $argv
     end
 end
 
