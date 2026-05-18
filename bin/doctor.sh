@@ -137,7 +137,7 @@ check_command() {
     fi
 }
 
-for cmd in git fish nvim tmux brew zoxide gh fzf rg fd bat eza delta tokei dust btm mise carapace shfmt mods; do
+for cmd in git fish nvim tmux brew zoxide gh fzf rg fd bat eza delta tokei dust btm mise carapace shfmt mods trash-put trash-empty; do
     check_command "$cmd"
 done
 

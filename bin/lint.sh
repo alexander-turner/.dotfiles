@@ -92,12 +92,19 @@ check_shellcheck() {
 check_fish() {
     require_or_skip fish "Fish syntax" || return 0
     echo -n "Fish syntax: "
-    if find . -name '*.fish' -not -path './apps/fish/functions/_tide*' -exec fish --no-execute {} \; 2>/dev/null; then
-        echo -e "${GREEN}passed${NC}"
-    else
+    local fish_failed=0 err_output
+    while IFS= read -r -d '' f; do
+        if ! err_output=$(fish --no-execute "$f" 2>&1); then
+            echo -e "\n  ${RED}Syntax error: $f${NC}"
+            echo "  $err_output"
+            fish_failed=1
+        fi
+    done < <(find . -name '*.fish' -not -path './apps/fish/functions/_tide*' -print0 2>/dev/null)
+    if [ "$fish_failed" -ne 0 ]; then
         echo -e "${RED}failed${NC}"
         return 1
     fi
+    echo -e "${GREEN}passed${NC}"
 }
 
 # StyLua

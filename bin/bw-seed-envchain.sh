@@ -70,7 +70,7 @@ seed_one() {
     else
         err "  FAIL   $ns/$var (envchain write failed)"
     fi
-    pw=
+    unset pw
 }
 
 items_json=$(bw list items --folderid "$folder_id" --session "$BW_SESSION")
