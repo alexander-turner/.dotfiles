@@ -80,6 +80,10 @@ jobs:
           out=$(bash bin/doctor.sh --verbose || true)
           echo "$out"
           symlinks_section=$(echo "$out" | awk '/=== Symlinks ===/{flag=1;next} /^=== /{flag=0} flag')
+          if [ -z "$symlinks_section" ]; then
+            echo "::error::doctor.sh --verbose produced no Symlinks section (section header changed?)" >&2
+            exit 1
+          fi
           if echo "$symlinks_section" | grep -q "FAIL"; then
             echo "::error::doctor.sh reported a symlink FAIL after setup.sh --link-only" >&2
             exit 1

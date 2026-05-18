@@ -300,7 +300,7 @@ if test -e $HOME/.iterm2_shell_integration.fish
     end
 end
 
-set -xg NODE_NO_WARNINGS 1
+set -gx NODE_NO_WARNINGS 1
 
 # Secret wrappers: envchain reads secrets from the macOS Keychain, which is
 # auto-unlocked at GUI login (zero-prompt runtime). Bitwarden is the
