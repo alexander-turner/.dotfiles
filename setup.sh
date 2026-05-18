@@ -19,64 +19,20 @@ DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # shellcheck source=bin/lib/safe_link.sh disable=SC1091
 source "$DOTFILES_DIR/bin/lib/safe_link.sh"
+# shellcheck source=bin/lib/symlinks.sh disable=SC1091
+source "$DOTFILES_DIR/bin/lib/symlinks.sh"
 
 # ── Symlinks (always run) ────────────────────────────────────────────────────
 status_msg "Linking dotfiles..."
-safe_link "$DOTFILES_DIR/.bashrc" "$HOME/.bashrc"
-safe_link "$DOTFILES_DIR/.vimrc" "$HOME/.vimrc"
-safe_link "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"
-safe_link "$DOTFILES_DIR/.npmrc" "$HOME/.npmrc"
-safe_link "$DOTFILES_DIR/.pnpmrc" "$HOME/.pnpmrc"
-safe_link "$DOTFILES_DIR/.tmux.conf" "$HOME/.tmux.conf"
+# Iterate the shared list. safe_link handles directory targets via mv-to-backup,
+# so nvim/borders/aerospace all flow through this one path with no bespoke branches.
+while IFS='|' read -r target source _label; do
+    mkdir -p "$(dirname "$target")"
+    safe_link "$source" "$target"
+done < <(managed_symlinks)
 
-mkdir -p "$HOME/.config/fish"
-safe_link "$DOTFILES_DIR/apps/fish/config.fish" "$HOME/.config/fish/config.fish"
-
-# mods (Charm AI): config lives in $XDG_CONFIG_HOME/mods/mods.yml
-mkdir -p "$HOME/.config/mods"
-safe_link "$DOTFILES_DIR/apps/mods/mods.yml" "$HOME/.config/mods/mods.yml"
-
-for aider_file in "$DOTFILES_DIR"/.aider*; do
-    if [ -f "$aider_file" ]; then
-        safe_link "$aider_file" "$HOME/$(basename "$aider_file")"
-    fi
-done
-
-# Neovim config
-NEOVIM_CONFIG_DIR="$HOME/.config/nvim"
-if [ -L "$NEOVIM_CONFIG_DIR" ] && [ "$(readlink "$NEOVIM_CONFIG_DIR")" = "$DOTFILES_DIR/apps/nvim" ]; then
-    : # already correct
-elif [ -e "$NEOVIM_CONFIG_DIR" ] && [ ! -L "$NEOVIM_CONFIG_DIR" ]; then
-    read -rp "nvim config dir exists (not a symlink). Overwrite? (y/N) " choice
-    case "$choice" in
-    y | Y)
-        rm -rf "$NEOVIM_CONFIG_DIR"
-        ln -s "$DOTFILES_DIR/apps/nvim" "$NEOVIM_CONFIG_DIR"
-        ;;
-    *) echo "Skipping nvim config" ;;
-    esac
-else
-    rm -f "$NEOVIM_CONFIG_DIR"
-    ln -s "$DOTFILES_DIR/apps/nvim" "$NEOVIM_CONFIG_DIR"
-fi
-
-# macOS-only config links
-if [ "$(uname)" = "Darwin" ]; then
-    mkdir -p "$HOME/Library"
-    safe_link "$DOTFILES_DIR/.aerospace.toml" "$HOME/.aerospace.toml"
-    safe_link "$DOTFILES_DIR/apps/com.googlecode.iterm2.plist" "$HOME/Library/com.googlecode.iterm2.plist"
-
-    # JankyBorders: config + invocation. Aerospace's after-startup-command
-    # spawns `borders`, which auto-loads ~/.config/borders/bordersrc.
-    mkdir -p "$HOME/.config/borders"
-    safe_link "$DOTFILES_DIR/apps/borders/bordersrc" "$HOME/.config/borders/bordersrc"
-fi
-
-# Vagrant templates
-mkdir -p "$HOME/.config/vagrant-templates"
-safe_link "$DOTFILES_DIR/ai/Vagrantfile" "$HOME/.config/vagrant-templates/Vagrantfile"
-
-# Git hooks for this dotfiles repo (relative symlink so the repo is portable)
+# Git hooks for this dotfiles repo (relative symlink — target is inside the
+# repo, not under $HOME, so it stays bespoke).
 safe_link "../bin/pre-push" "$DOTFILES_DIR/.hooks/pre-push"
 
 touch "$HOME"/.extras.{bash,fish}

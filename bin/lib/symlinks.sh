@@ -19,6 +19,7 @@ $HOME/.npmrc|$DOTFILES_DIR/.npmrc|.npmrc
 $HOME/.pnpmrc|$DOTFILES_DIR/.pnpmrc|.pnpmrc
 $HOME/.config/fish/config.fish|$DOTFILES_DIR/apps/fish/config.fish|fish config
 $HOME/.config/mods/mods.yml|$DOTFILES_DIR/apps/mods/mods.yml|mods config
+$HOME/.config/mise/config.toml|$DOTFILES_DIR/apps/mise/config.toml|mise config
 $HOME/.config/nvim|$DOTFILES_DIR/apps/nvim|nvim config
 $HOME/.config/vagrant-templates/Vagrantfile|$DOTFILES_DIR/ai/Vagrantfile|vagrant-templates/Vagrantfile
 EOF
