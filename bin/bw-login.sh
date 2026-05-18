@@ -89,8 +89,11 @@ cache_master_and_seed() {
 
     # Pass via --passwordenv (scoped to the bw subprocess) — bw on newer
     # Node versions has an inquirer bug that crashes on stdin pipes.
+    # 2>/dev/null suppresses the Node.js/inquirer crash noise on newer bw builds;
+    # it also hides any other bw error, so the message below is intentionally
+    # generic rather than claiming a password rejection specifically.
     BW_SESSION=$(BW_PASSWORD="$MASTER" bw unlock --raw --passwordenv BW_PASSWORD 2>/dev/null) || {
-        echo "bw unlock: master password rejected. Re-run bin/bw-login.sh." >&2
+        echo "bw unlock failed (wrong password, network error, or bw binary issue). Re-run bin/bw-login.sh." >&2
         unset MASTER
         return 1
     }
