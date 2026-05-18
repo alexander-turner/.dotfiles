@@ -76,6 +76,11 @@ if command -q zoxide
     zoxide init fish --cmd j | source
 end
 
+# mise: per-project tool versions (honors .nvmrc / .tool-versions / etc.).
+if command -q mise
+    mise activate fish | source
+end
+
 if $IS_MAC
     if command -q AeroSpace
         # Custom goodness for my workflow https://nikitabobko.github.io/AeroSpace/goodness

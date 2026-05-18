@@ -26,6 +26,7 @@ safe_link "$DOTFILES_DIR/.bashrc" "$HOME/.bashrc"
 safe_link "$DOTFILES_DIR/.vimrc" "$HOME/.vimrc"
 safe_link "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"
 safe_link "$DOTFILES_DIR/.npmrc" "$HOME/.npmrc"
+safe_link "$DOTFILES_DIR/.pnpmrc" "$HOME/.pnpmrc"
 safe_link "$DOTFILES_DIR/.tmux.conf" "$HOME/.tmux.conf"
 
 mkdir -p "$HOME/.config/fish"
