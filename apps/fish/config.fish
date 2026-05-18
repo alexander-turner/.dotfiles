@@ -1,7 +1,7 @@
 #!/usr/bin/env fish
 
 if set -q ANTIGRAVITY_AGENT
-  exec bash -c "$argv"
+    exec bash -c "$argv"
 end
 
 # Kill detached tmux sessions with auto-numbered names. Run before reboot to
@@ -11,7 +11,7 @@ function tmux-prune --description 'Kill detached, auto-numbered tmux sessions'
     set -l killed 0
     for line in (tmux list-sessions -F '#{session_name} #{session_attached}' 2>/dev/null)
         set -l parts (string split ' ' -- $line)
-        if test "$parts[2]" = "0"; and string match -qr '^[0-9]+$' -- $parts[1]
+        if test "$parts[2]" = 0; and string match -qr '^[0-9]+$' -- $parts[1]
             tmux kill-session -t $parts[1]
             set killed (math $killed + 1)
         end
@@ -244,6 +244,14 @@ function rm
     trash-put $argv
 end
 
+# Load iTerm2 integration before the grep/cat shadows so its internal
+# `grep -cvE` call hits the real grep rather than rg.
+if test -e $HOME/.iterm2_shell_integration.fish
+    if set -q TMUX
+        source $HOME/.iterm2_shell_integration.fish
+    end
+end
+
 # Interactive shadows: prefer ripgrep / bat when present. Bash scripts and
 # subshells still get the real binaries (fish functions don't propagate).
 # Escape hatch when a pasted invocation needs the real grep/cat: prefix
@@ -287,14 +295,6 @@ end
 
 abbr -a fxtra editfishextras
 
-# Only load iTerm2 integration when already inside tmux, not during tmux startup
-if test -e $HOME/.iterm2_shell_integration.fish
-    # Only load if TMUX variable is already set (we're inside a running tmux session)
-    if set -q TMUX
-        source $HOME/.iterm2_shell_integration.fish
-    end
-end
-
 set -xg NODE_NO_WARNINGS 1
 
 # Secret wrappers: envchain reads secrets from the macOS Keychain, which is
@@ -304,7 +304,7 @@ set -xg NODE_NO_WARNINGS 1
 # shell-startup background job below). See README for the data flow.
 
 function ai_secrets_wrap
-    envchain ai -- $argv
+    envchain ai $argv
 end
 
 # Charm `mods`: pipe shell output through an LLM. Routes exclusively
@@ -313,35 +313,27 @@ end
 #   git diff | mods 'review for issues'
 #   tail -200 build.log | mods -m coder 'what broke?'
 function mods
-    envchain ai -- command mods $argv
-end
-
-function cloudflare_secrets_wrap
-    envchain cloudflare -- $argv
-end
-
-function services_secrets_wrap
-    envchain services -- $argv
+    envchain ai command mods $argv
 end
 
 # `command npm` invokes the real npm binary, bypassing this same-named
 # fish function. It is fish syntax, not an envchain flag.
 function npm
-    envchain npm -- command npm $argv
+    envchain npm command npm $argv
 end
 
 function rclone
-    envchain cloudflare -- command rclone $argv
+    envchain cloudflare command rclone $argv
 end
 
 function twine
-    envchain pypi -- command twine $argv
+    envchain pypi command twine $argv
 end
 
 # Aider via Redpill: envchain populates REDPILL_API_KEY into the child
 # process; the shim script remaps it onto OPENAI_API_KEY and execs aider.
 function aider_redpill
-    envchain ai -- "$DOTFILES_DIR/bin/aider-redpill-shim.sh" (type -p aider) --edit-format editor-diff $argv
+    envchain ai "$DOTFILES_DIR/bin/aider-redpill-shim.sh" (type -p aider) --edit-format editor-diff $argv
 end
 
 # ── Bitwarden sync helpers ────────────────────────────────────────────────
