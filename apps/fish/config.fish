@@ -279,8 +279,13 @@ end
 
 abbr pytest_diff 'pytest -vv --tb=short'
 
-function grp # Recursively grep
-    grep $argv ** 2>/dev/null
+function grp --description 'Recursively grep from current directory'
+    if command -q rg
+        rg $argv
+    else
+        # grep -r with no path defaults to '.', matching rg's behaviour
+        command grep -r --exclude="*~" --color=auto $argv
+    end
 end
 
 # Printing helpers 
@@ -299,6 +304,14 @@ function editfishextras
 end
 
 abbr -a fxtra editfishextras
+
+# Only load iTerm2 integration when already inside tmux, not during tmux startup
+if test -e $HOME/.iterm2_shell_integration.fish
+    # Only load if TMUX variable is already set (we're inside a running tmux session)
+    if set -q TMUX
+        source $HOME/.iterm2_shell_integration.fish
+    end
+end
 
 set -xg NODE_NO_WARNINGS 1
 

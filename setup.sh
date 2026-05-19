@@ -136,6 +136,10 @@ fi
 if [ "$(uname)" = "Darwin" ]; then
     status_msg "Configuring macOS packages..."
 
+    # Escape $USER for literal sed replacement (guards against `/` and `&` in
+    # unusual usernames). Used for both the sudoers and Tailscale templates.
+    ESCAPED_USER="$(printf '%s' "$USER" | sed 's/[\/&]/\\&/g')"
+
     # Aerospace window manager setup (requires custom tap)
     brew_quiet_install --cask nikitabobko/tap/aerospace
 
@@ -146,7 +150,7 @@ if [ "$(uname)" = "Darwin" ]; then
     SUDOERS_DEST="/etc/sudoers.d/brew-autoupdate"
     if [ -f "$SUDOERS_TEMPLATE" ] && [ ! -f "$SUDOERS_DEST" ]; then
         SUDOERS_RENDERED="$(mktemp)"
-        sed "s/__USERNAME__/$USER/g" "$SUDOERS_TEMPLATE" >"$SUDOERS_RENDERED"
+        sed "s/__USERNAME__/$ESCAPED_USER/g" "$SUDOERS_TEMPLATE" >"$SUDOERS_RENDERED"
         if sudo visudo -cf "$SUDOERS_RENDERED" >/dev/null; then
             sudo install -o root -g wheel -m 0440 "$SUDOERS_RENDERED" "$SUDOERS_DEST"
         else
@@ -164,11 +168,11 @@ if [ "$(uname)" = "Darwin" ]; then
     # out of date, otherwise re-runs prompt for sudo every time.
     TAILSCALE_PLIST_DEST="/Library/LaunchDaemons/com.$USER.tailscaled.plist"
     TAILSCALE_PLIST_RENDERED="$(mktemp)"
-    sed "s/__USERNAME__/$USER/g" "$DOTFILES_DIR/launchagents/com.tailscaled.plist.template" \
+    sed "s/__USERNAME__/$ESCAPED_USER/g" "$DOTFILES_DIR/launchagents/com.tailscaled.plist.template" \
         >"$TAILSCALE_PLIST_RENDERED"
     if [ ! -f "$TAILSCALE_PLIST_DEST" ] || ! cmp -s "$TAILSCALE_PLIST_RENDERED" "$TAILSCALE_PLIST_DEST"; then
         sudo install -o root -g wheel -m 0644 "$TAILSCALE_PLIST_RENDERED" "$TAILSCALE_PLIST_DEST"
-        sudo launchctl load "$TAILSCALE_PLIST_DEST" 2>/dev/null || true
+        sudo launchctl bootstrap system "$TAILSCALE_PLIST_DEST" 2>/dev/null || true
     fi
     rm -f "$TAILSCALE_PLIST_RENDERED"
 
@@ -178,8 +182,8 @@ if [ "$(uname)" = "Darwin" ]; then
     CCR_PLIST_DEST="$HOME/Library/LaunchAgents/com.turntrout.ccr.plist"
     mkdir -p "$HOME/Library/LaunchAgents" "$HOME/Library/Logs/com.turntrout.ccr"
     safe_link "$DOTFILES_DIR/launchagents/com.turntrout.ccr.plist" "$CCR_PLIST_DEST"
-    launchctl unload "$CCR_PLIST_DEST" 2>/dev/null || true
-    launchctl load "$CCR_PLIST_DEST" 2>/dev/null || true
+    launchctl bootout "gui/$(id -u)" "$CCR_PLIST_DEST" 2>/dev/null || true
+    launchctl bootstrap "gui/$(id -u)" "$CCR_PLIST_DEST" 2>/dev/null || true
 
     # Install wally-cli for keyboard flashing
     if ! command_exists wally-cli; then

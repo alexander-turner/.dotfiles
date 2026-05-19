@@ -106,7 +106,7 @@ if $IS_MAC; then
         fi
         case "$choice" in
         y | Y)
-            launchctl unload "$CCR_PLIST" 2>/dev/null || true
+            launchctl bootout "gui/$(id -u)" "$CCR_PLIST" 2>/dev/null || true
             remove_dotfile_symlink "$CCR_PLIST" "$DOTFILES_DIR/launchagents/com.turntrout.ccr.plist"
             ;;
         *) echo "  skip ccr launch agent" ;;

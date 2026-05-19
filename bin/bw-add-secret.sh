@@ -87,16 +87,17 @@ create_vault_item() {
 }
 
 # Overwrite the password on an existing vault item. The full item JSON is
-# fetched, mutated through jq (with the new password in env.SECRET), and
+# fetched once, mutated through jq (with the new password in env.SECRET), and
 # piped back through `bw edit item`.
 update_vault_item() {
-    local id
-    id=$(bw get item --session "$BW_SESSION" "$item_name" | jq -r '.id')
+    local item_json id
+    item_json=$(bw get item --session "$BW_SESSION" "$item_name")
+    id=$(printf '%s' "$item_json" | jq -r '.id')
     [ -n "$id" ] || {
         echo "bw: couldn't resolve id for '$item_name'." >&2
         return 1
     }
-    bw get item --session "$BW_SESSION" "$id" |
+    printf '%s' "$item_json" |
         jq '.login.password=env.SECRET' |
         bw encode |
         bw edit item --session "$BW_SESSION" "$id" >/dev/null
