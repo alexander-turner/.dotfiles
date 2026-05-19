@@ -101,7 +101,9 @@
     "ots",
     "pnpm add",
     "pnpm exec tsc",
-    "bash -c pnpm exec tsc --noEmit"
+    "bash -c pnpm exec tsc --noEmit",
+    "pnpm -s lint",
+    "npm -s run lint"
   ],
   "roo-cline.deniedCommands": [],
   "git.openRepositoryInParentFolders": "always",
