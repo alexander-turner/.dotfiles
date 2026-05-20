@@ -129,8 +129,8 @@ fi
 if [ -n "${GH_REPO:-}" ] && command -v gh &>/dev/null &&
     { [[ "$origin_url" == *://github.com/* ]] ||
         [[ "$origin_url" == git@github.com:* ]]; }; then
-    gh repo set-default "$GH_REPO" >/dev/null 2>&1 ||
-        warn "Failed to set default repo for gh"
+    set_default_err=$(gh repo set-default "$GH_REPO" 2>&1 >/dev/null) ||
+        warn "Failed to set default repo for gh: ${set_default_err}"
 fi
 
 #######################################
