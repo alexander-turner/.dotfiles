@@ -4,7 +4,7 @@
 
 set -uo pipefail
 
-PROJECT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
 
 #######################################
 # Helpers
@@ -17,10 +17,14 @@ warn() {
 }
 is_root() { [ "$(id -u)" = "0" ]; }
 
-# Install a command via uv if missing
+# Install a command via uv if missing. No-op when uv itself is unavailable.
 uv_install_if_missing() {
     local cmd="$1" pkg="${2:-$1}"
     if ! command -v "$cmd" &>/dev/null; then
+        if ! command -v uv &>/dev/null; then
+            warn "Cannot install $pkg: uv not found"
+            return
+        fi
         uv tool install --quiet "$pkg" || warn "Failed to install $pkg"
     fi
 }
@@ -117,10 +121,17 @@ if [ -z "${GH_REPO:-}" ]; then
     fi
 fi
 
-# Set gh's default repo so commands like `gh pr create` work even when
-# the git remote is a local proxy URL that gh can't resolve.
+# `gh repo set-default` writes to the git config but requires the
+# remote to point at a GitHub host. In Claude Code web sessions the
+# remote is a local proxy URL, so set-default would fail. Skip it —
+# the exported GH_REPO env var is enough for `gh` to target the repo.
+# Only attempt set-default when origin actually looks like GitHub.
 if [ -n "${GH_REPO:-}" ] && command -v gh &>/dev/null; then
-    gh repo set-default "$GH_REPO" || warn "Failed to set default repo for gh"
+    origin_url=$(git -C "$PROJECT_DIR" remote get-url origin 2>/dev/null)
+    if [[ "$origin_url" == *github.com* ]]; then
+        gh repo set-default "$GH_REPO" >/dev/null 2>&1 ||
+            warn "Failed to set default repo for gh"
+    fi
 fi
 
 #######################################

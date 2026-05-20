@@ -10,7 +10,9 @@ This directory contains configuration and skills for Claude Code.
 ├── hooks/
 │   ├── session-setup.sh      # Runs on session start (installs tools, configures git)
 │   ├── pre-push-check.sh    # Runs before git push / gh pr (build, lint, typecheck)
+│   ├── ci-watch.sh          # Runs after git push / gh pr create (watches PR's CI)
 │   ├── verify_ci.py          # Runs on session stop (blocks if checks fail, max 3 retries)
+│   ├── notify.sh            # Cross-platform desktop notification for Notification hook
 │   └── lib-checks.sh        # Shared bash helpers (exists, has_script)
 └── skills/
     └── pr-creation/       # PR creation workflow with self-critique
