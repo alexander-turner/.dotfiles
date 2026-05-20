@@ -44,9 +44,9 @@ bw_require_logged_in() {
 
 # Ensure $BW_SESSION is exported, unlocking via the master password cached
 # in the OS secret store (service `bw-master-password`, see
-# bin/lib/secret-store.sh) if needed. Password is fed via stdin to
-# `--passwordfile /dev/stdin` — the Rust bw CLI (>=2024) ignores
-# `--passwordenv`, and stdin keeps the value off argv either way.
+# bin/lib/secret-store.sh) if needed. Password is written to a 0600 temp
+# file and passed via `--passwordfile` — the Rust bw CLI doesn't reliably
+# read /dev/stdin as a file, and keeping the value off argv matters.
 bw_ensure_session() {
     if [ -n "${BW_SESSION:-}" ]; then
         export BW_SESSION
@@ -58,14 +58,16 @@ bw_ensure_session() {
         echo "bw: locked and no cached master password. Run bin/bw-login.sh." >&2
         return 1
     fi
-    BW_SESSION=$(printf '%s' "$mp" | bw unlock --raw --passwordfile /dev/stdin 2>/dev/null) || {
-        echo "bw unlock: cached master password rejected. Re-run bin/bw-login.sh." >&2
-        unset mp
-        return 1
-    }
+    local pwfile
+    pwfile=$(mktemp -t bwpw)
+    chmod 600 "$pwfile"
+    printf '%s\n' "$mp" >"$pwfile"
     unset mp
-    if [ -z "$BW_SESSION" ]; then
-        echo "bw unlock: returned empty session. Re-run bin/bw-login.sh." >&2
+    BW_SESSION=$(bw unlock --raw --passwordfile "$pwfile" 2>/dev/null)
+    local rc=$?
+    rm -f "$pwfile"
+    if [ "$rc" -ne 0 ] || [ -z "$BW_SESSION" ]; then
+        echo "bw unlock: cached master password rejected or empty session. Re-run bin/bw-login.sh." >&2
         return 1
     fi
     export BW_SESSION
