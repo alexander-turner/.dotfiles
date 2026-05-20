@@ -31,55 +31,6 @@ while IFS='|' read -r target source _label; do
     safe_link "$source" "$target"
 done < <(managed_symlinks)
 
-mkdir -p "$HOME/.config/fish"
-safe_link "$DOTFILES_DIR/apps/fish/config.fish" "$HOME/.config/fish/config.fish"
-
-# Claude Code global settings — Layer 1 security baseline (sandbox, deny rules,
-# curated allows) plus telemetry-off env vars, Edit/Write review hook, and
-# enabled plugins. Pairs with .devcontainer/ for in-container isolation.
-mkdir -p "$HOME/.claude"
-safe_link "$DOTFILES_DIR/ai/prompting/settings.json" "$HOME/.claude/settings.json"
-
-# Claude Code wrapper for non-fish shells: bash/zsh/etc. invoke this shim, which
-# auto-launches the dotfiles devcontainer. ~/.local/bin must be ahead of the
-# real claude in PATH for the shim to win. Fish has its own functions/claude.fish.
-mkdir -p "$HOME/.local/bin"
-safe_link "$DOTFILES_DIR/bin/claude" "$HOME/.local/bin/claude"
-
-for aider_file in "$DOTFILES_DIR"/.aider*; do
-    if [ -f "$aider_file" ]; then
-        safe_link "$aider_file" "$HOME/$(basename "$aider_file")"
-    fi
-done
-
-# Neovim config
-NEOVIM_CONFIG_DIR="$HOME/.config/nvim"
-if [ -L "$NEOVIM_CONFIG_DIR" ] && [ "$(readlink "$NEOVIM_CONFIG_DIR")" = "$DOTFILES_DIR/apps/nvim" ]; then
-    : # already correct
-elif [ -e "$NEOVIM_CONFIG_DIR" ] && [ ! -L "$NEOVIM_CONFIG_DIR" ]; then
-    read -rp "nvim config dir exists (not a symlink). Overwrite? (y/N) " choice
-    case "$choice" in
-    y | Y)
-        rm -rf "$NEOVIM_CONFIG_DIR"
-        ln -s "$DOTFILES_DIR/apps/nvim" "$NEOVIM_CONFIG_DIR"
-        ;;
-    *) echo "Skipping nvim config" ;;
-    esac
-else
-    rm -f "$NEOVIM_CONFIG_DIR"
-    ln -s "$DOTFILES_DIR/apps/nvim" "$NEOVIM_CONFIG_DIR"
-fi
-
-# macOS-only config links
-if [ "$(uname)" = "Darwin" ]; then
-    safe_link "$DOTFILES_DIR/.aerospace.toml" ~/.aerospace.toml
-    safe_link "$DOTFILES_DIR/apps/com.googlecode.iterm2.plist" ~/Library/com.googlecode.iterm2.plist
-fi
-
-# Vagrant templates
-mkdir -p "$HOME/.config/vagrant-templates"
-safe_link "$DOTFILES_DIR/ai/Vagrantfile" "$HOME/.config/vagrant-templates/Vagrantfile"
-
 # Git hooks for this dotfiles repo (relative symlink — target is inside the
 # repo, not under $HOME, so it stays bespoke).
 safe_link "../bin/pre-push" "$DOTFILES_DIR/.hooks/pre-push"
