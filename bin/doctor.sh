@@ -227,6 +227,17 @@ if $IS_MAC; then
         skip "ccr launch agent" "$CCR_PLIST not present"
     fi
 
+    TS_EXIT_PLIST="$HOME/Library/LaunchAgents/com.turntrout.tailscale-exit-node.plist"
+    if [[ -L "$TS_EXIT_PLIST" ]]; then
+        if launchctl list 2>/dev/null | grep -q com.turntrout.tailscale-exit-node; then
+            pass "tailscale-exit-node launch agent loaded"
+        else
+            fail "tailscale-exit-node launch agent" "plist symlinked but not loaded (run: launchctl bootstrap gui/$(id -u) $TS_EXIT_PLIST)"
+        fi
+    else
+        skip "tailscale-exit-node launch agent" "$TS_EXIT_PLIST not present"
+    fi
+
     TAILSCALE_PLIST="/Library/LaunchDaemons/com.$USER.tailscaled.plist"
     if [[ -f "$TAILSCALE_PLIST" ]]; then
         pass "Tailscale daemon plist installed"

@@ -234,6 +234,14 @@ if [ "$(uname)" = "Darwin" ]; then
     launchctl bootout "gui/$(id -u)" "$CCR_PLIST_DEST" 2>/dev/null || true
     launchctl bootstrap "gui/$(id -u)" "$CCR_PLIST_DEST" 2>/dev/null || true
 
+    # Tailscale exit-node applier: reasserts the configured Mullvad exit node
+    # at login, retrying while tailscaled finishes its handshake.
+    TS_EXIT_PLIST_DEST="$HOME/Library/LaunchAgents/com.turntrout.tailscale-exit-node.plist"
+    mkdir -p "$HOME/Library/Logs/com.turntrout.tailscale-exit-node"
+    safe_link "$DOTFILES_DIR/launchagents/com.turntrout.tailscale-exit-node.plist" "$TS_EXIT_PLIST_DEST"
+    launchctl bootout "gui/$(id -u)" "$TS_EXIT_PLIST_DEST" 2>/dev/null || true
+    launchctl bootstrap "gui/$(id -u)" "$TS_EXIT_PLIST_DEST" 2>/dev/null || true
+
     # Install wally-cli for keyboard flashing
     if ! command_exists wally-cli; then
         go install github.com/zsa/wally-cli@latest >/dev/null
