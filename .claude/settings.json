@@ -23,18 +23,6 @@
         ]
       }
     ],
-    "PostToolUse": [
-      {
-        "matcher": "Bash(git push*|gh pr create*)",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/ci-watch.sh",
-            "timeout": 360
-          }
-        ]
-      }
-    ],
     "Stop": [
       {
         "matcher": "",

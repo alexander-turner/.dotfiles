@@ -109,15 +109,14 @@ fi
 # The gh CLI can't detect the GitHub repo from this, so we extract
 # owner/repo and export GH_REPO to make all gh commands work.
 
-if [ -z "${GH_REPO:-}" ]; then
-    remote_url=$(git -C "$PROJECT_DIR" remote get-url origin 2>/dev/null || true)
-    if [[ "$remote_url" =~ /git/([^/]+/[^/]+)$ ]]; then
-        GH_REPO="${BASH_REMATCH[1]}"
-        GH_REPO="${GH_REPO%.git}"
-        export GH_REPO
-        if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
-            echo "export GH_REPO=\"$GH_REPO\"" >>"$CLAUDE_ENV_FILE"
-        fi
+origin_url=$(git -C "$PROJECT_DIR" remote get-url origin 2>/dev/null)
+
+if [ -z "${GH_REPO:-}" ] && [[ "$origin_url" =~ /git/([^/]+/[^/]+)$ ]]; then
+    GH_REPO="${BASH_REMATCH[1]}"
+    GH_REPO="${GH_REPO%.git}"
+    export GH_REPO
+    if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
+        echo "export GH_REPO=\"$GH_REPO\"" >>"$CLAUDE_ENV_FILE"
     fi
 fi
 
@@ -125,13 +124,13 @@ fi
 # remote to point at a GitHub host. In Claude Code web sessions the
 # remote is a local proxy URL, so set-default would fail. Skip it —
 # the exported GH_REPO env var is enough for `gh` to target the repo.
-# Only attempt set-default when origin actually looks like GitHub.
-if [ -n "${GH_REPO:-}" ] && command -v gh &>/dev/null; then
-    origin_url=$(git -C "$PROJECT_DIR" remote get-url origin 2>/dev/null)
-    if [[ "$origin_url" == *github.com* ]]; then
-        gh repo set-default "$GH_REPO" >/dev/null 2>&1 ||
-            warn "Failed to set default repo for gh"
-    fi
+# Only attempt set-default when origin actually looks like GitHub
+# (anchored to the host segment so `github.com.evil.tld` doesn't match).
+if [ -n "${GH_REPO:-}" ] && command -v gh &>/dev/null &&
+    { [[ "$origin_url" == *://github.com/* ]] ||
+        [[ "$origin_url" == git@github.com:* ]]; }; then
+    gh repo set-default "$GH_REPO" >/dev/null 2>&1 ||
+        warn "Failed to set default repo for gh"
 fi
 
 #######################################
