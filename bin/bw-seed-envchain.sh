@@ -53,16 +53,21 @@ folder_id=$(bw_envchain_folder_id) || exit 0 # nothing to seed yet
 # `bw list items` just returned). `bw get item` is the stable path.
 seed_one() {
     local id="$1" name="$2"
-    local prefix ns var pw
+    local prefix ns var pw item_json
     IFS=/ read -r prefix ns var <<<"$name"
     if [ "$prefix" != "envchain" ] || [ -z "$ns" ] || [ -z "$var" ]; then
         log "  skip   $name (not in envchain/<ns>/<VAR> format)"
         return 0
     fi
-    pw=$(bw get item --session "$BW_SESSION" "$id" 2>/dev/null |
-        jq -r '.login.password // empty')
+    # Split bw and jq so a bw failure doesn't trip pipefail+set-e and kill
+    # the whole loop silently. `|| { ... }` keeps set -e quiet either way.
+    item_json=$(bw get item --session "$BW_SESSION" "$id" 2>/dev/null) || {
+        err "  FAIL   $ns/$var (bw get item rc=$?)"
+        return 0
+    }
+    pw=$(printf '%s' "$item_json" | jq -r '.login.password // empty')
     if [ -z "$pw" ]; then
-        err "  FAIL   $ns/$var (empty password or fetch error)"
+        err "  FAIL   $ns/$var (empty password field)"
         return 0
     fi
     if printf '%s' "$pw" | envchain --set "$ns" "$var" >/dev/null; then
@@ -70,7 +75,7 @@ seed_one() {
     else
         err "  FAIL   $ns/$var (envchain write failed)"
     fi
-    unset pw
+    unset pw item_json
 }
 
 items_json=$(bw list items --folderid "$folder_id" --session "$BW_SESSION")

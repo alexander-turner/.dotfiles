@@ -1,0 +1,35 @@
+# Gitleaks config — keeps the built-in rule set, narrows false positives.
+#
+# Order: built-in defaults run first (via `useDefault = true`), then this
+# allowlist drops known-safe matches. To debug a finding locally:
+#   gitleaks detect --source . --no-banner --verbose
+#
+# Layered with bin/lint.sh (pre-push, push-range scan) and
+# .github/workflows/lint.yml (CI, full history).
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known-safe patterns specific to this repo"
+
+paths = [
+    # Lockfiles can contain integrity hashes that look like high-entropy
+    # secrets but aren't.
+    '''(.*?)package-lock\.json''',
+    '''(.*?)pnpm-lock\.yaml''',
+    # The dotfiles backup directory is local-only, never committed, but
+    # belt-and-suspenders.
+    '''\.dotfiles-backup/.*''',
+]
+
+regexes = [
+    # Claude Code session URLs embedded in commit-message templates and PR
+    # bodies — the 32-char ID after /session_ is a public identifier, not a
+    # secret. Match the literal URL prefix to keep the allowlist narrow.
+    '''claude\.ai/code/session_[A-Za-z0-9]+''',
+    # Bitwarden item-name convention used throughout the repo. The string
+    # `envchain/<namespace>/<VAR>` names where a secret lives — it's not
+    # the secret itself.
+    '''envchain/[a-z0-9_-]+/[A-Z0-9_]+''',
+]

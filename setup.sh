@@ -19,67 +19,20 @@ DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # shellcheck source=bin/lib/safe_link.sh disable=SC1091
 source "$DOTFILES_DIR/bin/lib/safe_link.sh"
+# shellcheck source=bin/lib/symlinks.sh disable=SC1091
+source "$DOTFILES_DIR/bin/lib/symlinks.sh"
 
 # ── Symlinks (always run) ────────────────────────────────────────────────────
 status_msg "Linking dotfiles..."
-safe_link "$DOTFILES_DIR/.bashrc" "$HOME/.bashrc"
-safe_link "$DOTFILES_DIR/.vimrc" "$HOME/.vimrc"
-safe_link "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"
-safe_link "$DOTFILES_DIR/.npmrc" "$HOME/.npmrc"
-safe_link "$DOTFILES_DIR/.tmux.conf" "$HOME/.tmux.conf"
+# Iterate the shared list. safe_link handles directory targets via mv-to-backup,
+# so nvim/borders/aerospace all flow through this one path with no bespoke branches.
+while IFS='|' read -r target source _label; do
+    mkdir -p "$(dirname "$target")"
+    safe_link "$source" "$target"
+done < <(managed_symlinks)
 
-mkdir -p "$HOME/.config/fish"
-safe_link "$DOTFILES_DIR/apps/fish/config.fish" "$HOME/.config/fish/config.fish"
-
-# mods (Charm AI): config lives in $XDG_CONFIG_HOME/mods/mods.yml
-mkdir -p "$HOME/.config/mods"
-safe_link "$DOTFILES_DIR/apps/mods/mods.yml" "$HOME/.config/mods/mods.yml"
-
-for aider_file in "$DOTFILES_DIR"/.aider*; do
-    if [ -f "$aider_file" ]; then
-        safe_link "$aider_file" "$HOME/$(basename "$aider_file")"
-    fi
-done
-
-# Neovim config
-NEOVIM_CONFIG_DIR="$HOME/.config/nvim"
-if [ -L "$NEOVIM_CONFIG_DIR" ] && [ "$(readlink "$NEOVIM_CONFIG_DIR")" = "$DOTFILES_DIR/apps/nvim" ]; then
-    : # already correct
-elif [ -e "$NEOVIM_CONFIG_DIR" ] && [ ! -L "$NEOVIM_CONFIG_DIR" ]; then
-    if [ ! -t 0 ]; then
-        echo "Skipping nvim config (real directory present, non-interactive)"
-    else
-        read -rp "nvim config dir exists (not a symlink). Overwrite? (y/N) " choice
-        case "$choice" in
-        y | Y)
-            rm -rf "$NEOVIM_CONFIG_DIR"
-            ln -s "$DOTFILES_DIR/apps/nvim" "$NEOVIM_CONFIG_DIR"
-            ;;
-        *) echo "Skipping nvim config" ;;
-        esac
-    fi
-else
-    rm -f "$NEOVIM_CONFIG_DIR"
-    ln -s "$DOTFILES_DIR/apps/nvim" "$NEOVIM_CONFIG_DIR"
-fi
-
-# macOS-only config links
-if [ "$(uname)" = "Darwin" ]; then
-    mkdir -p "$HOME/Library"
-    safe_link "$DOTFILES_DIR/.aerospace.toml" "$HOME/.aerospace.toml"
-    safe_link "$DOTFILES_DIR/apps/com.googlecode.iterm2.plist" "$HOME/Library/com.googlecode.iterm2.plist"
-
-    # JankyBorders: config + invocation. Aerospace's after-startup-command
-    # spawns `borders`, which auto-loads ~/.config/borders/bordersrc.
-    mkdir -p "$HOME/.config/borders"
-    safe_link "$DOTFILES_DIR/apps/borders/bordersrc" "$HOME/.config/borders/bordersrc"
-fi
-
-# Vagrant templates
-mkdir -p "$HOME/.config/vagrant-templates"
-safe_link "$DOTFILES_DIR/ai/Vagrantfile" "$HOME/.config/vagrant-templates/Vagrantfile"
-
-# Git hooks for this dotfiles repo (relative symlink so the repo is portable)
+# Git hooks for this dotfiles repo (relative symlink — target is inside the
+# repo, not under $HOME, so it stays bespoke).
 safe_link "../bin/pre-push" "$DOTFILES_DIR/.hooks/pre-push"
 
 touch "$HOME"/.extras.{bash,fish}
@@ -124,9 +77,20 @@ brew_quiet_install() {
     brew install --quiet "$@"
 }
 
-# Install all brew packages from Brewfile
+# Install all brew packages from Brewfile. Retry on transient failure —
+# GitHub's HTTP/2 frontend occasionally drops `git clone` mid-tap, and a
+# second attempt almost always succeeds. doctor.sh at the end of setup
+# catches anything that's still missing after 3 tries.
 status_msg "Installing from Brewfile..."
-brew bundle --quiet --file="$DOTFILES_DIR/Brewfile" || true
+for attempt in 1 2 3; do
+    if brew bundle --quiet --file="$DOTFILES_DIR/Brewfile"; then
+        break
+    fi
+    if [ "$attempt" -lt 3 ]; then
+        status_msg "brew bundle failed (attempt $attempt/3); retrying in $((attempt * 10))s..."
+        sleep $((attempt * 10))
+    fi
+done
 
 # Bitwarden CLI bootstrap. Bitwarden is the cross-machine source of truth
 # for secrets; envchain is the local runtime cache. We use the personal
@@ -220,6 +184,14 @@ if [ "$(uname)" = "Darwin" ]; then
     safe_link "$DOTFILES_DIR/launchagents/com.turntrout.ccr.plist" "$CCR_PLIST_DEST"
     launchctl bootout "gui/$(id -u)" "$CCR_PLIST_DEST" 2>/dev/null || true
     launchctl bootstrap "gui/$(id -u)" "$CCR_PLIST_DEST" 2>/dev/null || true
+
+    # Tailscale exit-node applier: reasserts the configured Mullvad exit node
+    # at login, retrying while tailscaled finishes its handshake.
+    TS_EXIT_PLIST_DEST="$HOME/Library/LaunchAgents/com.turntrout.tailscale-exit-node.plist"
+    mkdir -p "$HOME/Library/Logs/com.turntrout.tailscale-exit-node"
+    safe_link "$DOTFILES_DIR/launchagents/com.turntrout.tailscale-exit-node.plist" "$TS_EXIT_PLIST_DEST"
+    launchctl bootout "gui/$(id -u)" "$TS_EXIT_PLIST_DEST" 2>/dev/null || true
+    launchctl bootstrap "gui/$(id -u)" "$TS_EXIT_PLIST_DEST" 2>/dev/null || true
 
     # Install wally-cli for keyboard flashing
     if ! command_exists wally-cli; then

@@ -1,7 +1,7 @@
 #!/usr/bin/env fish
 
 if set -q ANTIGRAVITY_AGENT
-  exec bash -c "$argv"
+    exec bash -c "$argv"
 end
 
 # Kill detached tmux sessions with auto-numbered names. Run before reboot to
@@ -11,7 +11,7 @@ function tmux-prune --description 'Kill detached, auto-numbered tmux sessions'
     set -l killed 0
     for line in (tmux list-sessions -F '#{session_name} #{session_attached}' 2>/dev/null)
         set -l parts (string split ' ' -- $line)
-        if test "$parts[2]" = "0"; and string match -qr '^[0-9]+$' -- $parts[1]
+        if test "$parts[2]" = 0; and string match -qr '^[0-9]+$' -- $parts[1]
             tmux kill-session -t $parts[1]
             set killed (math $killed + 1)
         end
@@ -74,6 +74,11 @@ fish_vi_key_bindings
 # zoxide (replaces autojump). `--cmd j` keeps the long-standing `j <dir>` workflow.
 if command -q zoxide
     zoxide init fish --cmd j | source
+end
+
+# mise: per-project tool versions (honors .nvmrc / .tool-versions / etc.).
+if command -q mise
+    mise activate fish | source
 end
 
 if $IS_MAC
@@ -244,6 +249,14 @@ function rm
     trash-put $argv
 end
 
+# Load iTerm2 integration before the grep/cat shadows so its internal
+# `grep -cvE` call hits the real grep rather than rg.
+if test -e $HOME/.iterm2_shell_integration.fish
+    if set -q TMUX
+        source $HOME/.iterm2_shell_integration.fish
+    end
+end
+
 # Interactive shadows: prefer ripgrep / bat when present. Bash scripts and
 # subshells still get the real binaries (fish functions don't propagate).
 # Escape hatch when a pasted invocation needs the real grep/cat: prefix
@@ -300,7 +313,7 @@ if test -e $HOME/.iterm2_shell_integration.fish
     end
 end
 
-set -gx NODE_NO_WARNINGS 1
+set -xg NODE_NO_WARNINGS 1
 
 # Secret wrappers: envchain reads secrets from the macOS Keychain, which is
 # auto-unlocked at GUI login (zero-prompt runtime). Bitwarden is the
@@ -309,7 +322,7 @@ set -gx NODE_NO_WARNINGS 1
 # shell-startup background job below). See README for the data flow.
 
 function ai_secrets_wrap
-    envchain ai -- $argv
+    envchain ai $argv
 end
 
 # Charm `mods`: pipe shell output through an LLM. Routes exclusively
@@ -318,35 +331,27 @@ end
 #   git diff | mods 'review for issues'
 #   tail -200 build.log | mods -m coder 'what broke?'
 function mods
-    envchain ai -- command mods $argv
-end
-
-function cloudflare_secrets_wrap
-    envchain cloudflare -- $argv
-end
-
-function services_secrets_wrap
-    envchain services -- $argv
+    envchain ai command mods $argv
 end
 
 # `command npm` invokes the real npm binary, bypassing this same-named
 # fish function. It is fish syntax, not an envchain flag.
 function npm
-    envchain npm -- command npm $argv
+    envchain npm command npm $argv
 end
 
 function rclone
-    envchain cloudflare -- command rclone $argv
+    envchain cloudflare command rclone $argv
 end
 
 function twine
-    envchain pypi -- command twine $argv
+    envchain pypi command twine $argv
 end
 
 # Aider via Redpill: envchain populates REDPILL_API_KEY into the child
 # process; the shim script remaps it onto OPENAI_API_KEY and execs aider.
 function aider_redpill
-    envchain ai -- "$DOTFILES_DIR/bin/aider-redpill-shim.sh" (type -p aider) --edit-format editor-diff $argv
+    envchain ai "$DOTFILES_DIR/bin/aider-redpill-shim.sh" (type -p aider) --edit-format editor-diff $argv
 end
 
 # ── Bitwarden sync helpers ────────────────────────────────────────────────
@@ -381,6 +386,35 @@ end
 if status is-interactive; and type -q bw
     _bw_envchain_autosync 2>/dev/null
 end
+
+# Tailscale's Mullvad exit node — choice persists in daemon prefs across reboots.
+function mullvad --description 'Switch Tailscale Mullvad exit node'
+    switch "$argv[1]"
+        case ca
+            tailscale set --exit-node=ca-mtr-wg-001.mullvad.ts.net --exit-node-allow-lan-access=true
+        case jp
+            tailscale set --exit-node=jp-tyo-wg-001.mullvad.ts.net --exit-node-allow-lan-access=true
+        case us
+            tailscale set --exit-node=us-chi-wg-301.mullvad.ts.net --exit-node-allow-lan-access=true
+        case off
+            tailscale set --exit-node=
+        case ls list
+            tailscale exit-node list
+            return
+        case st status
+            tailscale status | head -3
+            return
+        case '*'
+            echo "usage: mullvad [ca|jp|us|off|ls|st]"
+            return 1
+    end
+    tailscale status | head -3
+end
+
+abbr -a mvca 'mullvad ca'
+abbr -a mvjp 'mullvad jp'
+abbr -a mvus 'mullvad us'
+abbr -a mvoff 'mullvad off'
 
 fish_add_path $HOME/go/bin
 

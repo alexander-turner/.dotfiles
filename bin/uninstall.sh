@@ -25,6 +25,9 @@ SAFE_LINK_BACKUP_ROOT="${SAFE_LINK_BACKUP_ROOT:-$HOME/.dotfiles-backup}"
 IS_MAC=false
 [[ "$(uname)" == "Darwin" ]] && IS_MAC=true
 
+# shellcheck source=lib/symlinks.sh disable=SC1091
+source "$DOTFILES_DIR/bin/lib/symlinks.sh"
+
 ASSUME_YES=false
 if [[ "${1:-}" == "--yes" || "${1:-}" == "-y" ]]; then
     ASSUME_YES=true
@@ -80,41 +83,18 @@ remove_dotfile_symlink() {
     fi
 }
 
-# Same shape as remove_dotfile_symlink but for directory targets (nvim
-# config). Symlinked dirs need -d on the readlink test, but readlink works
-# the same — handle as a normal symlink path.
-remove_dotfile_symlink_dir() {
-    remove_dotfile_symlink "$@"
-}
-
 echo ":: Uninstalling dotfiles symlinks from $HOME..."
 echo "   (Backups, if any, will be restored from $SAFE_LINK_BACKUP_ROOT/<latest>/)"
 echo
 
-remove_dotfile_symlink "$HOME/.bashrc" "$DOTFILES_DIR/.bashrc"
-remove_dotfile_symlink "$HOME/.vimrc" "$DOTFILES_DIR/.vimrc"
-remove_dotfile_symlink "$HOME/.gitconfig" "$DOTFILES_DIR/.gitconfig"
-remove_dotfile_symlink "$HOME/.npmrc" "$DOTFILES_DIR/.npmrc"
-remove_dotfile_symlink "$HOME/.tmux.conf" "$DOTFILES_DIR/.tmux.conf"
-remove_dotfile_symlink "$HOME/.config/fish/config.fish" "$DOTFILES_DIR/apps/fish/config.fish"
-remove_dotfile_symlink "$HOME/.config/mods/mods.yml" "$DOTFILES_DIR/apps/mods/mods.yml"
-remove_dotfile_symlink_dir "$HOME/.config/nvim" "$DOTFILES_DIR/apps/nvim"
-remove_dotfile_symlink "$HOME/.config/vagrant-templates/Vagrantfile" "$DOTFILES_DIR/ai/Vagrantfile"
-
-# Aider files match the same loop as setup.sh — iterate the source list to
-# stay in sync without hard-coding names.
-for aider_file in "$DOTFILES_DIR"/.aider*; do
-    if [ -f "$aider_file" ]; then
-        remove_dotfile_symlink "$HOME/$(basename "$aider_file")" "$aider_file"
-    fi
-done
+# Iterate the shared list from bin/lib/symlinks.sh (sourced above). Symlinked
+# directories (e.g. nvim config) go through the same code path — readlink and
+# `rm -f` work identically on file and directory symlinks.
+while IFS='|' read -r target source _label; do
+    remove_dotfile_symlink "$target" "$source"
+done < <(managed_symlinks)
 
 if $IS_MAC; then
-    remove_dotfile_symlink "$HOME/.aerospace.toml" "$DOTFILES_DIR/.aerospace.toml"
-    remove_dotfile_symlink "$HOME/Library/com.googlecode.iterm2.plist" \
-        "$DOTFILES_DIR/apps/com.googlecode.iterm2.plist"
-    remove_dotfile_symlink "$HOME/.config/borders/bordersrc" "$DOTFILES_DIR/apps/borders/bordersrc"
-
     # Unload + remove the ccr launch agent. launchctl unload is safe on a
     # missing label; we still prompt because it touches a running service.
     CCR_PLIST="$HOME/Library/LaunchAgents/com.turntrout.ccr.plist"
@@ -130,6 +110,22 @@ if $IS_MAC; then
             remove_dotfile_symlink "$CCR_PLIST" "$DOTFILES_DIR/launchagents/com.turntrout.ccr.plist"
             ;;
         *) echo "  skip ccr launch agent" ;;
+        esac
+    fi
+
+    TS_EXIT_PLIST="$HOME/Library/LaunchAgents/com.turntrout.tailscale-exit-node.plist"
+    if [[ -L "$TS_EXIT_PLIST" ]]; then
+        if $ASSUME_YES; then
+            choice=y
+        else
+            read -rp "Unload + remove tailscale-exit-node launch agent? (y/N) " choice
+        fi
+        case "$choice" in
+        y | Y)
+            launchctl bootout "gui/$(id -u)" "$TS_EXIT_PLIST" 2>/dev/null || true
+            remove_dotfile_symlink "$TS_EXIT_PLIST" "$DOTFILES_DIR/launchagents/com.turntrout.tailscale-exit-node.plist"
+            ;;
+        *) echo "  skip tailscale-exit-node launch agent" ;;
         esac
     fi
 fi

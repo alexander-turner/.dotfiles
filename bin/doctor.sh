@@ -31,6 +31,9 @@ DOTFILES_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 IS_MAC=false
 [[ "$(uname)" == "Darwin" ]] && IS_MAC=true
 
+# shellcheck source=lib/symlinks.sh disable=SC1091
+source "$DOTFILES_DIR/bin/lib/symlinks.sh"
+
 if [[ -t 1 ]]; then
     GREEN='\033[0;32m'
     RED='\033[0;31m'
@@ -86,32 +89,10 @@ check_symlink() {
     fi
 }
 
-check_symlink "$HOME/.bashrc" "$DOTFILES_DIR/.bashrc" ".bashrc"
-check_symlink "$HOME/.vimrc" "$DOTFILES_DIR/.vimrc" ".vimrc"
-check_symlink "$HOME/.gitconfig" "$DOTFILES_DIR/.gitconfig" ".gitconfig"
-check_symlink "$HOME/.tmux.conf" "$DOTFILES_DIR/.tmux.conf" ".tmux.conf"
-check_symlink "$HOME/.npmrc" "$DOTFILES_DIR/.npmrc" ".npmrc"
-check_symlink "$HOME/.config/fish/config.fish" "$DOTFILES_DIR/apps/fish/config.fish" "fish config"
-check_symlink "$HOME/.config/mods/mods.yml" "$DOTFILES_DIR/apps/mods/mods.yml" "mods config"
-check_symlink "$HOME/.config/nvim" "$DOTFILES_DIR/apps/nvim" "nvim config"
-
-if $IS_MAC; then
-    check_symlink "$HOME/.aerospace.toml" "$DOTFILES_DIR/.aerospace.toml" ".aerospace.toml"
-    check_symlink "$HOME/Library/com.googlecode.iterm2.plist" \
-        "$DOTFILES_DIR/apps/com.googlecode.iterm2.plist" "iTerm2 plist"
-    check_symlink "$HOME/.config/borders/bordersrc" "$DOTFILES_DIR/apps/borders/bordersrc" "borders config"
-fi
-
-check_symlink "$HOME/.config/vagrant-templates/Vagrantfile" \
-    "$DOTFILES_DIR/ai/Vagrantfile" "vagrant-templates/Vagrantfile"
-
-# Aider dotfiles are optional (only linked when .aider* files exist in the repo).
-for aider_file in "$DOTFILES_DIR"/.aider*; do
-    if [ -f "$aider_file" ]; then
-        name="$(basename "$aider_file")"
-        check_symlink "$HOME/$name" "$aider_file" "$name"
-    fi
-done
+# Iterate the shared list from bin/lib/symlinks.sh (sourced above).
+while IFS='|' read -r target source label; do
+    check_symlink "$target" "$source" "$label"
+done < <(managed_symlinks)
 
 # Pre-push hook is a relative symlink inside the repo.
 if [[ -L "$DOTFILES_DIR/.hooks/pre-push" ]]; then
@@ -256,6 +237,17 @@ if $IS_MAC; then
         fi
     else
         skip "ccr launch agent" "$CCR_PLIST not present"
+    fi
+
+    TS_EXIT_PLIST="$HOME/Library/LaunchAgents/com.turntrout.tailscale-exit-node.plist"
+    if [[ -L "$TS_EXIT_PLIST" ]]; then
+        if launchctl list 2>/dev/null | grep -q com.turntrout.tailscale-exit-node; then
+            pass "tailscale-exit-node launch agent loaded"
+        else
+            fail "tailscale-exit-node launch agent" "plist symlinked but not loaded (run: launchctl bootstrap gui/$(id -u) $TS_EXIT_PLIST)"
+        fi
+    else
+        skip "tailscale-exit-node launch agent" "$TS_EXIT_PLIST not present"
     fi
 
     TAILSCALE_PLIST="/Library/LaunchDaemons/com.$USER.tailscaled.plist"

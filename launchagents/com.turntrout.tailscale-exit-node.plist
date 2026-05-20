@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.turntrout.tailscale-exit-node</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/turntrout/.dotfiles/bin/tailscale-apply-exit-node.sh</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/bin:/bin</string>
+    </dict>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/Users/turntrout/Library/Logs/com.turntrout.tailscale-exit-node/stdout.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/turntrout/Library/Logs/com.turntrout.tailscale-exit-node/stderr.log</string>
+</dict>
+</plist>
