@@ -28,6 +28,7 @@ EOF
 $HOME/.aerospace.toml|$DOTFILES_DIR/.aerospace.toml|.aerospace.toml
 $HOME/Library/com.googlecode.iterm2.plist|$DOTFILES_DIR/apps/com.googlecode.iterm2.plist|iTerm2 plist
 $HOME/.config/borders/bordersrc|$DOTFILES_DIR/apps/borders/bordersrc|borders config
+$HOME/.config/swiftbar/vpn.10s.sh|$DOTFILES_DIR/apps/swiftbar/vpn.10s.sh|swiftbar vpn plugin
 EOF
     fi
     for aider_file in "$DOTFILES_DIR"/.aider*; do

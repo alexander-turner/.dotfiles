@@ -387,6 +387,35 @@ if status is-interactive; and type -q bw
     _bw_envchain_autosync 2>/dev/null
 end
 
+# Tailscale's Mullvad exit node — choice persists in daemon prefs across reboots.
+function mullvad --description 'Switch Tailscale Mullvad exit node'
+    switch "$argv[1]"
+        case ca
+            tailscale set --exit-node=ca-mtr-wg-001.mullvad.ts.net --exit-node-allow-lan-access=true
+        case jp
+            tailscale set --exit-node=jp-tyo-wg-001.mullvad.ts.net --exit-node-allow-lan-access=true
+        case us
+            tailscale set --exit-node=us-chi-wg-301.mullvad.ts.net --exit-node-allow-lan-access=true
+        case off
+            tailscale set --exit-node=
+        case ls list
+            tailscale exit-node list
+            return
+        case st status
+            tailscale status | head -3
+            return
+        case '*'
+            echo "usage: mullvad [ca|jp|us|off|ls|st]"
+            return 1
+    end
+    tailscale status | head -3
+end
+
+abbr -a mvca 'mullvad ca'
+abbr -a mvjp 'mullvad jp'
+abbr -a mvus 'mullvad us'
+abbr -a mvoff 'mullvad off'
+
 fish_add_path $HOME/go/bin
 
 # pnpm
