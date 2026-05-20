@@ -325,60 +325,24 @@ function ai_secrets_wrap
     envchain ai $argv
 end
 
-# envchain syntax is `envchain NAMESPACE CMD [ARGS...]` — there's no `--`
-# separator; envchain execs argv[2] literally. `command foo` won't work
-# either: envchain sees the literal string "command" and tries execvp on
-# it. Resolve binaries to absolute paths here.
-function _resolve_bin
-    set -l name $argv[1]
-    for p in /opt/homebrew/bin /usr/local/bin /usr/bin
-        if test -x $p/$name; and not test -d $p/$name
-            echo $p/$name
-            return 0
-        end
-    end
-    set -l fallback (which $name 2>/dev/null)
-    if test -n "$fallback"; and test -x "$fallback"
-        echo $fallback
-        return 0
-    end
-    return 1
-end
-
 # Charm `mods`: pipe shell output through an LLM. Routes exclusively
 # through Venice (E2EE inference) per apps/mods/mods.yml. envchain ai
 # populates VENICE_INFERENCE_KEY from the macOS Keychain.
 #   git diff | mods 'review for issues'
-#   tail -200 build.log | mods -m coder 'what broke?'
 function mods
     envchain ai command mods $argv
 end
 
 function npm
-    set -l bin (_resolve_bin npm)
-    if test -z "$bin"
-        echo "npm: real binary not found" >&2
-        return 127
-    end
-    envchain npm $bin $argv
+    envchain npm command npm $argv
 end
 
 function rclone
-    set -l bin (_resolve_bin rclone)
-    if test -z "$bin"
-        echo "rclone: real binary not found" >&2
-        return 127
-    end
-    envchain cloudflare $bin $argv
+    envchain cloudflare command rclone $argv
 end
 
 function twine
-    set -l bin (_resolve_bin twine)
-    if test -z "$bin"
-        echo "twine: real binary not found" >&2
-        return 127
-    end
-    envchain pypi $bin $argv
+    envchain pypi command twine $argv
 end
 
 # Aider via Redpill: envchain populates REDPILL_API_KEY into the child
