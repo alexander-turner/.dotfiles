@@ -87,14 +87,18 @@ cache_master_and_seed() {
 
     secret_set bw-master-password "$MASTER"
 
-    # Pass via --passwordenv (scoped to the bw subprocess) — bw on newer
-    # Node versions has an inquirer bug that crashes on stdin pipes.
-    BW_SESSION=$(BW_PASSWORD="$MASTER" bw unlock --raw --passwordenv BW_PASSWORD 2>/dev/null) || {
+    # Pipe via stdin to --passwordfile — Rust bw (>=2024) ignores
+    # --passwordenv, and stdin keeps the value off argv either way.
+    BW_SESSION=$(printf '%s' "$MASTER" | bw unlock --raw --passwordfile /dev/stdin 2>/dev/null) || {
         echo "bw unlock: master password rejected. Re-run bin/bw-login.sh." >&2
         unset MASTER
         return 1
     }
     unset MASTER
+    if [ -z "$BW_SESSION" ]; then
+        echo "bw unlock: returned empty session. Re-run bin/bw-login.sh." >&2
+        return 1
+    fi
     export BW_SESSION
 
     bash "$DOTFILES_DIR/bin/bw-seed-envchain.sh"

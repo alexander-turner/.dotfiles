@@ -44,9 +44,9 @@ bw_require_logged_in() {
 
 # Ensure $BW_SESSION is exported, unlocking via the master password cached
 # in the OS secret store (service `bw-master-password`, see
-# bin/lib/secret-store.sh) if needed. We use `--passwordenv` rather than
-# stdin to dodge a bw/inquirer bug on newer Node versions. The env var is
-# scoped to the bw subprocess only.
+# bin/lib/secret-store.sh) if needed. Password is fed via stdin to
+# `--passwordfile /dev/stdin` — the Rust bw CLI (>=2024) ignores
+# `--passwordenv`, and stdin keeps the value off argv either way.
 bw_ensure_session() {
     if [ -n "${BW_SESSION:-}" ]; then
         export BW_SESSION
@@ -58,12 +58,16 @@ bw_ensure_session() {
         echo "bw: locked and no cached master password. Run bin/bw-login.sh." >&2
         return 1
     fi
-    BW_SESSION=$(BW_PASSWORD="$mp" bw unlock --raw --passwordenv BW_PASSWORD 2>/dev/null) || {
+    BW_SESSION=$(printf '%s' "$mp" | bw unlock --raw --passwordfile /dev/stdin 2>/dev/null) || {
         echo "bw unlock: cached master password rejected. Re-run bin/bw-login.sh." >&2
         unset mp
         return 1
     }
     unset mp
+    if [ -z "$BW_SESSION" ]; then
+        echo "bw unlock: returned empty session. Re-run bin/bw-login.sh." >&2
+        return 1
+    fi
     export BW_SESSION
 }
 
