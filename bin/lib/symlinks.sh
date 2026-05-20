@@ -18,6 +18,9 @@ $HOME/.tmux.conf|$DOTFILES_DIR/.tmux.conf|.tmux.conf
 $HOME/.npmrc|$DOTFILES_DIR/.npmrc|.npmrc
 $HOME/.pnpmrc|$DOTFILES_DIR/.pnpmrc|.pnpmrc
 $HOME/.config/fish/config.fish|$DOTFILES_DIR/apps/fish/config.fish|fish config
+$HOME/.config/fish/functions/claude.fish|$DOTFILES_DIR/apps/fish/functions/claude.fish|fish claude wrapper
+$HOME/.local/bin/claude|$DOTFILES_DIR/bin/claude|claude shim
+$HOME/.claude/settings.json|$DOTFILES_DIR/ai/prompting/settings.json|claude settings
 $HOME/.config/mods/mods.yml|$DOTFILES_DIR/apps/mods/mods.yml|mods config
 $HOME/.config/mise/config.toml|$DOTFILES_DIR/apps/mise/config.toml|mise config
 $HOME/.config/nvim|$DOTFILES_DIR/apps/nvim|nvim config

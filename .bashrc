@@ -19,7 +19,7 @@ elif [ -d /home/linuxbrew/.linuxbrew ]; then
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 fi
 
-export PATH="$PATH:$HOME/bin:$HOME/.local/bin"
+export PATH="$HOME/.local/bin:$HOME/bin:$PATH"
 export EDITOR='nvim'
 
 # Hand off to fish for interactive sessions.
