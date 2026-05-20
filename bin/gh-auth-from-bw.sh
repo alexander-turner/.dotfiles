@@ -17,7 +17,7 @@ bw_require_logged_in || exit 1
 bw_ensure_session || exit 1
 
 item_name="envchain/github/PAT"
-pat=$(bw get item "$item_name" 2>/dev/null |
+pat=$(bw get item --session "$BW_SESSION" "$item_name" 2>/dev/null |
     jq -r '.login.password // empty')
 [ -n "$pat" ] || {
     echo "gh-auth-from-bw: no '$item_name' item in vault. Add with: bin/bw-add-secret.sh github PAT" >&2
