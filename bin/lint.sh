@@ -221,22 +221,23 @@ check_python() {
     fi
 }
 
-# Secrets — layer 2 of the gate. bin/pre-push sets GITLEAKS_LOG_OPTS to the
-# range of commits being pushed so local pushes scan only what's new; CI
-# leaves the env unset and gets a full-history scan. Same .gitleaks.toml
-# in both paths.
+# Secrets scan. bin/pre-push sets GITLEAKS_LOG_OPTS to the range of commits
+# being pushed so local pushes scan only what's new; CI leaves the env
+# unset and gets a full-history scan. Same .gitleaks.toml in both paths.
 check_gitleaks() {
     require_or_skip gitleaks "Gitleaks" || return 0
     echo -n "Gitleaks: "
+    # `${arr[@]+"${arr[@]}"}` is the bash-3.2-safe expansion for an empty
+    # array under `set -u` (macOS default bash trips on plain "${arr[@]}").
     local extra=()
     if [[ -n "${GITLEAKS_LOG_OPTS:-}" ]]; then
         extra=(--log-opts="$GITLEAKS_LOG_OPTS")
     fi
-    if gitleaks detect --no-banner --redact --config=.gitleaks.toml "${extra[@]}" >/dev/null 2>&1; then
+    if gitleaks detect --no-banner --redact --config=.gitleaks.toml ${extra[@]+"${extra[@]}"} >/dev/null 2>&1; then
         echo -e "${GREEN}passed${NC}"
     else
         echo -e "${RED}failed${NC}"
-        echo "  Re-run for details: gitleaks detect --no-banner --redact --config=.gitleaks.toml ${extra[*]:-}" >&2
+        echo "  Re-run for details: gitleaks detect --no-banner --redact --config=.gitleaks.toml ${GITLEAKS_LOG_OPTS:+--log-opts=\"$GITLEAKS_LOG_OPTS\"}" >&2
         return 1
     fi
 }

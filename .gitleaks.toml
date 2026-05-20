@@ -4,8 +4,8 @@
 # allowlist drops known-safe matches. To debug a finding locally:
 #   gitleaks detect --source . --no-banner --verbose
 #
-# Layered with .hooks/pre-commit (staged scan), bin/lint.sh (pre-push,
-# full history), and .github/workflows/lint.yml (CI, full history).
+# Layered with bin/lint.sh (pre-push, push-range scan) and
+# .github/workflows/lint.yml (CI, full history).
 
 [extend]
 useDefault = true

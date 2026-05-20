@@ -1,6 +1,6 @@
 #!/bin/bash
-# Pre-commit hook: scan staged content for secrets, then format and lint.
-# Customize the lint-staged configuration in package.json.
+# Pre-commit hook: Format and lint staged files
+# Customize the lint-staged configuration in package.json
 
 set -euo pipefail
 
@@ -10,22 +10,6 @@ git_root=$(git rev-parse --show-toplevel)
 # Explicitly add .venv/bin to PATH so Python tools from uv are available.
 if [ -d "$git_root/.venv/bin" ]; then
     export PATH="$git_root/.venv/bin:$PATH"
-fi
-
-# Layer 1 of the secrets gate: scan staged diff only (fast). bin/lint.sh
-# (pre-push) and .github/workflows/lint.yml (CI) re-run gitleaks on the
-# full history as defense in depth. All three use .gitleaks.toml. If
-# gitleaks isn't installed, warn and skip so a fresh clone can still
-# commit before `brew bundle` has run.
-if command -v gitleaks >/dev/null 2>&1; then
-    if ! gitleaks protect --staged --no-banner --redact --config="$git_root/.gitleaks.toml"; then
-        echo "gitleaks: secret(s) detected in staged changes." >&2
-        echo "Rotate the credential first, then unstage or amend the file." >&2
-        echo "Bypass after rotation (last resort): git commit --no-verify" >&2
-        exit 1
-    fi
-else
-    echo "Warning: gitleaks not installed; pre-commit secret scan skipped (run 'brew bundle')." >&2
 fi
 
 # Check if lint-staged is installed

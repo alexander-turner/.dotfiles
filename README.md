@@ -105,9 +105,9 @@ Each secret is stored as a Bitwarden Login item named `envchain/<namespace>/<VAR
 
 ### Defense against accidental leaks
 
-Three-layer `gitleaks` gate, all reading the same `.gitleaks.toml`:
-pre-commit (staged diff), pre-push (only commits the push adds), CI
-(full history). If a real hit lands, **rotate first**, then rewrite.
+Two-layer `gitleaks` gate, same `.gitleaks.toml`: pre-push scans only
+the commits the push adds (fast even on huge histories), CI scans full
+history on every PR. If a real hit lands, **rotate first**, then rewrite.
 
 ### One-time setup
 
