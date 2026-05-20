@@ -6,7 +6,7 @@ To install:
 git clone https://github.com/alexander-turner/.dotfiles ~/.dotfiles && cd ~/.dotfiles && bash setup.sh
 ```
 
-`setup.sh` will (with warning) **overwrite** your existing `.bashrc`, `.vimrc`, `.gitconfig`, `.npmrc`, `.tmux.conf`, `.config/nvim`, `.config/fish/config.fish`, `.config/mods/mods.yml`, and any `.aider*` files. Before clobbering, the previous file is moved to `~/.dotfiles-backup/<UTC-timestamp>/<rel-path>/` — so a misclick on the y/N prompt is recoverable. The new files are symlinked to the files in the repository, so edits to the originals are reflected immediately.
+`setup.sh` will (with warning) **overwrite** your existing `.bashrc`, `.vimrc`, `.gitconfig`, `.npmrc`, `.tmux.conf`, `.config/nvim`, `.config/fish/config.fish`, `.config/mods/mods.yml`, and any `.aider*` files. On macOS it also links `.aerospace.toml`, `~/Library/com.googlecode.iterm2.plist`, `~/.config/borders/bordersrc`, and `~/.config/vagrant-templates/Vagrantfile`. Before clobbering, the previous file is moved to `~/.dotfiles-backup/<UTC-timestamp>/<rel-path>/` — so a misclick on the y/N prompt is recoverable. The new files are symlinked to the files in the repository, so edits to the originals are reflected immediately.
 
 You can also run `bash setup.sh --link-only` to refresh symlinks without reinstalling packages. Both setup paths end by running `bin/doctor.sh`, which reports a green health summary (or tells you exactly what's still broken).
 
