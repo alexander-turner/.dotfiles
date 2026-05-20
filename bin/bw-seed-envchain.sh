@@ -38,7 +38,7 @@ bw_require_cmds bw jq envchain "$(secret_store_required_cmd)" awk || exit 1
 bw_require_logged_in || exit 1
 bw_ensure_session || exit 1
 
-bw sync --session "$BW_SESSION" >/dev/null 2>&1 || true
+bw sync >/dev/null 2>&1 || true
 
 # shellcheck disable=SC2119  # no args = lookup-only mode
 folder_id=$(bw_envchain_folder_id) || exit 0 # nothing to seed yet
@@ -59,7 +59,7 @@ seed_one() {
         log "  skip   $name (not in envchain/<ns>/<VAR> format)"
         return 0
     fi
-    pw=$(bw get item --session "$BW_SESSION" "$id" 2>/dev/null |
+    pw=$(bw get item "$id" 2>/dev/null |
         jq -r '.login.password // empty')
     if [ -z "$pw" ]; then
         err "  FAIL   $ns/$var (empty password or fetch error)"
@@ -73,7 +73,7 @@ seed_one() {
     unset pw
 }
 
-items_json=$(bw list items --folderid "$folder_id" --session "$BW_SESSION")
+items_json=$(bw list items --folderid "$folder_id")
 count=$(printf '%s' "$items_json" | jq 'length')
 log "Seeding $count items from Bitwarden folder envchain → envchain..."
 
