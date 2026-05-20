@@ -221,6 +221,26 @@ check_python() {
     fi
 }
 
+# Secrets — layer 2 of the gate. bin/pre-push sets GITLEAKS_LOG_OPTS to the
+# range of commits being pushed so local pushes scan only what's new; CI
+# leaves the env unset and gets a full-history scan. Same .gitleaks.toml
+# in both paths.
+check_gitleaks() {
+    require_or_skip gitleaks "Gitleaks" || return 0
+    echo -n "Gitleaks: "
+    local extra=()
+    if [[ -n "${GITLEAKS_LOG_OPTS:-}" ]]; then
+        extra=(--log-opts="$GITLEAKS_LOG_OPTS")
+    fi
+    if gitleaks detect --no-banner --redact --config=.gitleaks.toml "${extra[@]}" >/dev/null 2>&1; then
+        echo -e "${GREEN}passed${NC}"
+    else
+        echo -e "${RED}failed${NC}"
+        echo "  Re-run for details: gitleaks detect --no-banner --redact --config=.gitleaks.toml ${extra[*]:-}" >&2
+        return 1
+    fi
+}
+
 # Run all checks
 echo "Running lint checks..."
 check_shfmt || FAILED=1
@@ -231,6 +251,7 @@ check_yaml || FAILED=1
 check_toml || FAILED=1
 check_json || FAILED=1
 check_python || FAILED=1
+check_gitleaks || FAILED=1
 
 if [ $FAILED -ne 0 ]; then
     echo -e "\n${RED}Lint checks failed.${NC}"

@@ -103,6 +103,12 @@ Two layers, both encrypted, complementary roles:
 
 Each secret is stored as a Bitwarden Login item named `envchain/<namespace>/<VAR>` inside a folder named `envchain`. The wrappers in `apps/fish/config.fish` call `envchain <namespace> -- <command>`, exactly as before.
 
+### Defense against accidental leaks
+
+Three-layer `gitleaks` gate, all reading the same `.gitleaks.toml`:
+pre-commit (staged diff), pre-push (only commits the push adds), CI
+(full history). If a real hit lands, **rotate first**, then rewrite.
+
 ### One-time setup
 
 Get a Bitwarden personal API key from web vault → Settings → Security → Keys → "View API Key", then:

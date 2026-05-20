@@ -16,6 +16,7 @@ brew "pnpm"
 brew "zoxide"
 brew "shellcheck"
 brew "fish-lsp"
+brew "gitleaks"   # pre-commit + pre-push secrets scan; CI runs it too
 
 # Modern Unix toolkit
 brew "fzf"
