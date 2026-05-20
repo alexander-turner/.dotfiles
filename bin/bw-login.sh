@@ -32,7 +32,7 @@ DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
 # the secret_set / secret_get / secret_store_required_cmd helpers used below.
 source "$DOTFILES_DIR/bin/lib/bw-common.sh"
 
-bw_require_cmds bw "$(secret_store_required_cmd)" || exit 1
+bw_require_cmds "$BW_CMD" "$(secret_store_required_cmd)" || exit 1
 
 # Prompt for a value into the named variable; empty input is an explicit
 # skip signal. If $3 == "hidden", echo is suppressed.
@@ -73,7 +73,7 @@ api_login() {
     secret_set bw-api-credentials "$CLIENT_ID:$CLIENT_SECRET"
 
     BW_CLIENTID="$CLIENT_ID" BW_CLIENTSECRET="$CLIENT_SECRET" \
-        bw login --apikey >/dev/null
+        "$BW_CMD" login --apikey >/dev/null
 }
 
 cache_master_and_seed() {
@@ -95,7 +95,7 @@ cache_master_and_seed() {
     chmod 600 "$pwfile"
     printf '%s\n' "$MASTER" >"$pwfile"
     unset MASTER
-    BW_SESSION=$(bw unlock --raw --passwordfile "$pwfile" 2>/dev/null)
+    BW_SESSION=$("$BW_CMD" unlock --raw --passwordfile "$pwfile" 2>/dev/null)
     local rc=$?
     rm -f "$pwfile"
     if [ "$rc" -ne 0 ] || [ -z "$BW_SESSION" ]; then

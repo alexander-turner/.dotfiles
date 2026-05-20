@@ -159,11 +159,18 @@ fi
 # ── Bitwarden / envchain ────────────────────────────────────────────────────
 section "Secrets"
 
-if command -v bw >/dev/null 2>&1; then
-    if bw status --raw 2>/dev/null | grep -qE '"status":"(locked|unlocked)"'; then
-        pass "bw is logged in"
+# Mirror bin/lib/bw-common.sh's BW_CMD resolution so we check the same
+# binary the scripts actually invoke.
+bw_cmd="${BW_CMD:-$(command -v bw-node 2>/dev/null || command -v bw 2>/dev/null || true)}"
+if [ -n "$bw_cmd" ] && command -v "$bw_cmd" >/dev/null 2>&1; then
+    if "$bw_cmd" status --raw 2>/dev/null | grep -qE '"status":"(locked|unlocked)"'; then
+        pass "bw is logged in ($bw_cmd)"
     else
         fail "bw login" "not logged in (run: bash bin/bw-login.sh)"
+    fi
+    # Warn if the scripts will use Rust bw — known-flaky for scripting.
+    if [ "$(basename "$bw_cmd")" = "bw" ] && ! command -v bw-node >/dev/null 2>&1; then
+        skip "bw-node" "Node bw not found; scripts will use $bw_cmd which may misbehave on Rust bw"
     fi
 else
     skip "bw" "bitwarden-cli not installed"

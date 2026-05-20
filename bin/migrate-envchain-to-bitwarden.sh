@@ -15,18 +15,18 @@ DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
 # secret_store_required_cmd used below.
 source "$DOTFILES_DIR/bin/lib/bw-common.sh"
 
-bw_require_cmds bw jq envchain "$(secret_store_required_cmd)" || exit 1
+bw_require_cmds "$BW_CMD" jq envchain "$(secret_store_required_cmd)" || exit 1
 bw_require_logged_in || exit 1
 bw_ensure_session || exit 1
 
-bw sync --session "$BW_SESSION" >/dev/null 2>&1 || true
+"$BW_CMD" sync --session "$BW_SESSION" >/dev/null 2>&1 || true
 folder_id=$(bw_envchain_folder_id --create)
 
 # Pre-compute the set of existing item names so we can skip in O(1) and
 # without re-fetching the listing per item.
 existing_names_file=$(mktemp)
 trap 'rm -f "$existing_names_file"' EXIT
-bw list items --folderid "$folder_id" --session "$BW_SESSION" |
+"$BW_CMD" list items --folderid "$folder_id" --session "$BW_SESSION" |
     jq -r '.[].name' >"$existing_names_file"
 
 # migrate_var: push one envchain (NS, VAR) into the vault. Returns 0 on
@@ -51,11 +51,11 @@ migrate_var() {
     # shell across loop iterations. jq reads env.SECRET from its own env.
     (
         export SECRET="$value"
-        bw get template item |
+        "$BW_CMD" get template item |
             jq --arg n "$item_name" --arg fid "$folder_id" \
                 '.name=$n | .folderId=$fid | .login={"username":null,"password":env.SECRET,"totp":null,"uris":[]} | .notes=null' |
-            bw encode |
-            bw create item --session "$BW_SESSION" >/dev/null
+            "$BW_CMD" encode |
+            "$BW_CMD" create item --session "$BW_SESSION" >/dev/null
     )
     unset value
     echo "  ok     $item_name"
@@ -74,6 +74,6 @@ for ns in $(envchain --list); do
     done < <(envchain --list "$ns")
 done
 
-bw sync --session "$BW_SESSION" >/dev/null
+"$BW_CMD" sync --session "$BW_SESSION" >/dev/null
 echo "Migration complete. Verify with:"
 echo "  bw list items --folderid $folder_id | jq -r '.[].name'"
