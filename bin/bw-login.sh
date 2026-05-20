@@ -40,12 +40,17 @@ prompt_skippable() {
     local prompt="$1" varname="$2" hidden="${3:-}" value
     printf '%s (empty to skip): ' "$prompt" >&2
     if [ "$hidden" = "hidden" ]; then
+        # Restore echo on Ctrl-C, SIGTERM, or unexpected exit (e.g. EOF with set -e).
+        trap 'stty echo 2>/dev/null; exit 130' INT
+        trap 'stty echo 2>/dev/null; exit 143' TERM
+        trap 'stty echo 2>/dev/null' EXIT
         stty -echo
-        IFS= read -r value
+        IFS= read -r value || true # allow EOF without triggering set -e
         stty echo
+        trap - INT TERM EXIT
         printf '\n' >&2
     else
-        IFS= read -r value
+        IFS= read -r value || true
     fi
     printf -v "$varname" '%s' "$value"
 }
@@ -59,8 +64,11 @@ api_login() {
         exit 0
     fi
     prompt_skippable "Bitwarden API client_secret" CLIENT_SECRET hidden
-    [ -n "${CLIENT_SECRET:-}" ] \
-        || { echo "client_secret required when client_id is set." >&2; exit 1; }
+    [ -n "${CLIENT_SECRET:-}" ] ||
+        {
+            echo "client_secret required when client_id is set." >&2
+            exit 1
+        }
 
     secret_set bw-api-credentials "$CLIENT_ID:$CLIENT_SECRET"
 
@@ -81,7 +89,11 @@ cache_master_and_seed() {
 
     # Pass via --passwordenv (scoped to the bw subprocess) — bw on newer
     # Node versions has an inquirer bug that crashes on stdin pipes.
-    BW_SESSION=$(BW_PASSWORD="$MASTER" bw unlock --raw --passwordenv BW_PASSWORD)
+    BW_SESSION=$(BW_PASSWORD="$MASTER" bw unlock --raw --passwordenv BW_PASSWORD 2>/dev/null) || {
+        echo "bw unlock: master password rejected. Re-run bin/bw-login.sh." >&2
+        unset MASTER
+        return 1
+    }
     unset MASTER
     export BW_SESSION
 

@@ -23,8 +23,11 @@ source "$DOTFILES_DIR/bin/lib/bw-common.sh"
 QUIET=0
 for arg in "$@"; do
     case "$arg" in
-        --quiet) QUIET=1 ;;
-        -h|--help) sed -n 's/^# \{0,1\}//p' "$0" | head -n 14; exit 0 ;;
+    --quiet) QUIET=1 ;;
+    -h | --help)
+        sed -n 's/^# \{0,1\}//p' "$0" | head -n 14
+        exit 0
+        ;;
     esac
 done
 
@@ -32,12 +35,13 @@ log() { [ "$QUIET" -eq 1 ] || echo "$@"; }
 err() { echo "$@" >&2; }
 
 bw_require_cmds bw jq envchain "$(secret_store_required_cmd)" awk || exit 1
-bw_require_logged_in                          || exit 1
-bw_ensure_session                             || exit 1
+bw_require_logged_in || exit 1
+bw_ensure_session || exit 1
 
 bw sync --session "$BW_SESSION" >/dev/null 2>&1 || true
 
-folder_id=$(bw_envchain_folder_id) || exit 0  # nothing to seed yet
+# shellcheck disable=SC2119  # no args = lookup-only mode
+folder_id=$(bw_envchain_folder_id) || exit 0 # nothing to seed yet
 
 # seed_one: parse `envchain/<ns>/<VAR>`, fetch the password, pipe it into
 # `envchain --set`. Skips items not matching the naming scheme.
@@ -55,8 +59,8 @@ seed_one() {
         log "  skip   $name (not in envchain/<ns>/<VAR> format)"
         return 0
     fi
-    pw=$(bw get item --session "$BW_SESSION" "$id" 2>/dev/null \
-            | jq -r '.login.password // empty')
+    pw=$(bw get item --session "$BW_SESSION" "$id" 2>/dev/null |
+        jq -r '.login.password // empty')
     if [ -z "$pw" ]; then
         err "  FAIL   $ns/$var (empty password or fetch error)"
         return 0
@@ -66,7 +70,7 @@ seed_one() {
     else
         err "  FAIL   $ns/$var (envchain write failed)"
     fi
-    pw=
+    unset pw
 }
 
 items_json=$(bw list items --folderid "$folder_id" --session "$BW_SESSION")

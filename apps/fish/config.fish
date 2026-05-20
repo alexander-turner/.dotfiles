@@ -1,7 +1,7 @@
 #!/usr/bin/env fish
 
 if set -q ANTIGRAVITY_AGENT
-  exec bash -c "$argv"
+    exec bash -c "$argv"
 end
 
 # Kill detached tmux sessions with auto-numbered names. Run before reboot to
@@ -11,12 +11,21 @@ function tmux-prune --description 'Kill detached, auto-numbered tmux sessions'
     set -l killed 0
     for line in (tmux list-sessions -F '#{session_name} #{session_attached}' 2>/dev/null)
         set -l parts (string split ' ' -- $line)
-        if test "$parts[2]" = "0"; and string match -qr '^[0-9]+$' -- $parts[1]
+        if test "$parts[2]" = 0; and string match -qr '^[0-9]+$' -- $parts[1]
             tmux kill-session -t $parts[1]
             set killed (math $killed + 1)
         end
     end
     echo "Pruned $killed detached auto-numbered session(s)."
+end
+
+# Put homebrew on PATH before anything that needs it (e.g. the tmux auto-launch
+# below). Cold-start login fish from `/usr/bin/login` only has the path_helper
+# defaults on PATH, which don't include /opt/homebrew/bin.
+if test (uname) = Darwin; and test -x /opt/homebrew/bin/brew
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+else if test -d /home/linuxbrew/.linuxbrew
+    fish_add_path /home/linuxbrew/.linuxbrew/bin /home/linuxbrew/.linuxbrew/sbin
 end
 
 # Auto-launch tmux if not already inside a tmux session.
@@ -33,6 +42,8 @@ end
 
 # No default greeting
 set fish_greeting ''
+
+set -gx DOTFILES_DIR "$HOME/.dotfiles"
 
 # These elements don't scale with font size
 set --universal tide_right_prompt_prefix ''
@@ -65,6 +76,11 @@ if command -q zoxide
     zoxide init fish --cmd j | source
 end
 
+# mise: per-project tool versions (honors .nvmrc / .tool-versions / etc.).
+if command -q mise
+    mise activate fish | source
+end
+
 if $IS_MAC
     if command -q AeroSpace
         # Custom goodness for my workflow https://nikitabobko.github.io/AeroSpace/goodness
@@ -92,14 +108,22 @@ function crontab
 end
 
 function ls
-    if command -q gls
+    # eza is a drop-in for the most common ls flags (-l, -a, -A, -F).
+    # Falls back to gls (coreutils) on macOS / bsd ls otherwise.
+    if command -q eza
+        eza --color=always --git --icons=auto $argv
+    else if command -q gls
         gls --color="always" --ignore-backups --hide="*.bak" $argv
     else if $IS_MAC
-        command ls $argv
+        command ls -G $argv
     else
         command ls --color="always" --ignore-backups --hide="*.bak" $argv
     end
 end
+
+abbr -a ll 'ls -lF'
+abbr -a la 'ls -laF'
+abbr -a lt 'ls --tree --level=2'
 
 set USE_MOSH false
 function ssh
@@ -120,7 +144,7 @@ if $IS_MAC
 end
 
 function flash
-    sh ~/.dotfiles/bin/keyboard_flash.sh
+    sh "$DOTFILES_DIR/bin/keyboard_flash.sh"
 end
 
 function pytest
@@ -138,12 +162,12 @@ function yank
         set -l tmp (mktemp)
         cat >$tmp
         set -l data (base64 < $tmp | tr -d '\n')
-        rm $tmp &>/dev/null
+        command rm $tmp &>/dev/null
         printf '\033]52;c;%s\a' $data
     else if $IS_MAC
         pbcopy
     else
-        clip
+        xclip -selection clipboard
     end
 end
 
@@ -195,7 +219,7 @@ function push
 
     # Find git root directory
     set -l git_root (git rev-parse --show-toplevel 2>/dev/null)
-    if test $status -eq 0
+    if test $push_status -eq 0; and test -n "$git_root"
         set -l post_push_hook "$git_root/.git/hooks/post-push"
 
         # Check if post-push hook exists and is executable
@@ -225,26 +249,48 @@ function rm
     trash-put $argv
 end
 
+# Load iTerm2 integration before the grep/cat shadows so its internal
+# `grep -cvE` call hits the real grep rather than rg.
+if test -e $HOME/.iterm2_shell_integration.fish
+    if set -q TMUX
+        source $HOME/.iterm2_shell_integration.fish
+    end
+end
+
+# Interactive shadows: prefer ripgrep / bat when present. Bash scripts and
+# subshells still get the real binaries (fish functions don't propagate).
+# Escape hatch when a pasted invocation needs the real grep/cat: prefix
+# with `command` (`command grep -P ...`) or backslash (`\grep`).
 function grep
-    command grep $argv --exclude="*~" --color=auto
+    if command -q rg
+        rg $argv
+    else
+        command grep $argv --exclude="*~" --color=auto
+    end
+end
+
+function cat
+    if command -q bat
+        bat $argv
+    else
+        command cat $argv
+    end
 end
 
 abbr pytest_diff 'pytest -vv --tb=short'
 
-function grp # Recursively grep
-    grep $argv ** 2>/dev/null
+function grp --description 'Recursively grep from current directory'
+    if command -q rg
+        rg $argv
+    else
+        # grep -r with no path defaults to '.', matching rg's behaviour
+        command grep -r --exclude="*~" --color=auto $argv
+    end
 end
 
 # Printing helpers 
 function echo_color
     echo (set_color $argv[1])$argv[2](set_color normal)
-end
-
-# Path homebrew
-if $IS_MAC
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-else
-    fish_add_path /home/linuxbrew/.linuxbrew/bin /home/linuxbrew/.linuxbrew/sbin
 end
 
 # Run extra commands
@@ -260,10 +306,10 @@ end
 abbr -a fxtra editfishextras
 
 # Only load iTerm2 integration when already inside tmux, not during tmux startup
-if test -e {$HOME}/.iterm2_shell_integration.fish
+if test -e $HOME/.iterm2_shell_integration.fish
     # Only load if TMUX variable is already set (we're inside a running tmux session)
     if set -q TMUX
-        source {$HOME}/.iterm2_shell_integration.fish
+        source $HOME/.iterm2_shell_integration.fish
     end
 end
 
@@ -277,14 +323,6 @@ set -xg NODE_NO_WARNINGS 1
 
 function ai_secrets_wrap
     envchain ai $argv
-end
-
-function cloudflare_secrets_wrap
-    envchain cloudflare $argv
-end
-
-function services_secrets_wrap
-    envchain services $argv
 end
 
 # envchain syntax is `envchain NAMESPACE CMD [ARGS...]` — there's no `--`
@@ -305,6 +343,15 @@ function _resolve_bin
         return 0
     end
     return 1
+end
+
+# Charm `mods`: pipe shell output through an LLM. Routes exclusively
+# through Venice (E2EE inference) per apps/mods/mods.yml. envchain ai
+# populates VENICE_INFERENCE_KEY from the macOS Keychain.
+#   git diff | mods 'review for issues'
+#   tail -200 build.log | mods -m coder 'what broke?'
+function mods
+    envchain ai command mods $argv
 end
 
 function npm
@@ -337,7 +384,7 @@ end
 # Aider via Redpill: envchain populates REDPILL_API_KEY into the child
 # process; the shim script remaps it onto OPENAI_API_KEY and execs aider.
 function aider_redpill
-    envchain ai $HOME/.dotfiles/bin/aider-redpill-shim.sh (type -p aider) --edit-format editor-diff $argv
+    envchain ai "$DOTFILES_DIR/bin/aider-redpill-shim.sh" (type -p aider) --edit-format editor-diff $argv
 end
 
 # ── Bitwarden sync helpers ────────────────────────────────────────────────
@@ -346,11 +393,11 @@ end
 # Auto-sync on shell startup is throttled by ~/.cache/bw-envchain-sync.stamp.
 
 function bwseed --description 'Refresh envchain from Bitwarden vault'
-    bash $HOME/.dotfiles/bin/bw-seed-envchain.sh $argv
+    bash "$DOTFILES_DIR/bin/bw-seed-envchain.sh" $argv
 end
 
 function bwadd --description 'Add a new secret to Bitwarden + envchain'
-    bash $HOME/.dotfiles/bin/bw-add-secret.sh $argv
+    bash "$DOTFILES_DIR/bin/bw-add-secret.sh" $argv
 end
 
 function _bw_envchain_autosync
@@ -365,7 +412,7 @@ function _bw_envchain_autosync
     if test (math (date +%s) - $mtime) -lt $interval
         return 0
     end
-    fish -c "if bash $HOME/.dotfiles/bin/bw-seed-envchain.sh --quiet >/dev/null 2>&1; touch $stamp; end" &
+    fish -c "if bash '$DOTFILES_DIR/bin/bw-seed-envchain.sh' --quiet >/dev/null 2>&1; touch '$stamp'; end" &
     disown
 end
 
@@ -373,7 +420,34 @@ if status is-interactive; and type -q bw
     _bw_envchain_autosync 2>/dev/null
 end
 
-# set -x OLLAMA_ORIGINS *
+# Tailscale's Mullvad exit node — choice persists in daemon prefs across reboots.
+function mullvad --description 'Switch Tailscale Mullvad exit node'
+    switch "$argv[1]"
+        case ca
+            tailscale set --exit-node=ca-mtr-wg-001.mullvad.ts.net --exit-node-allow-lan-access=true
+        case jp
+            tailscale set --exit-node=jp-tyo-wg-001.mullvad.ts.net --exit-node-allow-lan-access=true
+        case us
+            tailscale set --exit-node=us-chi-wg-301.mullvad.ts.net --exit-node-allow-lan-access=true
+        case off
+            tailscale set --exit-node=
+        case ls list
+            tailscale exit-node list
+            return
+        case st status
+            tailscale status | head -3
+            return
+        case '*'
+            echo "usage: mullvad [ca|jp|us|off|ls|st]"
+            return 1
+    end
+    tailscale status | head -3
+end
+
+abbr -a mvca 'mullvad ca'
+abbr -a mvjp 'mullvad jp'
+abbr -a mvus 'mullvad us'
+abbr -a mvoff 'mullvad off'
 
 fish_add_path $HOME/go/bin
 

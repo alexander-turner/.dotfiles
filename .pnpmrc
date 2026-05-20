@@ -1,0 +1,4 @@
+# Delay installing any package version until 3 days after publication.
+# Most malicious packages are caught and pulled within hours.
+# (pnpm-only: npm interprets this as `before=<invalid>` and warns.)
+min-release-age=3d

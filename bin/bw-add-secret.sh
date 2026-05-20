@@ -29,8 +29,11 @@ usage() {
 
 update=0
 case "${1:-}" in
-    --update) update=1; shift ;;
-    -h|--help) usage ;;
+--update)
+    update=1
+    shift
+    ;;
+-h | --help) usage ;;
 esac
 
 [ $# -eq 2 ] || usage
@@ -39,8 +42,8 @@ var="$2"
 item_name="envchain/$ns/$var"
 
 bw_require_cmds bw jq envchain "$(secret_store_required_cmd)" || exit 1
-bw_require_logged_in                    || exit 1
-bw_ensure_session                       || exit 1
+bw_require_logged_in || exit 1
+bw_ensure_session || exit 1
 
 bw sync --session "$BW_SESSION" >/dev/null 2>&1 || true
 
@@ -49,14 +52,21 @@ bw sync --session "$BW_SESSION" >/dev/null 2>&1 || true
 read_secret_into_SECRET() {
     if [ -t 0 ]; then
         printf 'Value for %s (hidden): ' "$item_name" >&2
+        trap 'stty echo 2>/dev/null; exit 130' INT
+        trap 'stty echo 2>/dev/null; exit 143' TERM
+        trap 'stty echo 2>/dev/null' EXIT
         stty -echo
-        IFS= read -r SECRET
+        IFS= read -r SECRET || true # allow EOF without triggering set -e
         stty echo
+        trap - INT TERM EXIT
         printf '\n' >&2
     else
-        IFS= read -r SECRET
+        IFS= read -r SECRET || true
     fi
-    [ -n "${SECRET:-}" ] || { echo "Empty value; aborting." >&2; exit 1; }
+    [ -n "${SECRET:-}" ] || {
+        echo "Empty value; aborting." >&2
+        exit 1
+    }
     export SECRET
 }
 
@@ -69,24 +79,28 @@ write_envchain() {
 # Create the vault item (folder envchain, name $item_name, value env.SECRET).
 create_vault_item() {
     local folder_id="$1"
-    bw get template item \
-        | jq --arg n "$item_name" --arg fid "$folder_id" \
-            '.name=$n | .folderId=$fid | .login={"username":null,"password":env.SECRET,"totp":null,"uris":[]} | .notes=null' \
-        | bw encode \
-        | bw create item --session "$BW_SESSION" >/dev/null
+    bw get template item |
+        jq --arg n "$item_name" --arg fid "$folder_id" \
+            '.name=$n | .folderId=$fid | .login={"username":null,"password":env.SECRET,"totp":null,"uris":[]} | .notes=null' |
+        bw encode |
+        bw create item --session "$BW_SESSION" >/dev/null
 }
 
 # Overwrite the password on an existing vault item. The full item JSON is
-# fetched, mutated through jq (with the new password in env.SECRET), and
+# fetched once, mutated through jq (with the new password in env.SECRET), and
 # piped back through `bw edit item`.
 update_vault_item() {
-    local id
-    id=$(bw get item --session "$BW_SESSION" "$item_name" | jq -r '.id')
-    [ -n "$id" ] || { echo "bw: couldn't resolve id for '$item_name'." >&2; return 1; }
-    bw get item --session "$BW_SESSION" "$id" \
-        | jq '.login.password=env.SECRET' \
-        | bw encode \
-        | bw edit item --session "$BW_SESSION" "$id" >/dev/null
+    local item_json id
+    item_json=$(bw get item --session "$BW_SESSION" "$item_name")
+    id=$(printf '%s' "$item_json" | jq -r '.id')
+    [ -n "$id" ] || {
+        echo "bw: couldn't resolve id for '$item_name'." >&2
+        return 1
+    }
+    printf '%s' "$item_json" |
+        jq '.login.password=env.SECRET' |
+        bw encode |
+        bw edit item --session "$BW_SESSION" "$id" >/dev/null
 }
 
 read_secret_into_SECRET

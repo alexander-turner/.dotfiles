@@ -6,9 +6,16 @@ To install:
 git clone https://github.com/alexander-turner/.dotfiles ~/.dotfiles && cd ~/.dotfiles && bash setup.sh
 ```
 
-`setup.sh` will (with warning) **overwrite** your existing `.bashrc`, `.vimrc`, `.gitconfig`, `.tmux.conf`, `.config/nvim`, and `fish` configurations, so back them up first if you want to retain their contents. The new files will be symlinked to the files in the repository, so edits to the originals are reflected immediately.
+`setup.sh` will (with warning) **overwrite** your existing `.bashrc`, `.vimrc`, `.gitconfig`, `.npmrc`, `.tmux.conf`, `.config/nvim`, `.config/fish/config.fish`, `.config/mods/mods.yml`, and any `.aider*` files. Before clobbering, the previous file is moved to `~/.dotfiles-backup/<UTC-timestamp>/<rel-path>/` — so a misclick on the y/N prompt is recoverable. The new files are symlinked to the files in the repository, so edits to the originals are reflected immediately.
 
-You can also run `bash setup.sh --link-only` to refresh symlinks without reinstalling packages.
+You can also run `bash setup.sh --link-only` to refresh symlinks without reinstalling packages. Both setup paths end by running `bin/doctor.sh`, which reports a green health summary (or tells you exactly what's still broken).
+
+To verify health at any time: `bash bin/doctor.sh` (or `--quiet` for failures-only). To reverse the install — removing only symlinks that point into this repo and restoring the most recent backup — run `bash bin/uninstall.sh` (add `--yes` for non-interactive). The dotfiles repo itself is left untouched.
+
+Two CI workflows guard the install:
+
+- `lint.yml` — shellcheck + fish syntax + stylua + yamllint + ruff, plus a `gitleaks` scan of the full git history (auto-fixes the formatters).
+- `idempotency.yml` — runs `setup.sh --link-only` twice on `ubuntu-latest` and `macos-latest`, asserts identical symlink set, no skip/overwrite/backup output on the second pass, and a clean `doctor.sh` symlink section.
 
 Features (configurable by changing `setup.sh`):
 
@@ -16,7 +23,7 @@ Features (configurable by changing `setup.sh`):
    ![fish suggests command completions.](https://fishshell.com/assets/img/screenshots/autosuggestion.webp)
 
 2. Also installs a cool `fish` theme, [`tide`](https://github.com/IlanCosman/tide):
-![Compares tide theme configurations for the fish shell.](https://github.com/IlanCosman/tide/raw/assets/images/header.png)
+   ![Compares tide theme configurations for the fish shell.](https://github.com/IlanCosman/tide/raw/assets/images/header.png)
 
 3. Installs [`zoxide`](https://github.com/ajeetdsouza/zoxide) for quick directory navigation. Once you've been to directory `dir`, just hit `j dir` to go back there.
 4. Installs `neovim` and sets it as default editor. Furthermore, sets up `LazyVim`, which is basically a full-fledged IDE.
@@ -25,17 +32,36 @@ Features (configurable by changing `setup.sh`):
 5. Installs a bunch of nice shortcuts, including `git` aliases (e.g. `git add` -> `ga`).
 6. Overrides `rm` in favor of the reversible `tp` (`trash-put`) command. No more accidentally permanently deleting crucial files!
 7. Installs `tmux` with the `tmux-restore` and `tmux-continuum` plugins. Basically, this means that your `tmux` sessions will be saved and restored automatically. No more losing your work when your computer crashes!
-8. Installs `AutoRaise`, which automatically focuses the window under the cursor (after a delay).
-9. Automatically uses `mosh` instead of `ssh`. `mosh` is a more robust version of `ssh` which can handle network changes and disconnections more gracefully. It generally presents a lower-latency user experience.
-10. Installs `envchain` (OS Keychain at runtime) plus the [Bitwarden CLI](https://bitwarden.com/help/cli/) for cross-machine secret sync. API keys live encrypted in your Bitwarden vault; a background sync at shell startup pulls updates into envchain so wrappers like `npm`, `rclone`, `twine`, and `aider_redpill` stay zero-prompt at runtime.
-11. Configures open source AI-powered development tools:
+8. Installs `mosh` alongside `ssh`. `mosh` is a more robust version of `ssh` that handles network changes and disconnections more gracefully. Set `USE_MOSH=true` in `config.fish` to use it by default.
+9. Installs `envchain` (OS Keychain at runtime) plus the [Bitwarden CLI](https://bitwarden.com/help/cli/) for cross-machine secret sync. API keys live encrypted in your Bitwarden vault; a background sync at shell startup pulls updates into envchain so wrappers like `npm`, `rclone`, `twine`, and `aider_redpill` stay zero-prompt at runtime.
+10. Configures open source AI-powered development tools:
     - Automatic commit message generation,
-    - Local LLM support with Ollama and Open WebUI,
     - Aider for CLI coding,
     - VSCodium with Roo Cline extension for privacy-first AI pair programming (use also with confidential cloud computing, like via [`redpill.ai`](https://redpill.ai)),
     - `claude-code-router` (`ccr`) installed via pnpm and supervised by `launchagents/com.turntrout.ccr.plist`, so the private Claude wrappers route through [Venice](https://venice.ai) without the daemon dying across reboots. Store your Venice API key in Bitwarden as `envchain/ai/VENICE_INFERENCE_KEY` (the standard `envchain/<namespace>/<VAR>` convention) — `bwseed` then pulls it into envchain on every machine.
     - `wut` command to explain shell output.
-13. Sandboxes [Claude Code](https://docs.claude.com/en/docs/claude-code) per-repo: every `claude` invocation auto-launches a container, the OS sandbox denies reads of secret stores, and permission rules block arbitrary shell-out. See [Claude Code security](#claude-code-security).
+    - `mods` (Charm) for piping shell output to an LLM, e.g. `<failing-cmd> 2>&1 | mods 'what broke?'`. Routes through Venice via `apps/mods/mods.yml`.
+11. Modern Unix toolkit installed via `Brewfile`:
+    - `eza` — drop-in `ls` replacement with git-aware listing and tree view; the fish `ls` function prefers it when present.
+    - `ripgrep` (`rg`), `fd`, `bat` — faster grep / find / cat. In interactive fish, `grep` dispatches to `rg` and `cat` to `bat`; bash scripts and subshells still get the real binaries. (`find` is intentionally not shadowed — the argument grammars don't line up.) Use `command grep` or `\grep` to bypass the wrapper.
+    - `fzf` plus the [`PatrickF1/fzf.fish`](https://github.com/PatrickF1/fzf.fish) plugin: Ctrl-R history search, Ctrl-Alt-F file picker, etc., all with `bat` previews.
+    - `git-delta` — paged, syntax-highlighted git diffs, wired up in `.gitconfig`.
+    - `mise` — single tool for Node, Python, Ruby, Go versions; auto-activated in fish via `apps/fish/conf.d/mise.fish`.
+    - `tokei` (LOC), `dust` (`du` with bars), `bottom` (`btm`, htop-alike).
+    - `carapace` — universal completion engine, auto-activated for fish.
+    - `shfmt` — shell formatter, also enforced in CI.
+
+12. AI tooling routed through Venice (E2EE inference):
+    - `mods` (Charm) for piping shell output through an LLM (`git diff | mods 'review for issues'`); configured in `apps/mods/mods.yml`.
+    - `aider`, `claude-code-router`, VSCodium + Roo Cline.
+    - `AGENTS.md` symlinks to `CLAUDE.md` so Cursor/Aider/OpenCode pick up the same project context Claude Code uses.
+    - `.mcp.json` configures the filesystem MCP server scoped to `~/.dotfiles` for Claude Code sessions in this repo.
+    - `.claude/hooks/notify.sh` fires cross-platform desktop notifications when Claude Code needs input.
+
+13. macOS keyboard-driven WM:
+    - `aerospace` for tiling.
+    - `JankyBorders` (`borders`) draws a colored outline around the focused window; config at `apps/borders/bordersrc`, spawned by Aerospace's `after-startup-command`.
+
 14. Most importantly, the `goosesay` command. A variant on the classic `cowsay` (which renders text inside a cow's speech bubble), `goosesay` goosens up your terminal just the right amount. For example:
 
 ```plaintext
@@ -148,4 +174,4 @@ Three layers, all installed by `setup.sh`:
 
 ## Other notes
 
-- To disable parenthesis matching in `nvim`, delete the `mini.pairs` plugin from `~/.local/share/nvim/lazy/LazyVim/lua/azyvim/plugins/coding.lua`.
+- To disable parenthesis matching in `nvim`, delete the `mini.pairs` plugin from `~/.local/share/nvim/lazy/LazyVim/lua/lazyvim/plugins/coding.lua`.

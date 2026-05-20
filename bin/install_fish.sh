@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 command_exists() {
     command -v "$1" >/dev/null 2>&1
@@ -27,30 +28,36 @@ fi
 # Set the correct permissions for the Fish configuration directory
 # Use SUDO_USER when running under sudo so we don't chown everything to root
 REAL_USER="${SUDO_USER:-$USER}"
-# Use sudo if available so we can fix root-owned files from prior sudo runs
-if command_exists sudo; then
-    sudo chown -R "$REAL_USER" "$HOME/.config/fish" 2>/dev/null || true
-else
-    chown -R "$REAL_USER" "$HOME/.config/fish" 2>/dev/null || true
+# Only chown if something inside is owned by another user (avoids a spurious
+# sudo password prompt on every re-run when ownership is already correct).
+if [ -d "$HOME/.config/fish" ] &&
+    find "$HOME/.config/fish" ! -user "$REAL_USER" -print -quit 2>/dev/null | grep -q .; then
+    sudo chown -R "$REAL_USER" "$HOME/.config/fish" || true
 fi
 
 # Set Fish as the default shell (skip if already set)
-FISH_PATH=$(which fish)
+FISH_PATH=$(command -v fish)
 grep -qxF "$FISH_PATH" /etc/shells || echo "$FISH_PATH" | sudo tee -a /etc/shells >/dev/null
 
 # Detect the user's actual login shell from the password DB rather than $SHELL
 # ($SHELL reflects the parent process and can be misleading inside tmux/scripts).
-current_login_shell=""
-if [ "$(uname)" = "Darwin" ] && command_exists dscl; then
-    current_login_shell=$(dscl . -read "/Users/${REAL_USER}" UserShell 2>/dev/null | awk '{print $2}')
-elif command_exists getent; then
+if [ "$(uname)" = "Darwin" ]; then
+    current_login_shell=$(dscl . -read "/Users/${REAL_USER}" UserShell | awk '{print $2}')
+else
     current_login_shell=$(getent passwd "$REAL_USER" | cut -d: -f7)
 fi
 
-if [ -n "$current_login_shell" ] && [ "$current_login_shell" = "$FISH_PATH" ]; then
+if [ "$current_login_shell" = "$FISH_PATH" ]; then
     echo ":: Login shell already set to $FISH_PATH; skipping chsh."
 else
-    chsh -s "$FISH_PATH" || echo ":: chsh failed — set fish as login shell manually with 'chsh -s $FISH_PATH'." >&2
+    # When running as root (via sudo), pass $REAL_USER so we change the right
+    # user's shell. As a non-root user, passing a username argument causes PAM
+    # to reject the call on many Linux distros, so omit it in that case.
+    if [ "$(id -u)" -eq 0 ]; then
+        chsh -s "$FISH_PATH" "$REAL_USER" || echo ":: chsh failed — set fish as login shell manually with 'chsh -s $FISH_PATH'." >&2
+    else
+        chsh -s "$FISH_PATH" || echo ":: chsh failed — set fish as login shell manually with 'chsh -s $FISH_PATH'." >&2
+    fi
 fi
 
 # Skip fisher/tide install if tide is already present
@@ -90,7 +97,7 @@ if [ "$tide_already_configured" = "1" ]; then
     echo ":: tide already configured; leaving existing settings untouched."
 else
     # See if user wants preset settings
-    read -rp "Accept preset tide settings? (Y/n) " answer
+    read -rp "Accept preset tide settings? (Y/n) " answer || true
 
     if [ -z "$answer" ] || echo "$answer" | grep -iq "^y"; then
         # Copy preset config files into existing fish config directory
@@ -103,10 +110,16 @@ fi
 
 # Always symlink key config files so changes in dotfiles repo are reflected.
 # Done after the copy so cp doesn't try to write through symlinks back to the source.
+# ln -sf is used directly (not safe_link) because cp -rf above just populated these
+# as plain files copied verbatim from the repo — prompting to overwrite would be wrong
+# here, and there is no user data at risk.
 ln -sf "$DOTFILES_DIR"/apps/fish/config.fish "$FISH_CONFIG_DIR/config.fish"
 ln -sf "$DOTFILES_DIR"/apps/fish/functions/fish_prompt.fish "$FISH_CONFIG_DIR/functions/fish_prompt.fish"
 ln -sf "$DOTFILES_DIR"/apps/fish/functions/claude.fish "$FISH_CONFIG_DIR/functions/claude.fish"
 # Clear any stale dangling symlink left by older versions of this script.
-[ -L "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish" ] && [ ! -e "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish" ] && rm -f "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish"
+if [ -L "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish" ] &&
+    [ ! -e "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish" ]; then
+    rm -f "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish"
+fi
 
 fish "$DOTFILES_DIR"/bin/install_fish_plugins.fish >/dev/null

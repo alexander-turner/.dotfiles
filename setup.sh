@@ -19,14 +19,17 @@ DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # shellcheck source=bin/lib/safe_link.sh disable=SC1091
 source "$DOTFILES_DIR/bin/lib/safe_link.sh"
+# shellcheck source=bin/lib/symlinks.sh disable=SC1091
+source "$DOTFILES_DIR/bin/lib/symlinks.sh"
 
 # ── Symlinks (always run) ────────────────────────────────────────────────────
 status_msg "Linking dotfiles..."
-safe_link "$DOTFILES_DIR/.bashrc" "$HOME/.bashrc"
-safe_link "$DOTFILES_DIR/.vimrc" "$HOME/.vimrc"
-safe_link "$DOTFILES_DIR/.gitconfig" "$HOME/.gitconfig"
-safe_link "$DOTFILES_DIR/.npmrc" "$HOME/.npmrc"
-safe_link "$DOTFILES_DIR/.tmux.conf" "$HOME/.tmux.conf"
+# Iterate the shared list. safe_link handles directory targets via mv-to-backup,
+# so nvim/borders/aerospace all flow through this one path with no bespoke branches.
+while IFS='|' read -r target source _label; do
+    mkdir -p "$(dirname "$target")"
+    safe_link "$source" "$target"
+done < <(managed_symlinks)
 
 mkdir -p "$HOME/.config/fish"
 safe_link "$DOTFILES_DIR/apps/fish/config.fish" "$HOME/.config/fish/config.fish"
@@ -77,7 +80,8 @@ fi
 mkdir -p "$HOME/.config/vagrant-templates"
 safe_link "$DOTFILES_DIR/ai/Vagrantfile" "$HOME/.config/vagrant-templates/Vagrantfile"
 
-# Git hooks for this dotfiles repo (relative symlink so the repo is portable)
+# Git hooks for this dotfiles repo (relative symlink — target is inside the
+# repo, not under $HOME, so it stays bespoke).
 safe_link "../bin/pre-push" "$DOTFILES_DIR/.hooks/pre-push"
 
 touch "$HOME"/.extras.{bash,fish}
@@ -86,6 +90,7 @@ touch "$HOME"/.vimextras
 
 if [ "$LINK_ONLY" = true ]; then
     status_msg "Symlinks refreshed."
+    bash "$DOTFILES_DIR/bin/doctor.sh" --quiet || true
     exit 0
 fi
 
@@ -109,6 +114,7 @@ if [ "$(uname)" = "Darwin" ]; then
 else
     if [ -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
         eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        # shellcheck disable=SC2016 # literal string, expanded at shell startup
         BREW_EVAL_LINE='eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"'
         if ! grep -qxF "$BREW_EVAL_LINE" "$HOME/.profile" 2>/dev/null; then
             echo "$BREW_EVAL_LINE" >>"$HOME/.profile"
@@ -120,9 +126,20 @@ brew_quiet_install() {
     brew install --quiet "$@"
 }
 
-# Install all brew packages from Brewfile
+# Install all brew packages from Brewfile. Retry on transient failure —
+# GitHub's HTTP/2 frontend occasionally drops `git clone` mid-tap, and a
+# second attempt almost always succeeds. doctor.sh at the end of setup
+# catches anything that's still missing after 3 tries.
 status_msg "Installing from Brewfile..."
-brew bundle --quiet --file="$DOTFILES_DIR/Brewfile" || true
+for attempt in 1 2 3; do
+    if brew bundle --quiet --file="$DOTFILES_DIR/Brewfile"; then
+        break
+    fi
+    if [ "$attempt" -lt 3 ]; then
+        status_msg "brew bundle failed (attempt $attempt/3); retrying in $((attempt * 10))s..."
+        sleep $((attempt * 10))
+    fi
+done
 
 # Bitwarden CLI bootstrap. Bitwarden is the cross-machine source of truth
 # for secrets; envchain is the local runtime cache. We use the personal
@@ -168,6 +185,10 @@ fi
 if [ "$(uname)" = "Darwin" ]; then
     status_msg "Configuring macOS packages..."
 
+    # Escape $USER for literal sed replacement (guards against `/` and `&` in
+    # unusual usernames). Used for both the sudoers and Tailscale templates.
+    ESCAPED_USER="$(printf '%s' "$USER" | sed 's/[\/&]/\\&/g')"
+
     # Aerospace window manager setup (requires custom tap)
     brew_quiet_install --cask nikitabobko/tap/aerospace
 
@@ -176,9 +197,9 @@ if [ "$(uname)" = "Darwin" ]; then
     # so the background launchd job can run sudo without prompting.
     SUDOERS_TEMPLATE="$DOTFILES_DIR/etc/sudoers.d/brew-autoupdate.template"
     SUDOERS_DEST="/etc/sudoers.d/brew-autoupdate"
-    if [ -f "$SUDOERS_TEMPLATE" ]; then
+    if [ -f "$SUDOERS_TEMPLATE" ] && [ ! -f "$SUDOERS_DEST" ]; then
         SUDOERS_RENDERED="$(mktemp)"
-        sed "s/__USERNAME__/$USER/g" "$SUDOERS_TEMPLATE" >"$SUDOERS_RENDERED"
+        sed "s/__USERNAME__/$ESCAPED_USER/g" "$SUDOERS_TEMPLATE" >"$SUDOERS_RENDERED"
         if sudo visudo -cf "$SUDOERS_RENDERED" >/dev/null; then
             sudo install -o root -g wheel -m 0440 "$SUDOERS_RENDERED" "$SUDOERS_DEST"
         else
@@ -192,11 +213,17 @@ if [ "$(uname)" = "Darwin" ]; then
     # OrbStack: lightweight Docker alternative for macOS
     brew_quiet_install --cask orbstack
 
-    # Tailscale VPN daemon
+    # Tailscale VPN daemon — only touch the system plist when missing or
+    # out of date, otherwise re-runs prompt for sudo every time.
     TAILSCALE_PLIST_DEST="/Library/LaunchDaemons/com.$USER.tailscaled.plist"
-    sed "s/__USERNAME__/$USER/g" "$DOTFILES_DIR/launchagents/com.tailscaled.plist.template" |
-        sudo tee "$TAILSCALE_PLIST_DEST" >/dev/null
-    sudo launchctl load "$TAILSCALE_PLIST_DEST" 2>/dev/null || true
+    TAILSCALE_PLIST_RENDERED="$(mktemp)"
+    sed "s/__USERNAME__/$ESCAPED_USER/g" "$DOTFILES_DIR/launchagents/com.tailscaled.plist.template" \
+        >"$TAILSCALE_PLIST_RENDERED"
+    if [ ! -f "$TAILSCALE_PLIST_DEST" ] || ! cmp -s "$TAILSCALE_PLIST_RENDERED" "$TAILSCALE_PLIST_DEST"; then
+        sudo install -o root -g wheel -m 0644 "$TAILSCALE_PLIST_RENDERED" "$TAILSCALE_PLIST_DEST"
+        sudo launchctl bootstrap system "$TAILSCALE_PLIST_DEST" 2>/dev/null || true
+    fi
+    rm -f "$TAILSCALE_PLIST_RENDERED"
 
     # claude-code-router (ccr): backs claude-{fast,private,think} wrappers.
     # Supervised by launchd so it's running before any wrapper invocation
@@ -204,18 +231,18 @@ if [ "$(uname)" = "Darwin" ]; then
     CCR_PLIST_DEST="$HOME/Library/LaunchAgents/com.turntrout.ccr.plist"
     mkdir -p "$HOME/Library/LaunchAgents" "$HOME/Library/Logs/com.turntrout.ccr"
     safe_link "$DOTFILES_DIR/launchagents/com.turntrout.ccr.plist" "$CCR_PLIST_DEST"
-    launchctl unload "$CCR_PLIST_DEST" 2>/dev/null || true
-    launchctl load "$CCR_PLIST_DEST" 2>/dev/null || true
+    launchctl bootout "gui/$(id -u)" "$CCR_PLIST_DEST" 2>/dev/null || true
+    launchctl bootstrap "gui/$(id -u)" "$CCR_PLIST_DEST" 2>/dev/null || true
 
     # Install wally-cli for keyboard flashing
-    if command_exists go; then
+    if ! command_exists wally-cli; then
         go install github.com/zsa/wally-cli@latest >/dev/null
-    else
-        status_msg "WARN: Go not found, skipping wally-cli install. Install Go first."
     fi
 
     # iTerm2 shell integration
-    curl -fsSL https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash >/dev/null
+    if [ ! -f "$HOME/.iterm2_shell_integration.bash" ]; then
+        curl -fsSL https://iterm2.com/shell_integration/install_shell_integration_and_utilities.sh | bash >/dev/null
+    fi
 
 else # Assume linux
     status_msg "Installing Linux packages..."
@@ -227,21 +254,24 @@ else # Assume linux
 fi
 
 # Install CLI tools via uv (not in Brewfile -- they're Python packages)
-uv tool install --quiet trash-cli
+if ! command_exists trash-put; then
+    uv tool install --quiet trash-cli
+fi
 
-# Clear trash which is over 30 days old, daily
+# Clear trash which is over 30 days old, monthly
 if command_exists crontab && command_exists trash-empty; then
-    if ! crontab -l 2>/dev/null | grep -q "trash-empty"; then
+    CRON_ENTRY="@monthly $(command -v trash-empty) 30"
+    if [ "$(crontab -l 2>/dev/null | grep "trash-empty" || true)" != "$CRON_ENTRY" ]; then
         (
-            crontab -l 2>/dev/null
-            echo "@daily $(which trash-empty) 30"
+            crontab -l 2>/dev/null | grep -v "trash-empty"
+            echo "$CRON_ENTRY"
         ) | crontab -
     fi
 fi
 
 status_msg "Setting up tmux..."
 # Tmux plugin manager setup (must come after tmux is installed)
-TPM_DIR=~/.tmux/plugins/tpm
+TPM_DIR="$HOME/.tmux/plugins/tpm"
 if [ ! -d "$TPM_DIR/.git" ]; then
     rm -rf "$TPM_DIR"
     git clone --quiet https://github.com/tmux-plugins/tpm "$TPM_DIR" >/dev/null
@@ -250,7 +280,20 @@ tmux source ~/.tmux.conf >/dev/null 2>&1 || true
 ~/.tmux/plugins/tpm/bin/install_plugins >/dev/null
 
 if command_exists pnpm; then
-    pnpm setup >/dev/null
+    if [ "$(uname)" = "Darwin" ]; then
+        export PNPM_HOME="${PNPM_HOME:-$HOME/Library/pnpm}"
+    else
+        export PNPM_HOME="${PNPM_HOME:-$HOME/.local/share/pnpm}"
+    fi
+    mkdir -p "$PNPM_HOME/bin"
+    case ":$PATH:" in
+    *":$PNPM_HOME/bin:"*) ;;
+    *) export PATH="$PNPM_HOME/bin:$PATH" ;;
+    esac
+    case ":$PATH:" in
+    *":$PNPM_HOME:"*) ;;
+    *) export PATH="$PNPM_HOME:$PATH" ;;
+    esac
     pnpm install -g prettier
 fi
 
@@ -259,10 +302,11 @@ fi
 # Installed via npm (not pnpm) because npm is bundled with Node and doesn't
 # need the pnpm-setup PATH dance — keeps the bootstrap reliable on fresh boxes.
 if command_exists npm; then
-    npm install -g @devcontainers/cli >/dev/null 2>&1 || \
+    npm install -g @devcontainers/cli >/dev/null 2>&1 ||
         status_msg "WARN: 'npm i -g @devcontainers/cli' failed. The claude wrapper will fall back to running on the host."
 fi
-if [ "$(uname)" != "Darwin" ]; then
+
+if [ "$(uname)" != "Darwin" ] && ! command_exists xmllint; then
     sudo apt-get install -y libxml2-utils
 fi
 
@@ -271,7 +315,5 @@ for directory in ~/.local/{share,state}/nvim ~/.cache/nvim; do
     cp -r "$directory"{,.bak} >/dev/null 2>&1 || true
 done
 
-status_msg "Setting up AI integrations..."
-fish "$DOTFILES_DIR/bin/setup_llm.fish"
-
-status_msg "Setup complete."
+status_msg "Setup complete. Running doctor.sh..."
+bash "$DOTFILES_DIR/bin/doctor.sh" || true

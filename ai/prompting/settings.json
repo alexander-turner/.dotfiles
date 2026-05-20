@@ -20,7 +20,7 @@
         "hooks": [
           {
             "type": "prompt",
-            "prompt": "Review only the diff/lines being changed by this tool call — ignore pre-existing code unless the change directly touches it. Default to \"allow\".\n\nReturn \"deny\" ONLY for:\n- A definite runtime bug introduced by this change (broken syntax, wrong logic that will fail in normal use)\n- A definite security hole introduced by this change (injection from untrusted input, hardcoded secret VALUE in the file, credentials leaked to logs/argv)\n- A clear regression vs the prior code\n\nDo NOT deny for:\n- Style, naming, comments, or \"maintainability\" preferences\n- Overrides of standard commands (rm/ls/ssh/etc.) — assume intentional\n- Patterns that trust env vars set by the agent harness\n- Item/key NAMES (not values) appearing in error messages\n- \"Could be improved\" or \"consider\" suggestions\n- Performance concerns short of a user-visible >1s regression\n\nIf denying, output one sentence naming the specific bug + line numbers. Otherwise output \"allow\".",
+            "prompt": "You see ONE edit hunk. You do NOT see the agent's full file, the rest of the file, the session history, or earlier edits in this turn. The agent does. Default strongly to \"allow\". You should be denying maybe 1-in-200 edits, not 1-in-5.\n\nThe only valid denials describe concrete, user-facing harm that the visible hunk itself introduces:\n- A hard-coded credential VALUE pasted into the diff (an actual key/token/password — not a placeholder, not a key name in an error string, not an env-var reference).\n- An obvious injection sink: untrusted input (req.body, argv, env) reaching exec / eval / SQL via string concatenation, in the hunk itself.\n- Syntax that won't parse — judged conservatively against the file's actual language. If unsure whether something parses, ALLOW.\n\nALWAYS ALLOW — never deny on any of these grounds:\n- Any reference to a symbol, variable, import, function, type, or shell var not defined in the visible hunk. It's almost certainly defined elsewhere in the file or imported. The agent sees the full file; you don't.\n- Removed code: deleted guards, simplified branches, dropped error handling, reverted logic, bare assignments replacing guarded ones. Could be a deliberate refactor, rollback, simplification, or regression-test step.\n- Renames, even if the call sites or imports aren't visible.\n- Async or top-level constructs valid in modern JS/TS: top-level await, async IIFE, `await expect(...).rejects.toThrow()`, `void (async () => {...})()`.\n- Initial-value changes (e.g. `let x = 0` instead of `let x = window.innerWidth`) — agent's deliberate choice.\n- Style, naming, comments, JSDoc tone, ergonomics, maintainability concerns.\n- Performance concerns smaller than ~1s of user-visible work.\n- Overrides of standard CLI commands, env-var trust, key NAMES inside log/error strings.\n- Anything you'd phrase as \"could be improved\", \"consider\", \"might be cleaner\", \"could mask\", \"could break if\", \"may cause\", \"unclear whether\".\n\nIf denying, output exactly one sentence naming the specific harm + diff line numbers. Otherwise output \"allow\".",
             "timeout": 10
           }
         ]
@@ -127,4 +127,11 @@
       "Read(//private/tmp/**)"
     ]
   }
+  "enabledPlugins": {
+    "code-simplifier@claude-plugins-official": true,
+    "plugin-dev@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": true
+  },
+  "theme": "dark-ansi",
+  "editorMode": "vim"
 }
