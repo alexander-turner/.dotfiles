@@ -112,6 +112,22 @@ if $IS_MAC; then
         *) echo "  skip ccr launch agent" ;;
         esac
     fi
+
+    TS_EXIT_PLIST="$HOME/Library/LaunchAgents/com.turntrout.tailscale-exit-node.plist"
+    if [[ -L "$TS_EXIT_PLIST" ]]; then
+        if $ASSUME_YES; then
+            choice=y
+        else
+            read -rp "Unload + remove tailscale-exit-node launch agent? (y/N) " choice
+        fi
+        case "$choice" in
+        y | Y)
+            launchctl bootout "gui/$(id -u)" "$TS_EXIT_PLIST" 2>/dev/null || true
+            remove_dotfile_symlink "$TS_EXIT_PLIST" "$DOTFILES_DIR/launchagents/com.turntrout.tailscale-exit-node.plist"
+            ;;
+        *) echo "  skip tailscale-exit-node launch agent" ;;
+        esac
+    fi
 fi
 
 # Remove trash-empty cron job if present
