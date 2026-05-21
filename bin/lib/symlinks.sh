@@ -25,6 +25,8 @@ $HOME/.config/mise/config.toml|$DOTFILES_DIR/apps/mise/config.toml|mise config
 $HOME/.config/nvim|$DOTFILES_DIR/apps/nvim|nvim config
 $HOME/.config/vagrant-templates/Vagrantfile|$DOTFILES_DIR/ai/Vagrantfile|vagrant-templates/Vagrantfile
 $HOME/.local/bin/bw-node|$DOTFILES_DIR/bin/bw-node|bw-node wrapper
+$HOME/.claude/settings.json|$DOTFILES_DIR/ai/prompting/settings.json|Claude Code settings
+$HOME/.local/bin/claude|$DOTFILES_DIR/bin/claude|claude shim
 EOF
     if [[ "$(uname)" == "Darwin" ]]; then
         cat <<EOF
