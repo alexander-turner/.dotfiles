@@ -154,6 +154,41 @@ real dir → prompt, missing → create.
   job is text expansion — abbrs preserve history readability.
 - Use `command <name>` to bypass fish/bash function shadowing
   (e.g. `command rm`, `command npm`) rather than removing the wrapper.
+- Tests of repo behavior go in `tests/test_*.py` and run via `pytest` —
+  cleaner assertions than shell, ruff already lints `.py`, and
+  `tmp_path` handles isolation. Pattern:
+  `tests/test_uninstall_roundtrip.py` invoked from
+  `.github/workflows/uninstall.yml`. Avoid non-trivial shell in workflow
+  `run:` blocks for the same reason: it skips static analysis. A `run:`
+  block of more than a handful of meaningful lines is the smell.
+
+## Workflow shell scripts live in `bin/`, not inline in `.yml`
+
+Inline `run: |` blocks in `.github/workflows/*.yml` are invisible to
+shellcheck/shfmt and skip the auto-fix pipeline. Anything beyond a
+trivial 1-3 line install incantation should be extracted to
+`bin/<name>.sh` and invoked from the workflow as `run: bash
+bin/<name>.sh` — `bin/lint.sh`'s shellcheck glob (`bin/*.sh`) then
+covers it automatically.
+
+Reference: `bin/check-idempotency.sh` is invoked from
+`.github/workflows/idempotency.yml` with `TEST_HOME` / `SCRATCH` passed
+via `env:`. The script defaults both to `mktemp` so it's runnable
+locally too.
+
+**Don't extract from template-synced workflows.** `template-sync.yaml`
+copies these files verbatim from the upstream template on every daily
+run, so any local edits get clobbered:
+
+- `.github/workflows/template-sync.yaml`
+- `.github/workflows/dependabot-auto-merge.yaml`
+- `.github/workflows/claude.yaml`
+- `.github/workflows/phone-home.yaml`
+- `.github/workflows/security-vulnerability-scan.yaml`
+
+The full list is in `template-sync.yaml`'s `SYNC_PATHS` env. Any
+refactor for shellcheck coverage of those scripts has to land upstream
+in `alexander-turner/claude-automation-template`.
 
 ## When fixing CI failures
 
@@ -179,4 +214,11 @@ bash bin/uninstall.sh --yes     # ... non-interactive
 bash bin/lint.sh                # run all linters locally
 bash bin/lint.sh --fix          # auto-fix what we can
 bwseed                          # force Bitwarden → envchain refresh
+
+# After setup.sh has run once, the same chores are reachable via the
+# dispatcher symlinked at ~/.local/bin/dotfiles (with fish completions):
+dotfiles doctor                 # → bin/doctor.sh
+dotfiles uninstall --yes        # → bin/uninstall.sh
+dotfiles link                   # → setup.sh --link-only
+dotfiles lint --fix             # → bin/lint.sh
 ```

@@ -90,11 +90,14 @@ cache_master_and_seed() {
     # Pass password via --passwordenv — Node bw silently ignores
     # --passwordfile and falls back to an interactive prompt that crashes
     # inquirer on piped stdin (Node 20+). Env var scoped to subprocess.
+    # 2>/dev/null hides bw's stderr (inquirer crash noise, network errors,
+    # cryptography errors all look alike there) so the validation below
+    # phrases the failure generically rather than claiming a specific cause.
     BW_SESSION=$(BW_PASSWORD="$MASTER" "$BW_CMD" unlock --raw --passwordenv BW_PASSWORD 2>/dev/null)
     local rc=$?
     unset MASTER
     if [ "$rc" -ne 0 ] || [ -z "$BW_SESSION" ]; then
-        echo "bw unlock: master password rejected or empty session. Re-run bin/bw-login.sh." >&2
+        echo "bw unlock failed (wrong password, network error, or bw binary issue). Re-run bin/bw-login.sh." >&2
         return 1
     fi
     export BW_SESSION

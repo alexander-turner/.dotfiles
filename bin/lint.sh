@@ -49,7 +49,7 @@ require_or_skip() {
 check_shfmt() {
     require_or_skip shfmt "Shfmt" || return 0
     echo -n "Shfmt: "
-    local shfmt_targets=(setup.sh bin/*.sh bin/lib/*.sh .hooks/*.sh .hooks/pre-push .hooks/pre-commit .hooks/commit-msg .claude/hooks/*.sh .bashrc)
+    local shfmt_targets=(setup.sh bin/*.sh bin/lib/*.sh bin/dotfiles .hooks/*.sh .hooks/pre-push .hooks/pre-commit .hooks/commit-msg .claude/hooks/*.sh .bashrc)
     if [[ "$FIX_MODE" == true ]]; then
         shfmt -w -i 4 "${shfmt_targets[@]}" 2>/dev/null || true
         echo -e "${GREEN}fixed${NC}"
@@ -69,7 +69,7 @@ check_shellcheck() {
     echo -n "Shellcheck: "
     if [[ "$FIX_MODE" == true ]]; then
         local diff_output
-        diff_output=$(shellcheck -e SC2016 --format=diff setup.sh bin/*.sh bin/lib/*.sh .hooks/*.sh .hooks/pre-push .hooks/pre-commit .hooks/commit-msg .claude/hooks/*.sh 2>/dev/null || true)
+        diff_output=$(shellcheck -e SC2016 --format=diff setup.sh bin/*.sh bin/lib/*.sh bin/dotfiles .hooks/*.sh .hooks/pre-push .hooks/pre-commit .hooks/commit-msg .claude/hooks/*.sh 2>/dev/null || true)
         diff_output+=$(shellcheck -s bash -e SC2148 -e SC1090 -e SC1091 -e SC2015 --format=diff .bashrc 2>/dev/null || true)
         if [ -n "$diff_output" ]; then
             echo "$diff_output" | git apply --allow-empty 2>/dev/null || true
@@ -78,7 +78,7 @@ check_shellcheck() {
             echo -e "${GREEN}passed${NC}"
         fi
     else
-        if shellcheck -e SC2016 setup.sh bin/*.sh bin/lib/*.sh .hooks/*.sh .hooks/pre-push .hooks/pre-commit .hooks/commit-msg .claude/hooks/*.sh 2>/dev/null &&
+        if shellcheck -e SC2016 setup.sh bin/*.sh bin/lib/*.sh bin/dotfiles .hooks/*.sh .hooks/pre-push .hooks/pre-commit .hooks/commit-msg .claude/hooks/*.sh 2>/dev/null &&
             shellcheck -s bash -e SC2148 -e SC1090 -e SC1091 -e SC2015 .bashrc 2>/dev/null; then
             echo -e "${GREEN}passed${NC}"
         else
@@ -221,6 +221,49 @@ check_python() {
     fi
 }
 
+# Secrets scan. bin/pre-push sets GITLEAKS_LOG_OPTS to narrow the scan to the
+# push range; CI leaves it unset for a full-history scan. GITLEAKS_REQUIRED=1
+# (also set by pre-push) flips missing-binary from SKIP to FAIL so the gate
+# isn't silenceable by an unconfigured dev box.
+check_gitleaks() {
+    if ! command -v gitleaks >/dev/null 2>&1; then
+        if [[ "${GITLEAKS_REQUIRED:-0}" == "1" ]]; then
+            echo -e "${RED}Gitleaks: missing (required in pre-push — install via Brewfile)${NC}"
+            return 1
+        fi
+        require_or_skip gitleaks "Gitleaks" || return 0
+    fi
+    echo -n "Gitleaks: "
+    # `${arr[@]+"${arr[@]}"}` is the bash-3.2-safe expansion for an empty
+    # array under `set -u` (macOS default bash trips on plain "${arr[@]}").
+    local extra=()
+    if [[ -n "${GITLEAKS_LOG_OPTS:-}" ]]; then
+        extra=(--log-opts="$GITLEAKS_LOG_OPTS")
+    fi
+    if gitleaks detect --no-banner --redact --config=.gitleaks.toml ${extra[@]+"${extra[@]}"} >/dev/null 2>&1; then
+        echo -e "${GREEN}passed${NC}"
+    else
+        echo -e "${RED}failed${NC}"
+        echo "  Re-run for details: gitleaks detect --no-banner --redact --config=.gitleaks.toml ${GITLEAKS_LOG_OPTS:+--log-opts=\"$GITLEAKS_LOG_OPTS\"}" >&2
+        return 1
+    fi
+}
+
+# Pytest harness for bin/lib/safe_link.sh — the only function that touches
+# user files. Quiet on pass; surfaces full pytest output on fail.
+check_safe_link_tests() {
+    require_or_skip pytest "safe_link tests" || return 0
+    echo -n "safe_link tests: "
+    local out
+    if out="$(pytest -q tests/test_safe_link.py 2>&1)"; then
+        echo -e "${GREEN}passed${NC}"
+    else
+        echo -e "${RED}failed${NC}"
+        printf '%s\n' "$out"
+        return 1
+    fi
+}
+
 # Run all checks
 echo "Running lint checks..."
 check_shfmt || FAILED=1
@@ -231,6 +274,8 @@ check_yaml || FAILED=1
 check_toml || FAILED=1
 check_json || FAILED=1
 check_python || FAILED=1
+check_gitleaks || FAILED=1
+check_safe_link_tests || FAILED=1
 
 if [ $FAILED -ne 0 ]; then
     echo -e "\n${RED}Lint checks failed.${NC}"
