@@ -27,10 +27,12 @@ while read -r _local_ref local_sha _remote_ref remote_sha; do
 done
 
 if [ -n "$log_opts" ]; then
-    # Setting this both narrows the gitleaks scan to the push range and flips
-    # lint.sh's check_gitleaks from SKIP-on-missing to FAIL-on-missing — the
-    # secrets gate must not be silenceable by an unconfigured dev box.
     export GITLEAKS_LOG_OPTS="${log_opts# }"
 fi
+
+# Flip lint.sh's check_gitleaks from SKIP-on-missing to FAIL-on-missing. A
+# separate var (not overloading GITLEAKS_LOG_OPTS) so a stray export in the
+# user's shell can't hard-fail their normal `bash bin/lint.sh` runs.
+export GITLEAKS_REQUIRED=1
 
 "$git_root/bin/lint.sh"

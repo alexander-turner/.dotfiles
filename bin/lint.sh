@@ -230,13 +230,13 @@ check_python() {
 # being pushed so local pushes scan only what's new; CI leaves the env
 # unset and gets a full-history scan. Same .gitleaks.toml in both paths.
 #
-# When GITLEAKS_LOG_OPTS is set we're in a security-gating context (pre-push)
-# and a missing binary must FAIL, not SKIP — otherwise an unconfigured dev box
-# silently lets secrets through. CI uses --ci, which already promotes SKIP→FAIL.
+# GITLEAKS_REQUIRED=1 (set by bin/pre-push, and implicitly by --ci) flips
+# missing-binary from SKIP to FAIL — security gates must not be silenceable
+# by an unconfigured dev box.
 check_gitleaks() {
     if ! command -v gitleaks >/dev/null 2>&1; then
-        if [[ -n "${GITLEAKS_LOG_OPTS:-}" ]]; then
-            echo -e "${RED}Gitleaks: missing (required when GITLEAKS_LOG_OPTS is set — install via Brewfile)${NC}"
+        if [[ "${GITLEAKS_REQUIRED:-0}" == "1" ]]; then
+            echo -e "${RED}Gitleaks: missing (required in pre-push — install via Brewfile)${NC}"
             return 1
         fi
         require_or_skip gitleaks "Gitleaks" || return 0
@@ -257,20 +257,15 @@ check_gitleaks() {
     fi
 }
 
-# Unit tests for safe_link — the only function in this repo that touches user
-# files. Plain bash (no bats dep). Required everywhere bash is, which is also
-# everywhere this lint script runs.
+# Unit tests for safe_link — the only function that touches user files.
+# Plain bash, no bats dep. tests/safe_link.sh stays silent on pass and
+# prints failed cases on fail; let it stream through like sibling checks.
 check_safe_link_tests() {
     echo -n "safe_link tests: "
-    local log
-    log="$(mktemp)"
-    if bash tests/safe_link.sh >"$log" 2>&1; then
+    if bash tests/safe_link.sh; then
         echo -e "${GREEN}passed${NC}"
-        rm -f "$log"
     else
         echo -e "${RED}failed${NC}"
-        sed 's/^/  /' "$log"
-        rm -f "$log"
         return 1
     fi
 }

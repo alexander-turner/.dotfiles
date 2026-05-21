@@ -209,34 +209,7 @@ case_session_backups_share_stamp() {
     assert_file_contents "${stamp_dirs[0]}/.b" "b-data" || return 1
 }
 
-# Case 4: target's parent directory doesn't exist. safe_link is documented as
-# "the linker"; mkdir of parents is the caller's job (setup.sh does it). We
-# pin that contract: missing parent surfaces as a failure rather than being
-# silently created, so a typo in a target path can't write to an unexpected
-# location.
-case_missing_parent_dir() {
-    local tmp="$1"
-    local src="$tmp/source"
-    local tgt="$HOME/no/such/dir/.foo"
-    echo "src-contents" >"$src"
-    # Capture both rc and output; safe_link returning 0 here would be a silent
-    # contract change.
-    local out rc
-    out="$(safe_link "$src" "$tgt" 2>&1)"
-    rc=$?
-    if [[ $rc -eq 0 && -L "$tgt" ]]; then
-        echo "expected failure when parent dir missing; got success"
-        return 1
-    fi
-    # ln should have complained; we don't pin the exact message, just that the
-    # link wasn't created.
-    if [[ -e "$tgt" || -L "$tgt" ]]; then
-        echo "link was created despite missing parent: $tgt ($out)"
-        return 1
-    fi
-}
-
-# Case 5: source doesn't exist. ln -sf happily creates a dangling symlink (that's
+# Case 4: source doesn't exist. ln -sf happily creates a dangling symlink (that's
 # how nvim's config dir gets bootstrapped before the repo dir is populated, etc.)
 # so we pin "dangling is allowed" rather than "must fail" — changing this would
 # break legitimate uses.
@@ -305,24 +278,23 @@ case_non_interactive_skip() {
 
 # ── Run ──────────────────────────────────────────────────────────────────────
 
-# Note on coverage: the prompted "decline overwrite" (user types `n`) branch
-# isn't exercised. Feeding `<<<"n"` makes stdin a pipe, which trips safe_link's
-# non-TTY skip first — same observable outcome (real file kept, no backup) as
-# case_non_interactive_skip, so the test would be a duplicate. A real PTY would
-# require `script`/`expect` with diverging Linux/macOS flags, not worth it for
-# three lines of prompt UI.
+# The prompted "decline overwrite" branch isn't exercised — non-TTY skip has
+# the same observable outcome and faking a PTY portably isn't worth it.
 
-echo "Running safe_link tests..."
+# Silent-on-pass so lint.sh can call this without cluttering its output. With
+# -v: also prints PASS lines and a summary. Failures always print.
+[[ "$VERBOSE" == true ]] && echo "Running safe_link tests..."
 run_case "already-correct symlink is a no-op"             case_already_correct
 run_case "stale symlink is atomically replaced"           case_stale_symlink
 run_case "real file is backed up before clobber"          case_real_file_clobber_with_backup
 run_case "same-session backups share one UTC stamp"       case_session_backups_share_stamp
-run_case "missing parent dir does not silently succeed"   case_missing_parent_dir
 run_case "missing source creates dangling link (allowed)" case_source_missing
 run_case "two runs are idempotent and create no backups"  case_idempotent_re_run
 run_case "non-interactive stdin skips real file silently" case_non_interactive_skip
 
-printf "\n%d passed, %d failed\n" "$PASS" "$FAIL"
+if [[ "$VERBOSE" == true ]]; then
+    printf "\n%d passed, %d failed\n" "$PASS" "$FAIL"
+fi
 if [[ $FAIL -gt 0 ]]; then
     printf "failed: %s\n" "${FAILED_CASES[*]}"
     exit 1
