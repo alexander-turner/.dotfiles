@@ -87,17 +87,12 @@ cache_master_and_seed() {
 
     secret_set bw-master-password "$MASTER"
 
-    # Write password to a 0600 temp file and pass via --passwordfile —
-    # Rust bw doesn't reliably read /dev/stdin, and keeping the value off
-    # argv matters.
-    local pwfile
-    pwfile=$(mktemp -t bwpw)
-    chmod 600 "$pwfile"
-    printf '%s\n' "$MASTER" >"$pwfile"
-    unset MASTER
-    BW_SESSION=$("$BW_CMD" unlock --raw --passwordfile "$pwfile" 2>/dev/null)
+    # Pass password via --passwordenv — Node bw silently ignores
+    # --passwordfile and falls back to an interactive prompt that crashes
+    # inquirer on piped stdin (Node 20+). Env var scoped to subprocess.
+    BW_SESSION=$(BW_PASSWORD="$MASTER" "$BW_CMD" unlock --raw --passwordenv BW_PASSWORD 2>/dev/null)
     local rc=$?
-    rm -f "$pwfile"
+    unset MASTER
     if [ "$rc" -ne 0 ] || [ -z "$BW_SESSION" ]; then
         echo "bw unlock: master password rejected or empty session. Re-run bin/bw-login.sh." >&2
         return 1

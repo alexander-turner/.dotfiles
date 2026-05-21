@@ -58,9 +58,10 @@ bw_require_logged_in() {
 
 # Ensure $BW_SESSION is exported, unlocking via the master password cached
 # in the OS secret store (service `bw-master-password`, see
-# bin/lib/secret-store.sh) if needed. Password is written to a 0600 temp
-# file and passed via `--passwordfile` — keeps the value off argv, works
-# with both Node and Rust bw, and dodges any /dev/stdin handling quirks.
+# bin/lib/secret-store.sh) if needed. Password is passed via env var to
+# `--passwordenv` — Node bw silently ignores `--passwordfile` and falls
+# back to an interactive prompt that crashes inquirer on piped stdin
+# ("readline was closed" on Node 20+). Env var scoped to the subprocess.
 bw_ensure_session() {
     if [ -n "${BW_SESSION:-}" ]; then
         export BW_SESSION
@@ -72,15 +73,10 @@ bw_ensure_session() {
         echo "bw: locked and no cached master password. Run bin/bw-login.sh." >&2
         return 1
     fi
-    local pwfile
-    pwfile=$(mktemp -t bwpw)
-    chmod 600 "$pwfile"
-    printf '%s' "$mp" >"$pwfile"
-    unset mp
     local out rc
-    out=$("$BW_CMD" unlock --raw --passwordfile "$pwfile" 2>/dev/null)
+    out=$(BW_PASSWORD="$mp" "$BW_CMD" unlock --raw --passwordenv BW_PASSWORD 2>/dev/null)
     rc=$?
-    rm -f "$pwfile"
+    unset mp
     # Rust bw 2026.x writes ERROR lines to stdout on unlock failure, so a
     # non-empty $out doesn't prove success. A real session is a single
     # base64-ish line with no whitespace; bail on anything else.

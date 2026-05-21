@@ -4,6 +4,13 @@
 # the password field. Existing items with the same name are skipped, so
 # reruns are idempotent.
 #
+# Flags:
+#   --fill-empty   for existing items whose `login.password` is empty,
+#                  overwrite from envchain. Items with a non-empty
+#                  password are still skipped. Use this to repair vaults
+#                  where a prior migration created the items but didn't
+#                  populate the values.
+#
 # Values flow stdin → stdin between envchain and bw via jq's env.SECRET
 # substitution. Nothing is logged.
 
@@ -15,32 +22,88 @@ DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
 # secret_store_required_cmd used below.
 source "$DOTFILES_DIR/bin/lib/bw-common.sh"
 
-bw_require_cmds "$BW_CMD" jq envchain "$(secret_store_required_cmd)" || exit 1
+FILL_EMPTY=0
+for arg in "$@"; do
+    case "$arg" in
+    --fill-empty) FILL_EMPTY=1 ;;
+    -h | --help)
+        sed -n 's/^# \{0,1\}//p' "$0" | head -n 14
+        exit 0
+        ;;
+    esac
+done
+
+bw_require_cmds "$BW_CMD" jq envchain awk "$(secret_store_required_cmd)" || exit 1
 bw_require_logged_in || exit 1
 bw_ensure_session || exit 1
 
 "$BW_CMD" sync --session "$BW_SESSION" >/dev/null 2>&1 || true
 folder_id=$(bw_envchain_folder_id --create)
 
-# Pre-compute the set of existing item names so we can skip in O(1) and
-# without re-fetching the listing per item.
-existing_names_file=$(mktemp)
-trap 'rm -f "$existing_names_file"' EXIT
+# Pre-compute existing items as `<name>\t<id>\t<password_len>` so we can
+# decide skip-vs-fill in O(1) without re-fetching per item.
+existing_items_file=$(mktemp)
+trap 'rm -f "$existing_items_file"' EXIT
 "$BW_CMD" list items --folderid "$folder_id" --session "$BW_SESSION" |
-    jq -r '.[].name' >"$existing_names_file"
+    jq -r '.[] | [.name, .id, ((.login.password // "") | length)] | @tsv' \
+        >"$existing_items_file"
+
+# Look up an existing item by name. Echoes `<id>\t<password_len>`, exits
+# non-zero if not found. awk over the tsv is plenty fast for ~hundreds.
+lookup_existing() {
+    awk -F'\t' -v n="$1" '$1==n {print $2"\t"$3; found=1; exit} END {exit !found}' \
+        "$existing_items_file"
+}
 
 # migrate_var: push one envchain (NS, VAR) into the vault. Returns 0 on
-# success or skip; only ever prints names + status to stdout (no values).
+# success/skip; only ever prints names + status to stdout (no values).
 migrate_var() {
     local ns="$1" var="$2"
     local item_name="envchain/$ns/$var"
+    local existing id pwlen value
 
-    if grep -Fxq "$item_name" "$existing_names_file"; then
-        echo "  skip   $item_name (already in vault)"
+    if existing=$(lookup_existing "$item_name"); then
+        IFS=$'\t' read -r id pwlen <<<"$existing"
+        if [ "$pwlen" -gt 0 ]; then
+            echo "  skip   $item_name (already populated)"
+            return 0
+        fi
+        if [ "$FILL_EMPTY" -ne 1 ]; then
+            echo "  skip   $item_name (empty; rerun with --fill-empty)"
+            return 0
+        fi
+        value=$(envchain "$ns" printenv "$var")
+        if [ -z "$value" ]; then
+            echo "  WARN   $item_name (envchain returned empty)"
+            return 0
+        fi
+        # Fetch full item, patch .login.password, re-encode, edit. Each
+        # bw call is checked explicitly so one item's failure doesn't
+        # trip pipefail+set-e and abort the whole loop silently.
+        local item_json
+        item_json=$("$BW_CMD" get item --session "$BW_SESSION" "$id" 2>/dev/null) || {
+            echo "  FAIL   $item_name (bw get item rc=$?)"
+            return 0
+        }
+        if [ -z "$item_json" ]; then
+            echo "  FAIL   $item_name (bw get item returned empty)"
+            return 0
+        fi
+        if (
+            export SECRET="$value"
+            printf '%s' "$item_json" |
+                jq '.login.password=env.SECRET' |
+                "$BW_CMD" encode |
+                "$BW_CMD" edit item --session "$BW_SESSION" "$id" >/dev/null
+        ) 2>/dev/null; then
+            echo "  fill   $item_name"
+        else
+            echo "  FAIL   $item_name (bw edit failed)"
+        fi
+        unset value item_json
         return 0
     fi
 
-    local value
     value=$(envchain "$ns" printenv "$var")
     if [ -z "$value" ]; then
         echo "  WARN   $item_name (envchain returned empty)"
