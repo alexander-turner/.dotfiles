@@ -75,6 +75,15 @@ RUN echo "vscode ALL=(root) NOPASSWD: /workspaces/.dotfiles/.devcontainer/init-f
         > /etc/sudoers.d/init-firewall \
     && chmod 0440 /etc/sudoers.d/init-firewall
 
+# Single source of truth for the CLI binaries this image is expected to
+# provide. .devcontainer/smoke-check.sh (invoked via devcontainers/ci on
+# every change under .devcontainer/) reads $DOTFILES_TOOLS and asserts
+# every entry is on PATH — adding an install step above without listing
+# the binary here means the smoke test passes by accident; listing one
+# here without an install step means it fails loudly. Whitespace-separated;
+# alphabetised for diff sanity.
+ENV DOTFILES_TOOLS="bash claude fish git gh gitleaks jq npm pytest python3 ruff shellcheck shfmt stylua yamllint"
+
 USER vscode
 ENV SHELL=/usr/bin/fish
 WORKDIR /workspaces
