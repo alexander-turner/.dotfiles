@@ -51,7 +51,7 @@ bw_is_logged_in() {
 # Exit-style guard: errors out if not logged in.
 bw_require_logged_in() {
     if ! bw_is_logged_in; then
-        echo "bw: not logged in. Run bin/bw-login.sh first." >&2
+        echo "bw: not logged in. Run bin/bw-login.bash first." >&2
         return 1
     fi
 }
@@ -70,7 +70,7 @@ bw_ensure_session() {
     local mp
     mp=$(secret_get bw-master-password)
     if [ -z "${mp:-}" ]; then
-        echo "bw: locked and no cached master password. Run bin/bw-login.sh." >&2
+        echo "bw: locked and no cached master password. Run bin/bw-login.bash." >&2
         return 1
     fi
     local out rc
@@ -81,7 +81,7 @@ bw_ensure_session() {
     # non-empty $out doesn't prove success. A real session is a single
     # base64-ish line with no whitespace; bail on anything else.
     if [ "$rc" -ne 0 ] || [ -z "$out" ] || [[ "$out" == *[[:space:]]* ]] || [[ "$out" == ERROR* ]]; then
-        echo "bw unlock: cached master password rejected. Re-run bin/bw-login.sh." >&2
+        echo "bw unlock: cached master password rejected. Re-run bin/bw-login.bash." >&2
         return 1
     fi
     BW_SESSION="$out"

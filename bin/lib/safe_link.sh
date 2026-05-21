@@ -9,8 +9,8 @@ SAFE_LINK_BACKUP_ROOT="${SAFE_LINK_BACKUP_ROOT:-$HOME/.dotfiles-backup}"
 
 _safe_link_backup() {
     local target_file="$1"
-    # One timestamp per shell session so all backups from a single setup.sh run
-    # land in the same directory. uninstall.sh's "restore from latest" then finds
+    # One timestamp per shell session so all backups from a single setup.bash run
+    # land in the same directory. uninstall.bash's "restore from latest" then finds
     # every file that was backed up together, not just the last one.
     if [[ -z "${SAFE_LINK_BACKUP_STAMP:-}" ]]; then
         SAFE_LINK_BACKUP_STAMP="$(date -u +%Y%m%dT%H%M%SZ)"

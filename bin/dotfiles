@@ -4,10 +4,10 @@
 # Usage:
 #   dotfiles doctor [--verbose|--quiet]   # health check
 #   dotfiles uninstall [--yes]            # remove $HOME symlinks (restores backups)
-#   dotfiles link                         # refresh symlinks only (runs setup.sh --link-only)
+#   dotfiles link                         # refresh symlinks only (runs setup.bash --link-only)
 #   dotfiles lint [--ci] [--fix]          # run all linters
 #
-# Wraps the underlying scripts in bin/ and setup.sh so users get a single
+# Wraps the underlying scripts in bin/ and setup.bash so users get a single
 # entry point with fish-completable subcommands. All extra args are passed
 # through verbatim.
 
@@ -30,10 +30,10 @@ usage() {
 usage: dotfiles <subcommand> [args...]
 
 subcommands:
-  doctor     run health check (bin/doctor.sh)
-  uninstall  remove \$HOME symlinks, restore backups (bin/uninstall.sh)
-  link       refresh symlinks only (setup.sh --link-only)
-  lint       run shellcheck/shfmt/stylua/yamllint/ruff/gitleaks (bin/lint.sh)
+  doctor     run health check (bin/doctor.bash)
+  uninstall  remove \$HOME symlinks, restore backups (bin/uninstall.bash)
+  link       refresh symlinks only (setup.bash --link-only)
+  lint       run shellcheck/shfmt/stylua/yamllint/ruff/gitleaks (bin/lint.bash)
   help       show this message (alias: -h, --help)
 
 Extra args are forwarded to the underlying script.
@@ -51,19 +51,19 @@ case "${1:-}" in
     ;;
 doctor)
     shift
-    exec bash "$DOTFILES_DIR/bin/doctor.sh" "$@"
+    exec bash "$DOTFILES_DIR/bin/doctor.bash" "$@"
     ;;
 uninstall)
     shift
-    exec bash "$DOTFILES_DIR/bin/uninstall.sh" "$@"
+    exec bash "$DOTFILES_DIR/bin/uninstall.bash" "$@"
     ;;
 link)
     shift
-    exec bash "$DOTFILES_DIR/setup.sh" --link-only "$@"
+    exec bash "$DOTFILES_DIR/setup.bash" --link-only "$@"
     ;;
 lint)
     shift
-    exec bash "$DOTFILES_DIR/bin/lint.sh" "$@"
+    exec bash "$DOTFILES_DIR/bin/lint.bash" "$@"
     ;;
 *)
     printf "dotfiles: unknown subcommand %q\n\n" "$1" >&2

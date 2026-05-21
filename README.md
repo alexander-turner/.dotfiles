@@ -3,23 +3,23 @@
 To install:
 
 ```bash
-git clone https://github.com/alexander-turner/.dotfiles ~/.dotfiles && cd ~/.dotfiles && bash setup.sh
+git clone https://github.com/alexander-turner/.dotfiles ~/.dotfiles && cd ~/.dotfiles && bash setup.bash
 ```
 
-`setup.sh` will (with warning) **overwrite** your existing `.bashrc`, `.vimrc`, `.gitconfig`, `.npmrc`, `.tmux.conf`, `.config/nvim`, `.config/fish/config.fish`, `.config/mods/mods.yml`, and any `.aider*` files. On macOS it also links `.aerospace.toml`, `~/Library/com.googlecode.iterm2.plist`, `~/.config/borders/bordersrc`, and `~/.config/vagrant-templates/Vagrantfile`. Before clobbering, the previous file is moved to `~/.dotfiles-backup/<UTC-timestamp>/<rel-path>/` — so a misclick on the y/N prompt is recoverable. The new files are symlinked to the files in the repository, so edits to the originals are reflected immediately.
+`setup.bash` will (with warning) **overwrite** your existing `.bashrc`, `.vimrc`, `.gitconfig`, `.npmrc`, `.tmux.conf`, `.config/nvim`, `.config/fish/config.fish`, `.config/mods/mods.yml`, and any `.aider*` files. On macOS it also links `.aerospace.toml`, `~/Library/com.googlecode.iterm2.plist`, `~/.config/borders/bordersrc`, and `~/.config/vagrant-templates/Vagrantfile`. Before clobbering, the previous file is moved to `~/.dotfiles-backup/<UTC-timestamp>/<rel-path>/` — so a misclick on the y/N prompt is recoverable. The new files are symlinked to the files in the repository, so edits to the originals are reflected immediately.
 
-You can also run `bash setup.sh --link-only` to refresh symlinks without reinstalling packages. Both setup paths end by running `bin/doctor.sh`, which reports a green health summary (or tells you exactly what's still broken).
+You can also run `bash setup.bash --link-only` to refresh symlinks without reinstalling packages. Both setup paths end by running `bin/doctor.bash`, which reports a green health summary (or tells you exactly what's still broken).
 
-To verify health at any time: `bash bin/doctor.sh` (or `--quiet` for failures-only). To reverse the install — removing only symlinks that point into this repo and restoring the most recent backup — run `bash bin/uninstall.sh` (add `--yes` for non-interactive). The dotfiles repo itself is left untouched.
+To verify health at any time: `bash bin/doctor.bash` (or `--quiet` for failures-only). To reverse the install — removing only symlinks that point into this repo and restoring the most recent backup — run `bash bin/uninstall.bash` (add `--yes` for non-interactive). The dotfiles repo itself is left untouched.
 
 Once setup has run, those chores are also reachable through the `dotfiles` dispatcher symlinked at `~/.local/bin/dotfiles` (fish completions included): `dotfiles doctor | uninstall | link | lint`.
 
 Two CI workflows guard the install:
 
 - `lint.yml` — shellcheck + fish syntax + stylua + yamllint + ruff, plus a `gitleaks` scan of the full git history (auto-fixes the formatters).
-- `idempotency.yml` — runs `setup.sh --link-only` twice on `ubuntu-latest` and `macos-latest`, asserts identical symlink set, no skip/overwrite/backup output on the second pass, and a clean `doctor.sh` symlink section.
+- `idempotency.yml` — runs `setup.bash --link-only` twice on `ubuntu-latest` and `macos-latest`, asserts identical symlink set, no skip/overwrite/backup output on the second pass, and a clean `doctor.bash` symlink section.
 
-Features (configurable by changing `setup.sh`):
+Features (configurable by changing `setup.bash`):
 
 1. Installs `fish` shell and sets it as the default shell. `fish` has autocomplete, syntax highlighting, and indicates when a command is invalid.
    ![fish suggests command completions.](https://fishshell.com/assets/img/screenshots/autosuggestion.webp)
@@ -58,7 +58,7 @@ Features (configurable by changing `setup.sh`):
     - `aider`, `claude-code-router`, VSCodium + Roo Cline.
     - `AGENTS.md` symlinks to `CLAUDE.md` so Cursor/Aider/OpenCode pick up the same project context Claude Code uses.
     - `.mcp.json` configures the filesystem MCP server scoped to `~/.dotfiles` for Claude Code sessions in this repo.
-    - `.claude/hooks/notify.sh` fires cross-platform desktop notifications when Claude Code needs input.
+    - `.claude/hooks/notify.bash` fires cross-platform desktop notifications when Claude Code needs input.
 
 13. macOS keyboard-driven WM:
     - `aerospace` for tiling.
@@ -117,7 +117,7 @@ history on every PR. If a real hit lands, **rotate first**, then rewrite.
 Get a Bitwarden personal API key from web vault → Settings → Security → Keys → "View API Key", then:
 
 ```bash
-bash bin/bw-login.sh
+bash bin/bw-login.bash
 ```
 
 You'll be prompted (each prompt is skippable) for `client_id`, `client_secret`, and your master password. Both are stashed in macOS Keychain; the master password lets the autosync run unattended on every shell startup. The script then runs an initial seed.
@@ -133,13 +133,13 @@ On every other machine the next shell startup picks it up automatically (or run 
 
 ### GitHub CLI auth via Bitwarden
 
-`setup.sh` authenticates `gh` non-interactively when a PAT is stored in the vault as `envchain/github/PAT`. Generate a token at <https://github.com/settings/tokens> (scopes: `repo`, `read:org` — add `admin:public_key` only if you want `gh` to upload your SSH key for you), then:
+`setup.bash` authenticates `gh` non-interactively when a PAT is stored in the vault as `envchain/github/PAT`. Generate a token at <https://github.com/settings/tokens> (scopes: `repo`, `read:org` — add `admin:public_key` only if you want `gh` to upload your SSH key for you), then:
 
 ```bash
-bin/bw-add-secret.sh github PAT
+bin/bw-add-secret.bash github PAT
 ```
 
-On the next `setup.sh` run (or directly via `bin/gh-auth-from-bw.sh`), `gh auth login --with-token` picks it up. No browser, no SSH-key-upload step — useful on headless boxes. If the item is missing, `setup.sh` falls back to the interactive `gh auth login` flow.
+On the next `setup.bash` run (or directly via `bin/gh-auth-from-bw.bash`), `gh auth login --with-token` picks it up. No browser, no SSH-key-upload step — useful on headless boxes. If the item is missing, `setup.bash` falls back to the interactive `gh auth login` flow.
 
 ### Auto-sync on shell startup
 
@@ -155,7 +155,7 @@ If a machine has values in envchain that aren't in the vault yet:
 
 ```bash
 export BW_SESSION=$(bw unlock --raw)
-bash bin/migrate-envchain-to-bitwarden.sh
+bash bin/migrate-envchain-to-bitwarden.bash
 ```
 
 Values pipe stdin→stdin from envchain into `bw create item`; nothing is logged.

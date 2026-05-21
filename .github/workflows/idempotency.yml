@@ -6,19 +6,19 @@ on:
   pull_request:
     branches: [main, master]
 
-# Verifies setup.sh --link-only is safely re-runnable. Running it twice in
+# Verifies setup.bash --link-only is safely re-runnable. Running it twice in
 # an isolated $HOME must produce identical symlink sets and zero "Skipping"
-# / "Overwrite?" / "backed up to" output on the second pass. doctor.sh is
+# / "Overwrite?" / "backed up to" output on the second pass. doctor.bash is
 # then asked to verify only the symlink section (other checks need
 # brew/fish, which we deliberately don't install in this fast smoke job).
 #
 # Runs on Ubuntu and macOS so the `if [ "$(uname)" = "Darwin" ]` branches
-# in setup.sh — aerospace + iTerm2 plist symlinks under ~/Library — are
+# in setup.bash — aerospace + iTerm2 plist symlinks under ~/Library — are
 # also exercised.
 
 jobs:
   link-only-idempotent:
-    name: setup.sh --link-only is idempotent (${{ matrix.os }})
+    name: setup.bash --link-only is idempotent (${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:
@@ -31,10 +31,10 @@ jobs:
         env:
           # Scratch dirs under $RUNNER_TEMP keep the workflow's own log/listing
           # files out of the repo workspace, so the script's porcelain check
-          # sees only what setup.sh itself wrote.
+          # sees only what setup.bash itself wrote.
           TEST_HOME: ${{ runner.temp }}/fakehome
           SCRATCH: ${{ runner.temp }}/idempotency
-        run: bash bin/check-idempotency.sh
+        run: bash bin/check-idempotency.bash
 
       - name: Doctor reports symlinks healthy
         run: |
@@ -43,14 +43,14 @@ jobs:
           # We tolerate FAILs from "Required commands" / "Brewfile" / "tmux"
           # (brew/fish/nvim/zoxide aren't fully installed in this minimal job)
           # but every Symlinks check must PASS.
-          out=$(bash bin/doctor.sh --verbose || true)
+          out=$(bash bin/doctor.bash --verbose || true)
           echo "$out"
           symlinks_section=$(echo "$out" | awk '/=== Symlinks ===/{flag=1;next} /^=== /{flag=0} flag')
           if [ -z "$symlinks_section" ]; then
-            echo "::error::doctor.sh --verbose produced no Symlinks section (section header changed?)" >&2
+            echo "::error::doctor.bash --verbose produced no Symlinks section (section header changed?)" >&2
             exit 1
           fi
           if echo "$symlinks_section" | grep -q "FAIL"; then
-            echo "::error::doctor.sh reported a symlink FAIL after setup.sh --link-only" >&2
+            echo "::error::doctor.bash reported a symlink FAIL after setup.bash --link-only" >&2
             exit 1
           fi

@@ -8,10 +8,10 @@ This directory contains configuration and skills for Claude Code.
 .claude/
 ├── settings.json              # Claude Code hooks configuration
 ├── hooks/
-│   ├── session-setup.sh      # Runs on session start (installs tools, configures git)
-│   ├── pre-push-check.sh    # Runs before git push / gh pr (build, lint, typecheck)
-│   ├── notify.sh            # Cross-platform desktop notification for Notification hook
-│   └── lib-checks.sh        # Shared bash helpers (exists, has_script)
+│   ├── session-setup.bash      # Runs on session start (installs tools, configures git)
+│   ├── pre-push-check.bash    # Runs before git push / gh pr (build, lint, typecheck)
+│   ├── notify.bash            # Cross-platform desktop notification for Notification hook
+│   └── lib-checks.bash        # Shared bash helpers (exists, has_script)
 └── skills/
     └── pr-creation/       # PR creation workflow with self-critique
         ├── SKILL.md       # Main skill entrypoint
@@ -23,7 +23,7 @@ This directory contains configuration and skills for Claude Code.
 
 ### Session Start Hook
 
-When Claude Code starts a session, it automatically runs `session-setup.sh` which:
+When Claude Code starts a session, it automatically runs `session-setup.bash` which:
 
 1. **Installs tools**: shfmt, gh (GitHub CLI), jq, shellcheck
 2. **Configures git hooks**: Sets `core.hooksPath` to `.hooks/`
@@ -33,7 +33,7 @@ When Claude Code starts a session, it automatically runs `session-setup.sh` whic
 
 ### Pre-Push Check Hook
 
-Before `git push` or `gh pr` commands, `pre-push-check.sh` runs any configured checks:
+Before `git push` or `gh pr` commands, `pre-push-check.bash` runs any configured checks:
 
 - **build** (`pnpm build`): Catches type errors in TypeScript projects
 - **lint** (`pnpm lint`): Catches code quality issues
@@ -54,7 +54,7 @@ Skills are automatically available to Claude Code when working in this repositor
 
 ### Adding Tools
 
-Edit `hooks/session-setup.sh` to add more tools:
+Edit `hooks/session-setup.bash` to add more tools:
 
 ```bash
 # Via uv

@@ -2,7 +2,7 @@
 # Test harness for .claude/hooks/ scripts. Exercises each hook with synthetic
 # env in a temp dir and asserts exit code + key output patterns.
 #
-# Run locally:  bash bin/test-claude-hooks.sh
+# Run locally:  bash bin/test-claude-hooks.bash
 # In CI:        same command — non-interactive, no network calls.
 
 set -euo pipefail
@@ -53,11 +53,11 @@ run_test() {
     fi
 }
 
-# --- session-setup.sh ---
+# --- session-setup.bash ---
 
 run_test "session-setup: empty repo, no env -> exit 0" '
     git init -q
-    output=$(CLAUDE_PROJECT_DIR="$PWD" bash "'"$HOOKS_DIR"'/session-setup.sh" 2>&1)
+    output=$(CLAUDE_PROJECT_DIR="$PWD" bash "'"$HOOKS_DIR"'/session-setup.bash" 2>&1)
     rc=$?
     expected_rc=0
 '
@@ -67,7 +67,7 @@ run_test "session-setup: proxy-URL remote -> exports GH_REPO via CLAUDE_ENV_FILE
     git remote add origin "http://local_proxy@127.0.0.1:18393/git/foo/bar"
     env_file=$(mktemp)
     output=$(env -u GH_REPO CLAUDE_PROJECT_DIR="$PWD" CLAUDE_ENV_FILE="$env_file" \
-        bash "'"$HOOKS_DIR"'/session-setup.sh" 2>&1)
+        bash "'"$HOOKS_DIR"'/session-setup.bash" 2>&1)
     rc=$?
     expected_rc=0
     output+=$'\''\n--ENVFILE--\n'\''$(cat "$env_file")
@@ -80,16 +80,16 @@ run_test "session-setup: github.com remote attempts set-default (warn is fine)" 
     git remote add origin "https://github.com/owner/repo.git"
     unset GH_REPO
     output=$(CLAUDE_PROJECT_DIR="$PWD" GH_REPO="owner/repo" \
-        bash "'"$HOOKS_DIR"'/session-setup.sh" 2>&1)
+        bash "'"$HOOKS_DIR"'/session-setup.bash" 2>&1)
     rc=$?
     expected_rc=0
 '
 
-# --- pre-push-check.sh ---
+# --- pre-push-check.bash ---
 
 run_test "pre-push-check: no package.json, no pyproject -> exit 0, no output" '
     git init -q
-    output=$(CLAUDE_PROJECT_DIR="$PWD" bash "'"$HOOKS_DIR"'/pre-push-check.sh" 2>&1)
+    output=$(CLAUDE_PROJECT_DIR="$PWD" bash "'"$HOOKS_DIR"'/pre-push-check.bash" 2>&1)
     rc=$?
     expected_rc=0
 '
@@ -99,7 +99,7 @@ run_test "pre-push-check: package.json with failing lint -> exit 1" '
     cat >package.json <<JSON
 {"scripts":{"lint":"false"}}
 JSON
-    output=$(CLAUDE_PROJECT_DIR="$PWD" bash "'"$HOOKS_DIR"'/pre-push-check.sh" 2>&1)
+    output=$(CLAUDE_PROJECT_DIR="$PWD" bash "'"$HOOKS_DIR"'/pre-push-check.bash" 2>&1)
     rc=$?
     expected_rc=1
     expected_match="lint FAILED"
@@ -110,21 +110,21 @@ run_test "pre-push-check: package.json with placeholder script -> skipped" '
     cat >package.json <<JSON
 {"scripts":{"lint":"echo ERROR: Configure your linter"}}
 JSON
-    output=$(CLAUDE_PROJECT_DIR="$PWD" bash "'"$HOOKS_DIR"'/pre-push-check.sh" 2>&1)
+    output=$(CLAUDE_PROJECT_DIR="$PWD" bash "'"$HOOKS_DIR"'/pre-push-check.bash" 2>&1)
     rc=$?
     expected_rc=0
 '
 
-# --- notify.sh ---
+# --- notify.bash ---
 
-run_test "notify.sh: JSON on stdin -> exit 0 (no-op without notifier)" '
-    output=$(echo '\''{"message":"hi"}'\'' | bash "'"$HOOKS_DIR"'/notify.sh" 2>&1)
+run_test "notify.bash: JSON on stdin -> exit 0 (no-op without notifier)" '
+    output=$(echo '\''{"message":"hi"}'\'' | bash "'"$HOOKS_DIR"'/notify.bash" 2>&1)
     rc=$?
     expected_rc=0
 '
 
-run_test "notify.sh: no stdin -> falls back to default message, exit 0" '
-    output=$(bash "'"$HOOKS_DIR"'/notify.sh" </dev/null 2>&1)
+run_test "notify.bash: no stdin -> falls back to default message, exit 0" '
+    output=$(bash "'"$HOOKS_DIR"'/notify.bash" </dev/null 2>&1)
     rc=$?
     expected_rc=0
 '

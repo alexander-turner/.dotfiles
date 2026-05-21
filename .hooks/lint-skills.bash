@@ -12,7 +12,7 @@
 # Skills must use directory format: .claude/skills/<name>/SKILL.md
 # Flat files (.claude/skills/<name>.md) are rejected.
 #
-# Usage: lint-skills.sh [files...]
+# Usage: lint-skills.bash [files...]
 
 set -euo pipefail
 
