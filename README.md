@@ -198,6 +198,11 @@ To pull explicitly (e.g. for `docker run` outside VS Code):
 docker pull ghcr.io/alexander-turner/dotfiles-devcontainer:latest
 ```
 
+GHCR packages default to **private**. After the first publish, mark the
+package public at <https://github.com/users/alexander-turner/packages>
+so anonymous `docker pull` (and the `build.cacheFrom` in
+`.devcontainer/devcontainer.json`) work without `docker login ghcr.io`.
+
 ### Multiple Claude sessions on the same repo
 
 Use a `git worktree` per session — the container is the protection
