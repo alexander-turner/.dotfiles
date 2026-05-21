@@ -28,7 +28,7 @@ Features (configurable by changing `setup.bash`):
    ![Compares tide theme configurations for the fish shell.](https://github.com/IlanCosman/tide/raw/assets/images/header.png)
 
 3. Installs [`zoxide`](https://github.com/ajeetdsouza/zoxide) for quick directory navigation. Once you've been to directory `dir`, just hit `j dir` to go back there.
-4. Installs `neovim` and sets it as default editor. Furthermore, sets up `LazyVim`, which is basically a full-fledged IDE. To disable parenthesis matching, delete the `mini.pairs` plugin from `~/.local/share/nvim/lazy/LazyVim/lua/lazyvim/plugins/coding.lua`.
+4. Installs `neovim` and sets it as default editor. Furthermore, sets up `LazyVim`, which is basically a full-fledged IDE.[^mini-pairs]
    ![Showing off the LazyVim CLI IDE.](https://user-images.githubusercontent.com/292349/213447056-92290767-ea16-430c-8727-ce994c93e9cc.png)
 
 5. Installs a bunch of nice shortcuts, including `git` aliases (e.g. `git add` -> `ga`).
@@ -179,3 +179,5 @@ Three layers, all installed by `setup.sh`:
 - **Permissions.** Deny rules block shell-out vectors and exfil destinations. Allow rules pre-approve routine package, test, and git commands. Deny wins on first match, so any allow that overlaps a deny is dead config.
 
 `claude` invoked anywhere on the host auto-launches the container via `bin/claude` (bash/zsh) and `apps/fish/functions/claude.fish` (fish). Both fall back to host execution on `CLAUDE_NO_SANDBOX=1` or if `@devcontainers/cli` is missing. `~/.local/bin` must be ahead of the real `claude` in `$PATH` for the shim to win on bash/zsh.
+
+[^mini-pairs]: To disable parenthesis matching, delete the `mini.pairs` plugin from `~/.local/share/nvim/lazy/LazyVim/lua/lazyvim/plugins/coding.lua`.
