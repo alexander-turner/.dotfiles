@@ -70,6 +70,18 @@ jobs:
             exit 1
           fi
 
+          # The repo working tree must stay clean. Catches the real bug class:
+          # setup writing into the repo (rendered templates left behind, stray
+          # files from a brew/install step, etc.). More targeted than running
+          # setup a 3rd time — n+1 runs only catches "drifts later," which we
+          # have no evidence of.
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::setup.sh --link-only dirtied the repo working tree:" >&2
+            git status --porcelain >&2
+            git diff >&2
+            exit 1
+          fi
+
       - name: Doctor reports symlinks healthy
         run: |
           set -uo pipefail

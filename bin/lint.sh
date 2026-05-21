@@ -67,10 +67,14 @@ check_shfmt() {
 check_shellcheck() {
     require_or_skip shellcheck "Shellcheck" || return 0
     echo -n "Shellcheck: "
+    # tests/*.sh suppresses SC2030/2031 (subshell-local env mutation — that's the
+    # whole point of test isolation) and SC2317 (false-positive "unreachable" on
+    # cases invoked indirectly via run_case).
     if [[ "$FIX_MODE" == true ]]; then
         local diff_output
         diff_output=$(shellcheck -e SC2016 --format=diff setup.sh bin/*.sh bin/lib/*.sh .hooks/*.sh .hooks/pre-push .hooks/pre-commit .hooks/commit-msg .claude/hooks/*.sh 2>/dev/null || true)
         diff_output+=$(shellcheck -s bash -e SC2148 -e SC1090 -e SC1091 -e SC2015 --format=diff .bashrc 2>/dev/null || true)
+        diff_output+=$(shellcheck -e SC2030,SC2031,SC2317 --format=diff tests/*.sh 2>/dev/null || true)
         if [ -n "$diff_output" ]; then
             echo "$diff_output" | git apply --allow-empty 2>/dev/null || true
             echo -e "${GREEN}fixed${NC}"
@@ -79,7 +83,8 @@ check_shellcheck() {
         fi
     else
         if shellcheck -e SC2016 setup.sh bin/*.sh bin/lib/*.sh .hooks/*.sh .hooks/pre-push .hooks/pre-commit .hooks/commit-msg .claude/hooks/*.sh 2>/dev/null &&
-            shellcheck -s bash -e SC2148 -e SC1090 -e SC1091 -e SC2015 .bashrc 2>/dev/null; then
+            shellcheck -s bash -e SC2148 -e SC1090 -e SC1091 -e SC2015 .bashrc 2>/dev/null &&
+            shellcheck -e SC2030,SC2031,SC2317 tests/*.sh 2>/dev/null; then
             echo -e "${GREEN}passed${NC}"
         else
             echo -e "${RED}failed${NC}"
@@ -224,8 +229,18 @@ check_python() {
 # Secrets scan. bin/pre-push sets GITLEAKS_LOG_OPTS to the range of commits
 # being pushed so local pushes scan only what's new; CI leaves the env
 # unset and gets a full-history scan. Same .gitleaks.toml in both paths.
+#
+# When GITLEAKS_LOG_OPTS is set we're in a security-gating context (pre-push)
+# and a missing binary must FAIL, not SKIP — otherwise an unconfigured dev box
+# silently lets secrets through. CI uses --ci, which already promotes SKIP→FAIL.
 check_gitleaks() {
-    require_or_skip gitleaks "Gitleaks" || return 0
+    if ! command -v gitleaks >/dev/null 2>&1; then
+        if [[ -n "${GITLEAKS_LOG_OPTS:-}" ]]; then
+            echo -e "${RED}Gitleaks: missing (required when GITLEAKS_LOG_OPTS is set — install via Brewfile)${NC}"
+            return 1
+        fi
+        require_or_skip gitleaks "Gitleaks" || return 0
+    fi
     echo -n "Gitleaks: "
     # `${arr[@]+"${arr[@]}"}` is the bash-3.2-safe expansion for an empty
     # array under `set -u` (macOS default bash trips on plain "${arr[@]}").
@@ -242,6 +257,24 @@ check_gitleaks() {
     fi
 }
 
+# Unit tests for safe_link — the only function in this repo that touches user
+# files. Plain bash (no bats dep). Required everywhere bash is, which is also
+# everywhere this lint script runs.
+check_safe_link_tests() {
+    echo -n "safe_link tests: "
+    local log
+    log="$(mktemp)"
+    if bash tests/safe_link.sh >"$log" 2>&1; then
+        echo -e "${GREEN}passed${NC}"
+        rm -f "$log"
+    else
+        echo -e "${RED}failed${NC}"
+        sed 's/^/  /' "$log"
+        rm -f "$log"
+        return 1
+    fi
+}
+
 # Run all checks
 echo "Running lint checks..."
 check_shfmt || FAILED=1
@@ -253,6 +286,7 @@ check_toml || FAILED=1
 check_json || FAILED=1
 check_python || FAILED=1
 check_gitleaks || FAILED=1
+check_safe_link_tests || FAILED=1
 
 if [ $FAILED -ne 0 ]; then
     echo -e "\n${RED}Lint checks failed.${NC}"
