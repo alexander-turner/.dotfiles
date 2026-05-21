@@ -172,4 +172,11 @@ bash bin/uninstall.sh --yes     # ... non-interactive
 bash bin/lint.sh                # run all linters locally
 bash bin/lint.sh --fix          # auto-fix what we can
 bwseed                          # force Bitwarden → envchain refresh
+
+# After setup.sh has run once, the same chores are reachable via the
+# dispatcher symlinked at ~/.local/bin/dotfiles (with fish completions):
+dotfiles doctor                 # → bin/doctor.sh
+dotfiles uninstall --yes        # → bin/uninstall.sh
+dotfiles link                   # → setup.sh --link-only
+dotfiles lint --fix             # → bin/lint.sh
 ```
