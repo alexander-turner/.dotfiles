@@ -1,0 +1,32 @@
+{
+  "name": "dotfiles-dev",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": {
+      "TZ": "${localEnv:TZ:UTC}"
+    }
+  },
+  "runArgs": [
+    "--cap-add=NET_ADMIN",
+    "--cap-add=NET_RAW"
+  ],
+  "mounts": [
+    "source=dotfiles-claude-history-${devcontainerId},target=/commandhistory,type=volume",
+    "source=dotfiles-claude-config-${devcontainerId},target=/home/vscode/.claude,type=volume"
+  ],
+  "remoteUser": "vscode",
+  "containerEnv": {
+    "DOTFILES_DEVCONTAINER": "1"
+  },
+  "workspaceFolder": "/workspaces/.dotfiles",
+  "postCreateCommand": "sudo /workspaces/.dotfiles/.devcontainer/init-firewall.sh && bash /workspaces/.dotfiles/setup.sh --link-only",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "timonwong.shellcheck",
+        "foxundermoon.shell-format",
+        "charliermarsh.ruff"
+      ]
+    }
+  }
+}
