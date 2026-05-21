@@ -1,0 +1,90 @@
+name: Uninstall round-trip
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+# Enforces the CLAUDE.md "Uninstall upkeep" contract: every safe_link in
+# setup.sh whose target lives in $HOME has a matching remove_dotfile_symlink
+# in uninstall.sh (typically via bin/lib/symlinks.sh). The test installs into
+# an isolated $HOME, then uninstalls, and asserts no symlinks pointing into
+# the dotfiles repo survive. Drift — a new safe_link with no matching
+# remove — shows up as leftover entries.
+#
+# Scope matches uninstall.sh's documented scope: symlinks only. setup.sh
+# also creates touch-files (.extras.bash, .hushlogin, …) and parent dirs
+# under ~/.config; uninstall.sh intentionally leaves those, so the test
+# ignores them too.
+#
+# Runs on Ubuntu and macOS so the `if $IS_MAC` arm of bin/lib/symlinks.sh
+# (aerospace, iTerm2 plist, borders, swiftbar) is exercised on the OS
+# where those links are emitted. The bespoke macOS launch-agent safe_links
+# in setup.sh (CCR, tailscale-exit-node) live past the --link-only exit
+# point and are intentionally out of scope here.
+
+jobs:
+  uninstall-roundtrip:
+    name: setup → uninstall leaves no repo symlinks (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Round-trip setup.sh --link-only and uninstall.sh --yes
+        run: |
+          set -euo pipefail
+          export TEST_HOME="$RUNNER_TEMP/fakehome"
+          mkdir -p "$TEST_HOME"
+          DOTFILES_DIR="$(pwd)"
+
+          # List every symlink under $TEST_HOME that points into the
+          # dotfiles repo. That's the set uninstall.sh is responsible for.
+          repo_symlinks() {
+            find "$TEST_HOME" -type l 2>/dev/null | sort | while read -r link; do
+              tgt="$(readlink "$link")"
+              case "$tgt" in
+                "$DOTFILES_DIR"/*) printf '%s -> %s\n' "$link" "$tgt" ;;
+              esac
+            done
+          }
+
+          set +e
+          HOME="$TEST_HOME" bash setup.sh --link-only > setup.log 2>&1
+          rc=$?
+          set -e
+          cat setup.log
+          if [ $rc -ne 0 ]; then
+            echo "::error::setup.sh --link-only exited $rc" >&2
+            exit $rc
+          fi
+
+          repo_symlinks > installed.txt
+          if [ ! -s installed.txt ]; then
+            echo "::error::setup.sh --link-only produced zero symlinks into the repo — workflow is no longer testing anything." >&2
+            exit 1
+          fi
+          echo "--- symlinks setup.sh created (uninstall.sh must remove these) ---"
+          cat installed.txt
+
+          set +e
+          HOME="$TEST_HOME" bash bin/uninstall.sh --yes > uninstall.log 2>&1
+          rc=$?
+          set -e
+          cat uninstall.log
+          if [ $rc -ne 0 ]; then
+            echo "::error::uninstall.sh --yes exited $rc" >&2
+            exit $rc
+          fi
+
+          repo_symlinks > leftover.txt
+          if [ -s leftover.txt ]; then
+            echo "--- symlinks into the repo that survived uninstall.sh ---"
+            cat leftover.txt
+            echo "::error::uninstall.sh left repo-pointing symlinks in \$HOME. Likely cause: a safe_link in setup.sh has no matching entry in bin/lib/symlinks.sh, so uninstall.sh never sees it. See CLAUDE.md → 'Uninstall upkeep'." >&2
+            exit 1
+          fi
