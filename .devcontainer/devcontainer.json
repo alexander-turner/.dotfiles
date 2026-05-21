@@ -12,7 +12,8 @@
   },
   "runArgs": [
     "--cap-add=NET_ADMIN",
-    "--cap-add=NET_RAW"
+    "--cap-add=NET_RAW",
+    "--pids-limit=512"
   ],
   "mounts": [
     "source=dotfiles-claude-history-${devcontainerId},target=/commandhistory,type=volume",
@@ -23,6 +24,7 @@
     "DOTFILES_DEVCONTAINER": "1"
   },
   "workspaceFolder": "/workspaces/.dotfiles",
+  "waitFor": "postCreateCommand",
   "postCreateCommand": "sudo /workspaces/.dotfiles/.devcontainer/init-firewall.sh && bash /workspaces/.dotfiles/setup.sh --link-only",
   "customizations": {
     "vscode": {
