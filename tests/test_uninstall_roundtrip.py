@@ -1,0 +1,48 @@
+"""Setup → uninstall round-trip.
+
+Enforces CLAUDE.md's "Uninstall upkeep" invariant: every safe_link in setup.sh
+whose target lives in $HOME has a matching remove in uninstall.sh (typically
+via bin/lib/symlinks.sh). Scope matches uninstall.sh — symlinks only, not the
+touch-files setup.sh creates.
+"""
+
+from __future__ import annotations
+
+import os
+import subprocess
+from pathlib import Path
+
+DOTFILES = Path(__file__).resolve().parents[1]
+
+
+def _repo_symlinks(home: Path) -> list[Path]:
+    """Symlinks under `home` that point into the dotfiles repo."""
+    found: list[Path] = []
+    for root, dirs, files in os.walk(home, followlinks=False):
+        for name in (*dirs, *files):
+            p = Path(root) / name
+            if p.is_symlink() and os.readlink(p).startswith(f"{DOTFILES}{os.sep}"):
+                found.append(p)
+    return sorted(found)
+
+
+def _run(script: str, *args: str, home: Path) -> None:
+    subprocess.run(
+        ["bash", str(DOTFILES / script), *args],
+        env={**os.environ, "HOME": str(home)},
+        check=True,
+    )
+
+
+def test_uninstall_removes_every_setup_symlink(tmp_path: Path) -> None:
+    _run("setup.sh", "--link-only", home=tmp_path)
+    installed = _repo_symlinks(tmp_path)
+    assert installed, "setup.sh --link-only produced zero repo symlinks — test is no longer testing anything"
+
+    _run("bin/uninstall.sh", "--yes", home=tmp_path)
+    leftover = _repo_symlinks(tmp_path)
+    assert not leftover, (
+        "uninstall.sh left repo-pointing symlinks in $HOME. Likely cause: a "
+        "safe_link in setup.sh has no matching entry in bin/lib/symlinks.sh. "
+        f"Leftover: {leftover}"
+    )

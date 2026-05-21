@@ -147,13 +147,13 @@ real dir → prompt, missing → create.
   job is text expansion — abbrs preserve history readability.
 - Use `command <name>` to bypass fish/bash function shadowing
   (e.g. `command rm`, `command npm`) rather than removing the wrapper.
-- Non-trivial shell logic in a `.github/workflows/*.yml` `run:` block
-  should be extracted into a script under `bin/` and invoked from the
-  workflow. `bin/lint.sh`'s shellcheck + shfmt globs cover `bin/*.sh`
-  but not inline workflow scripts, so anything left in `run:` skips
-  static analysis. Pattern: `bin/test-uninstall-roundtrip.sh` called by
-  `.github/workflows/uninstall.yml`. A `run:` block of more than ~10
-  meaningful lines is the smell.
+- Tests of repo behavior go in `tests/test_*.py` and run via `pytest` —
+  cleaner assertions than shell, ruff already lints `.py`, and
+  `tmp_path` handles isolation. Pattern:
+  `tests/test_uninstall_roundtrip.py` invoked from
+  `.github/workflows/uninstall.yml`. Avoid non-trivial shell in workflow
+  `run:` blocks for the same reason: it skips static analysis. A `run:`
+  block of more than a handful of meaningful lines is the smell.
 
 ## When fixing CI failures
 
