@@ -1,0 +1,30 @@
+name: Uninstall round-trip
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+# Enforces the CLAUDE.md "Uninstall upkeep" contract: every safe_link in
+# setup.sh whose target lives in $HOME has a matching remove in uninstall.sh.
+# Test logic lives in tests/test_uninstall_roundtrip.py — pytest gives clean
+# assertions and ruff already lints it.
+#
+# Runs on Ubuntu and macOS so the `if $IS_MAC` arm of bin/lib/symlinks.sh
+# (aerospace, iTerm2 plist, borders, swiftbar) is exercised on the OS that
+# emits those entries. The bespoke macOS launch-agent safe_links in setup.sh
+# live past --link-only's exit point and are intentionally out of scope.
+
+jobs:
+  uninstall-roundtrip:
+    name: setup → uninstall leaves no repo symlinks (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install --quiet pytest
+      - run: pytest -v tests/test_uninstall_roundtrip.py

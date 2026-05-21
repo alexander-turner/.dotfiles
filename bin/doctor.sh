@@ -118,8 +118,20 @@ check_command() {
     fi
 }
 
-for cmd in git fish nvim tmux brew zoxide gh fzf rg fd bat eza delta tokei dust btm mise carapace shfmt mods trash-put trash-empty; do
+for cmd in git fish nvim tmux brew zoxide gh fzf rg fd bat eza delta tokei dust btm mise carapace shfmt mods; do
     check_command "$cmd"
+done
+
+# trash-put / trash-empty are installed via `uv tool install trash-cli`, which
+# puts binaries in ~/.local/bin (not a brew prefix). Skip rather than fail so a
+# partially-bootstrapped machine (PATH not yet fully configured) doesn't flood
+# the output with spurious FAILs.
+for cmd in trash-put trash-empty; do
+    if command -v "$cmd" >/dev/null 2>&1; then
+        pass "$cmd"
+    else
+        skip "$cmd" "not on PATH (run: uv tool install trash-cli)"
+    fi
 done
 
 if $IS_MAC; then

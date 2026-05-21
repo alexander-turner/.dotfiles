@@ -115,7 +115,8 @@ fi
 # here, and there is no user data at risk.
 ln -sf "$DOTFILES_DIR"/apps/fish/config.fish "$FISH_CONFIG_DIR/config.fish"
 ln -sf "$DOTFILES_DIR"/apps/fish/functions/fish_prompt.fish "$FISH_CONFIG_DIR/functions/fish_prompt.fish"
-ln -sf "$DOTFILES_DIR"/apps/fish/functions/claude.fish "$FISH_CONFIG_DIR/functions/claude.fish"
+mkdir -p "$FISH_CONFIG_DIR/completions"
+ln -sf "$DOTFILES_DIR"/apps/fish/completions/dotfiles.fish "$FISH_CONFIG_DIR/completions/dotfiles.fish"
 # Clear any stale dangling symlink left by older versions of this script.
 if [ -L "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish" ] &&
     [ ! -e "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish" ]; then

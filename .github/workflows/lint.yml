@@ -45,6 +45,9 @@ jobs:
       - name: Auto-fix lint issues
         run: ./bin/lint.sh --ci --fix
 
+      - name: Test Claude Code hooks
+        run: bash bin/test-claude-hooks.sh
+
       - name: Commit fixes if any
         run: |
           git diff --quiet && exit 0

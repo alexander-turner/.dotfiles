@@ -6,11 +6,13 @@ To install:
 git clone https://github.com/alexander-turner/.dotfiles ~/.dotfiles && cd ~/.dotfiles && bash setup.sh
 ```
 
-`setup.sh` will (with warning) **overwrite** your existing `.bashrc`, `.vimrc`, `.gitconfig`, `.npmrc`, `.tmux.conf`, `.config/nvim`, `.config/fish/config.fish`, `.config/mods/mods.yml`, and any `.aider*` files. Before clobbering, the previous file is moved to `~/.dotfiles-backup/<UTC-timestamp>/<rel-path>/` — so a misclick on the y/N prompt is recoverable. The new files are symlinked to the files in the repository, so edits to the originals are reflected immediately.
+`setup.sh` will (with warning) **overwrite** your existing `.bashrc`, `.vimrc`, `.gitconfig`, `.npmrc`, `.tmux.conf`, `.config/nvim`, `.config/fish/config.fish`, `.config/mods/mods.yml`, and any `.aider*` files. On macOS it also links `.aerospace.toml`, `~/Library/com.googlecode.iterm2.plist`, `~/.config/borders/bordersrc`, and `~/.config/vagrant-templates/Vagrantfile`. Before clobbering, the previous file is moved to `~/.dotfiles-backup/<UTC-timestamp>/<rel-path>/` — so a misclick on the y/N prompt is recoverable. The new files are symlinked to the files in the repository, so edits to the originals are reflected immediately.
 
 You can also run `bash setup.sh --link-only` to refresh symlinks without reinstalling packages. Both setup paths end by running `bin/doctor.sh`, which reports a green health summary (or tells you exactly what's still broken).
 
 To verify health at any time: `bash bin/doctor.sh` (or `--quiet` for failures-only). To reverse the install — removing only symlinks that point into this repo and restoring the most recent backup — run `bash bin/uninstall.sh` (add `--yes` for non-interactive). The dotfiles repo itself is left untouched.
+
+Once setup has run, those chores are also reachable through the `dotfiles` dispatcher symlinked at `~/.local/bin/dotfiles` (fish completions included): `dotfiles doctor | uninstall | link | lint`.
 
 Two CI workflows guard the install:
 
@@ -103,6 +105,12 @@ Two layers, both encrypted, complementary roles:
 - **envchain** (runtime cache, per-machine). Reads from the macOS Keychain, which is silently unlocked at GUI login — so wrappers like `npm`, `rclone`, and `aider_redpill` are zero-prompt during normal use.
 
 Each secret is stored as a Bitwarden Login item named `envchain/<namespace>/<VAR>` inside a folder named `envchain`. The wrappers in `apps/fish/config.fish` call `envchain <namespace> <command> <args...>`, exactly as before.
+
+### Defense against accidental leaks
+
+Two-layer `gitleaks` gate, same `.gitleaks.toml`: pre-push scans only
+the commits the push adds (fast even on huge histories), CI scans full
+history on every PR. If a real hit lands, **rotate first**, then rewrite.
 
 ### One-time setup
 

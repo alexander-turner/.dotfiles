@@ -1,4 +1,33 @@
 #!/bin/bash
-# Pre-push hook: runs linting checks before pushing
+# Pre-push hook: secrets scan on the push range, then full lint.
+#
+# Git's pre-push protocol feeds us one line per ref being pushed:
+#   <local-ref> <local-sha> <remote-ref> <remote-sha>
+# We translate each into a git-log range and hand it to gitleaks via
+# GITLEAKS_LOG_OPTS so bin/lint.sh only scans the commits this push adds
+# (full-history scans run in CI). Falls back to a full scan when stdin
+# isn't a git hook — e.g. running `bash bin/lint.sh` directly.
+set -euo pipefail
 
-"$(git rev-parse --show-toplevel)/bin/lint.sh"
+git_root="$(git rev-parse --show-toplevel)"
+zero=0000000000000000000000000000000000000000
+log_opts=""
+
+# `read` is the right tool to consume git's per-ref protocol; harmless when
+# stdin is closed (the loop just doesn't iterate).
+while read -r _local_ref local_sha _remote_ref remote_sha; do
+    [ "$local_sha" = "$zero" ] && continue # branch deletion — nothing to scan
+    if [ "$remote_sha" = "$zero" ]; then
+        # New branch: scan commits unique to it (not reachable from any
+        # ref already on origin).
+        log_opts="$log_opts $local_sha --not --remotes=origin"
+    else
+        log_opts="$log_opts $remote_sha..$local_sha"
+    fi
+done
+
+if [ -n "$log_opts" ]; then
+    export GITLEAKS_LOG_OPTS="${log_opts# }"
+fi
+
+"$git_root/bin/lint.sh"
