@@ -26,12 +26,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # QEMU enables building the arm64 image on the amd64 runner so
-      # Apple Silicon Mac minis + arm64 home-server boxes get a native
-      # pull instead of falling back to QEMU at runtime.
-      - name: Set up QEMU for cross-arch builds
-        uses: docker/setup-qemu-action@v3
-
       # Auth to GHCR only on actual pushes to main — PRs from forks can't
       # mint a token with packages:write anyway, and `push: filter` below
       # already skips the push step on pull_request events.
@@ -46,19 +40,18 @@ jobs:
       # devcontainers/ci builds per devcontainer.json (catches devcontainer.json
       # regressions, not just Dockerfile ones). `runCmd` is asserted post-build,
       # so a failing build OR a failing smoke check both fail the workflow.
-      #
-      # `platform` is conditional: PR runs build amd64-only because multi-arch
-      # forces buildx to export to an OCI tarball rather than load into the
-      # local daemon — which leaves `runCmd` with no image to exec. push-to-main
-      # runs (which actually publish) get the full linux/amd64,linux/arm64
-      # manifest list so Apple Silicon + arm64 home-server boxes pull native.
-      #
       # `push: filter` pushes only on push events (never PRs).
+      #
+      # Note: multi-arch (linux/amd64,linux/arm64) is incompatible with this
+      # action's `runCmd` — setting `platform` forces buildx into OCI-tarball
+      # export mode (--output type=oci) instead of --load, which leaves the
+      # smoke check with no image in the local daemon to exec. Building amd64
+      # only for now; multi-arch can come back as a follow-up if/when needed
+      # (separate two-stage build, or `ubuntu-22.04-arm` runner).
       - name: Build devcontainer, run smoke check, publish to GHCR
         uses: devcontainers/ci@v0.3
         with:
           imageName: ghcr.io/${{ github.repository_owner }}/dotfiles-devcontainer
           imageTag: latest,${{ github.sha }}
-          platform: ${{ github.event_name == 'push' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
           push: filter
           runCmd: bash .devcontainer/smoke-check.bash
