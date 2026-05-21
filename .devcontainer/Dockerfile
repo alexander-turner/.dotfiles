@@ -107,4 +107,4 @@ USER node
 # without listing the binary here means the smoke test passes by
 # accident; listing one here without an install step means it fails
 # loudly. Whitespace-separated; alphabetised for diff sanity.
-ENV DOTFILES_TOOLS="bash claude fish fzf gh git iptables ipset jq node npm pnpm python3 ripgrep zsh"
+ENV DOTFILES_TOOLS="bash claude fish fzf gh git iptables ipset jq node npm pnpm python3 rg zsh"
