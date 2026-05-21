@@ -23,8 +23,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Uses devcontainer.smoke.json (no postCreateCommand, no runArgs) so
+      # the smoke test validates the IMAGE in isolation. The real
+      # devcontainer.json wires up init-firewall.sh + setup.sh --link-only
+      # for actual developer sessions — those are tested by usage, not here.
       - name: Build devcontainer and run smoke check
         uses: devcontainers/ci@v0.3
         with:
           imageName: dotfiles-devcontainer-smoke
+          configFile: .devcontainer/devcontainer.smoke.json
           runCmd: bash .devcontainer/smoke-check.sh
