@@ -27,64 +27,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run setup.sh --link-only twice in an isolated HOME
-        run: |
-          set -euo pipefail
-          export TEST_HOME="$RUNNER_TEMP/fakehome"
-          mkdir -p "$TEST_HOME"
-          # All scratch files live under $RUNNER_TEMP, not the repo workspace,
-          # so the porcelain check below sees only what setup.sh itself wrote.
-          SCRATCH="$RUNNER_TEMP/idempotency"
-          mkdir -p "$SCRATCH"
-          # safe_link writes its backups under $HOME/.dotfiles-backup; isolating
-          # $HOME means the real runner home is untouched. setup.sh's tail-end
-          # call to doctor.sh emits FAILs for missing brew/fish/etc. — we
-          # inspect the output later, so capture here without exiting.
-          set +e
-          HOME="$TEST_HOME" bash setup.sh --link-only > "$SCRATCH/run1.log" 2>&1
-          rc1=$?
-          set -e
-          cat "$SCRATCH/run1.log"
-          if [ $rc1 -ne 0 ]; then
-            # setup.sh shouldn't return non-zero on --link-only even when
-            # doctor flags missing tools (we use `|| true` there). Anything
-            # else is a real failure.
-            echo "::error::setup.sh --link-only exited $rc1 on first run" >&2
-            exit $rc1
-          fi
-          ( cd "$TEST_HOME" && find . -type l | sort | xargs -I{} bash -c 'echo "{} -> $(readlink "{}")"' ) > "$SCRATCH/links1.txt"
-
-          set +e
-          HOME="$TEST_HOME" bash setup.sh --link-only > "$SCRATCH/run2.log" 2>&1
-          rc2=$?
-          set -e
-          cat "$SCRATCH/run2.log"
-          if [ $rc2 -ne 0 ]; then
-            echo "::error::setup.sh --link-only exited $rc2 on second run" >&2
-            exit $rc2
-          fi
-          ( cd "$TEST_HOME" && find . -type l | sort | xargs -I{} bash -c 'echo "{} -> $(readlink "{}")"' ) > "$SCRATCH/links2.txt"
-
-          # Symlink set must be identical between runs.
-          diff -u "$SCRATCH/links1.txt" "$SCRATCH/links2.txt"
-
-          # Second run must not have prompted, skipped, or backed anything up.
-          if grep -E "(already exists|Overwrite|Skipping|backed up to)" "$SCRATCH/run2.log"; then
-            echo "::error::setup.sh --link-only is not idempotent — see matches above" >&2
-            exit 1
-          fi
-
-          # The repo working tree must stay clean. Catches the real bug class:
-          # setup writing into the repo (rendered templates left behind, stray
-          # files from a brew/install step, etc.). More targeted than running
-          # setup a 3rd time — n+1 runs only catches "drifts later," which we
-          # have no evidence of.
-          if [ -n "$(git status --porcelain)" ]; then
-            echo "::error::setup.sh --link-only dirtied the repo working tree:" >&2
-            git status --porcelain >&2
-            git diff >&2
-            exit 1
-          fi
+      - name: Run idempotency check
+        env:
+          # Scratch dirs under $RUNNER_TEMP keep the workflow's own log/listing
+          # files out of the repo workspace, so the script's porcelain check
+          # sees only what setup.sh itself wrote.
+          TEST_HOME: ${{ runner.temp }}/fakehome
+          SCRATCH: ${{ runner.temp }}/idempotency
+        run: bash bin/check-idempotency.sh
 
       - name: Doctor reports symlinks healthy
         run: |
