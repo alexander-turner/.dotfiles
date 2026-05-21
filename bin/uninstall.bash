@@ -1,5 +1,5 @@
 #!/bin/bash
-# uninstall.sh — reverse the symlinks that setup.sh created in $HOME, then
+# uninstall.bash — reverse the symlinks that setup.bash created in $HOME, then
 # restore from the most recent ~/.dotfiles-backup/<UTC-stamp>/ when one
 # exists.
 #
@@ -11,10 +11,10 @@
 #   * Does not touch the in-repo .hooks/pre-push relative symlink.
 #
 # Usage:
-#   bash bin/uninstall.sh           # prompts before each macOS launchd unload
-#   bash bin/uninstall.sh --yes     # non-interactive; assume yes to prompts
+#   bash bin/uninstall.bash           # prompts before each macOS launchd unload
+#   bash bin/uninstall.bash --yes     # non-interactive; assume yes to prompts
 #
-# Maintenance invariant: every new safe_link in setup.sh whose target is in
+# Maintenance invariant: every new safe_link in setup.bash whose target is in
 # $HOME must get a matching `remove_dotfile_symlink` call here. See CLAUDE.md
 # ("Uninstall upkeep") for the rule.
 
@@ -140,4 +140,4 @@ fi
 
 echo
 echo ":: Uninstall complete. The dotfiles repo at $DOTFILES_DIR is untouched."
-echo "   Run 'bash $DOTFILES_DIR/setup.sh' to reinstall."
+echo "   Run 'bash $DOTFILES_DIR/setup.bash' to reinstall."

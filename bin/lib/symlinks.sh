@@ -5,10 +5,10 @@
 # with `while IFS='|' read -r target source label; do …; done < <(managed_symlinks)`.
 # DOTFILES_DIR must be set in the caller before invoking.
 #
-# Maintenance invariant: every safe_link in setup.sh whose target lives in
+# Maintenance invariant: every safe_link in setup.bash whose target lives in
 # $HOME should have a matching entry here (or be intentionally bespoke).
 # Anything bespoke — the in-repo .hooks/pre-push relative symlink, the ccr
-# launch agent, etc. — stays inline in setup.sh / doctor.sh / uninstall.sh.
+# launch agent, etc. — stays inline in setup.bash / doctor.bash / uninstall.bash.
 managed_symlinks() {
     cat <<EOF
 $HOME/.bashrc|$DOTFILES_DIR/.bashrc|.bashrc
@@ -31,7 +31,7 @@ EOF
 $HOME/.aerospace.toml|$DOTFILES_DIR/.aerospace.toml|.aerospace.toml
 $HOME/Library/com.googlecode.iterm2.plist|$DOTFILES_DIR/apps/com.googlecode.iterm2.plist|iTerm2 plist
 $HOME/.config/borders/bordersrc|$DOTFILES_DIR/apps/borders/bordersrc|borders config
-$HOME/.config/swiftbar/vpn.10s.sh|$DOTFILES_DIR/apps/swiftbar/vpn.10s.sh|swiftbar vpn plugin
+$HOME/.config/swiftbar/vpn.10s.bash|$DOTFILES_DIR/apps/swiftbar/vpn.10s.bash|swiftbar vpn plugin
 EOF
     fi
     for aider_file in "$DOTFILES_DIR"/.aider*; do

@@ -6,7 +6,7 @@
     <string>com.turntrout.tailscale-exit-node</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/turntrout/.dotfiles/bin/tailscale-apply-exit-node.sh</string>
+        <string>/Users/turntrout/.dotfiles/bin/tailscale-apply-exit-node.bash</string>
     </array>
     <key>EnvironmentVariables</key>
     <dict>

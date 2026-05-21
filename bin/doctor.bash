@@ -1,17 +1,17 @@
 #!/bin/bash
-# doctor.sh — health check for this dotfiles install.
+# doctor.bash — health check for this dotfiles install.
 #
 # Runs a set of read-only assertions and prints PASS/FAIL/SKIP per check.
 # Exits non-zero if any required check fails. Optional checks (Bitwarden,
 # tmux/TPM, launchd agents) are SKIP rather than FAIL when their tooling
-# isn't installed — `doctor.sh` is meant to be safe to run anywhere.
+# isn't installed — `doctor.bash` is meant to be safe to run anywhere.
 #
 # Usage:
-#   bash bin/doctor.sh             # only print failing/skipped checks + summary
-#   bash bin/doctor.sh --verbose   # also print every passing check
-#   bash bin/doctor.sh --quiet     # alias of the default (kept for compat)
+#   bash bin/doctor.bash             # only print failing/skipped checks + summary
+#   bash bin/doctor.bash --verbose   # also print every passing check
+#   bash bin/doctor.bash --quiet     # alias of the default (kept for compat)
 #
-# Maintenance invariant: every new feature added to setup.sh that creates a
+# Maintenance invariant: every new feature added to setup.bash that creates a
 # symlink, daemon, or external dependency MUST add a matching check here.
 # See CLAUDE.md ("Doctor upkeep") for the rule.
 
@@ -22,7 +22,7 @@ case "${1:-}" in
 --verbose) VERBOSE=true ;;
 --quiet | "") ;;
 *)
-    printf "doctor.sh: unknown flag %q\n" "$1" >&2
+    printf "doctor.bash: unknown flag %q\n" "$1" >&2
     exit 2
     ;;
 esac
@@ -76,7 +76,7 @@ check_symlink() {
         if [[ -e "$target" ]]; then
             fail "$label" "$target exists but is not a symlink"
         else
-            fail "$label" "$target missing (run setup.sh --link-only)"
+            fail "$label" "$target missing (run setup.bash --link-only)"
         fi
         return
     fi
@@ -142,7 +142,7 @@ if $IS_MAC; then
     if command -v wally-cli >/dev/null 2>&1; then
         pass "wally-cli"
     else
-        skip "wally-cli" "not on PATH (run setup.sh or: go install github.com/zsa/wally-cli@latest)"
+        skip "wally-cli" "not on PATH (run setup.bash or: go install github.com/zsa/wally-cli@latest)"
     fi
 fi
 
@@ -186,14 +186,14 @@ if [ -n "$bw_cmd" ] && command -v "$bw_cmd" >/dev/null 2>&1; then
     if "$bw_cmd" status --raw 2>/dev/null | grep -qE '"status":"(locked|unlocked)"'; then
         pass "bw is logged in ($bw_cmd)"
     else
-        fail "bw login" "not logged in (run: bash bin/bw-login.sh)"
+        fail "bw login" "not logged in (run: bash bin/bw-login.bash)"
     fi
     # Warn if the scripts will fall back to Rust bw — known-flaky for scripting.
     if [ "$(basename "$bw_cmd")" = "bw" ] && ! command -v bw-node >/dev/null 2>&1; then
         skip "bw-node" "Node bw not found; scripts will use $bw_cmd which may misbehave"
     fi
 else
-    skip "bw" "neither bw-node nor bw on PATH (run setup.sh)"
+    skip "bw" "neither bw-node nor bw on PATH (run setup.bash)"
 fi
 
 if command -v envchain >/dev/null 2>&1; then
@@ -224,7 +224,7 @@ TPM_DIR="$HOME/.tmux/plugins/tpm"
 if [[ -d "$TPM_DIR/.git" ]]; then
     pass "tmux plugin manager (TPM) cloned"
 else
-    fail "TPM" "$TPM_DIR is not a git checkout (run setup.sh)"
+    fail "TPM" "$TPM_DIR is not a git checkout (run setup.bash)"
 fi
 
 # ── cron jobs ───────────────────────────────────────────────────────────────
@@ -234,7 +234,7 @@ if command -v crontab >/dev/null 2>&1 && command -v trash-empty >/dev/null 2>&1;
     if crontab -l 2>/dev/null | grep -q "trash-empty"; then
         pass "trash-empty cron job"
     else
-        fail "trash-empty cron" "not scheduled (run setup.sh)"
+        fail "trash-empty cron" "not scheduled (run setup.bash)"
     fi
 else
     skip "trash-empty cron" "crontab or trash-empty not available"
@@ -269,7 +269,7 @@ if $IS_MAC; then
     if [[ -f "$TAILSCALE_PLIST" ]]; then
         pass "Tailscale daemon plist installed"
     else
-        skip "Tailscale daemon" "plist not at $TAILSCALE_PLIST (run setup.sh to install)"
+        skip "Tailscale daemon" "plist not at $TAILSCALE_PLIST (run setup.bash to install)"
     fi
 fi
 

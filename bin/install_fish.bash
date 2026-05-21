@@ -87,7 +87,7 @@ fish -c '_tide_find_and_remove jobs tide_right_prompt_items; _tide_find_and_remo
 
 # Resolve DOTFILES_DIR from this script's location (bin/ is one level down)
 DOTFILES_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-bash "$DOTFILES_DIR"/bin/font_install.sh
+bash "$DOTFILES_DIR"/bin/font_install.bash
 
 # Create Fish configuration directory if it doesn't exist
 FISH_CONFIG_DIR="$HOME/.config/fish"

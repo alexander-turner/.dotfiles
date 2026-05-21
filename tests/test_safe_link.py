@@ -1,6 +1,6 @@
 """Tests for bin/lib/safe_link.sh — the only function that touches user files.
 
-Invoked from bin/lint.sh (check_safe_link_tests). Pytest's fixtures + assertion
+Invoked from bin/lint.bash (check_safe_link_tests). Pytest's fixtures + assertion
 rewriting express the same coverage in roughly half the lines a shell harness
 would need.
 """
@@ -32,7 +32,7 @@ def home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 def run_script(src: Path, tgt: Path, *, stdin: str | None = None) -> int:
-    """Invoke safe_link.sh as a script — the entry point setup.sh uses."""
+    """Invoke safe_link.sh as a script — the entry point setup.bash uses."""
     return subprocess.run(
         ["bash", str(SAFE_LINK_SH), str(src), str(tgt)],
         input=stdin, capture_output=True, text=True,
@@ -90,8 +90,8 @@ def test_real_file_backed_up_before_clobber(home: Path) -> None:
 
 
 def test_same_session_backups_share_stamp(home: Path) -> None:
-    """uninstall.sh's "restore from latest" depends on every file clobbered
-    in one setup.sh run landing under the same UTC stamp dir."""
+    """uninstall.bash's "restore from latest" depends on every file clobbered
+    in one setup.bash run landing under the same UTC stamp dir."""
     (home / ".a").write_text("a-data")
     (home / ".b").write_text("b-data")
     result = source_and_run(
@@ -122,7 +122,7 @@ def test_two_runs_are_idempotent(home: Path, tmp_path: Path) -> None:
 
 
 def test_non_interactive_skips_real_file_silently(home: Path, tmp_path: Path) -> None:
-    """CI idempotency depends on setup.sh's closed-stdin runs not blocking
+    """CI idempotency depends on setup.bash's closed-stdin runs not blocking
     or tripping set -e on the overwrite prompt."""
     src = tmp_path / "source"
     src.write_text("x")

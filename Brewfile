@@ -5,8 +5,8 @@ brew "neovim"
 brew "tmux"
 brew "mosh"
 brew "envchain"
-# Bitwarden CLI is installed via pnpm (@bitwarden/cli) — see setup.sh.
-# The Rust brew flavor has scripting quirks our bin/bw-*.sh can't dodge.
+# Bitwarden CLI is installed via pnpm (@bitwarden/cli) — see setup.bash.
+# The Rust brew flavor has scripting quirks our bin/bw-*.bash can't dodge.
 brew "safe-rm"
 brew "xclip"
 brew "gcc"
@@ -40,7 +40,7 @@ brew "charmbracelet/tap/mods"
 # Fonts
 cask "font-fira-code-nerd-font"
 
-# Formatters (conform.nvim, lint.sh)
+# Formatters (conform.nvim, lint.bash)
 brew "stylua"
 brew "ruff"
 brew "shfmt"
