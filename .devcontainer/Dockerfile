@@ -1,15 +1,15 @@
 # Devcontainer image for hacking on this dotfiles repo with Claude Code.
-# Mirrors what bin/lint.sh and tests/test_claude_hooks.py expect locally:
+# Mirrors what bin/lint.bash and tests/test_claude_hooks.py expect locally:
 # shellcheck, shfmt, gitleaks, ruff/pytest, yamllint, fish, jq, node,
 # stylua. The gh CLI is installed by the devcontainer feature
 # `github-cli` declared in devcontainer.json — not by this Dockerfile.
-# Egress is restricted at first boot by init-firewall.sh.
+# Egress is restricted at first boot by init-firewall.bash.
 FROM mcr.microsoft.com/devcontainers/base:ubuntu-22.04
 
 ARG TZ=UTC
 ENV TZ="$TZ"
 
-# System packages. iptables/ipset/dnsutils are for init-firewall.sh.
+# System packages. iptables/ipset/dnsutils are for init-firewall.bash.
 # Node.js is NOT here — Ubuntu 22.04's apt nodejs is 12.x which can't
 # parse Claude Code's install script (optional-chaining is Node 14+).
 # See the NodeSource step further down.
@@ -40,7 +40,7 @@ RUN apt-get update \
         yamllint \
     && rm -rf /var/lib/apt/lists/*
 
-# Python tooling used by bin/lint.sh and tests/.
+# Python tooling used by bin/lint.bash and tests/.
 RUN pip3 install --no-cache-dir ruff==0.6.9 pytest==8.3.3
 
 # gitleaks — pinned so devcontainer rebuilds are reproducible. No official
@@ -75,12 +75,12 @@ RUN npm install -g @anthropic-ai/claude-code \
     && npm cache clean --force
 
 # Let the firewall init script run unattended at postCreateCommand time.
-RUN echo "vscode ALL=(root) NOPASSWD: /workspaces/.dotfiles/.devcontainer/init-firewall.sh" \
+RUN echo "vscode ALL=(root) NOPASSWD: /workspaces/.dotfiles/.devcontainer/init-firewall.bash" \
         > /etc/sudoers.d/init-firewall \
     && chmod 0440 /etc/sudoers.d/init-firewall
 
 # Single source of truth for the CLI binaries this image is expected to
-# provide. .devcontainer/smoke-check.sh (invoked via devcontainers/ci on
+# provide. .devcontainer/smoke-check.bash (invoked via devcontainers/ci on
 # every change under .devcontainer/) reads $DOTFILES_TOOLS and asserts
 # every entry is on PATH — adding an install step above without listing
 # the binary here means the smoke test passes by accident; listing one

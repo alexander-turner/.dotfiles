@@ -1,6 +1,6 @@
 #!/bin/bash
 # Local wrapper for the devcontainer smoke check. Brings the devcontainer
-# up and runs .devcontainer/smoke-check.sh inside it — same script CI
+# up and runs .devcontainer/smoke-check.bash inside it — same script CI
 # runs via the devcontainers/ci action, just driven by the official
 # @devcontainers/cli locally.
 #
@@ -29,5 +29,5 @@ cd "$REPO_ROOT"
 echo "==> devcontainer up"
 devcontainer up --workspace-folder .
 
-echo "==> devcontainer exec bash .devcontainer/smoke-check.sh"
-devcontainer exec --workspace-folder . bash .devcontainer/smoke-check.sh
+echo "==> devcontainer exec bash .devcontainer/smoke-check.bash"
+devcontainer exec --workspace-folder . bash .devcontainer/smoke-check.bash

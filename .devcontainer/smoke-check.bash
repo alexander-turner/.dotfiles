@@ -7,8 +7,8 @@
 # lives in .mcp.json — nothing to assert here.
 #
 # Invoked two ways:
-#   * CI:    devcontainers/ci@v0.3 runCmd: bash .devcontainer/smoke-check.sh
-#   * Local: bash bin/check-devcontainer.sh (which wraps the devcontainer CLI)
+#   * CI:    devcontainers/ci@v0.3 runCmd: bash .devcontainer/smoke-check.bash
+#   * Local: bash bin/check-devcontainer.bash (which wraps the devcontainer CLI)
 
 set -euo pipefail
 

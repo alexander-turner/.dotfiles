@@ -6,14 +6,14 @@ on:
     paths:
       - ".devcontainer/**"
       - ".mcp.json"
-      - "bin/check-devcontainer.sh"
+      - "bin/check-devcontainer.bash"
       - ".github/workflows/devcontainer-smoke.yml"
   pull_request:
     branches: [main, master]
     paths:
       - ".devcontainer/**"
       - ".mcp.json"
-      - "bin/check-devcontainer.sh"
+      - "bin/check-devcontainer.bash"
       - ".github/workflows/devcontainer-smoke.yml"
 
 # packages:write lets the action push to GHCR on main; read-only otherwise.
@@ -41,8 +41,8 @@ jobs:
 
       # Uses .devcontainer/smoke/devcontainer.json (no postCreateCommand,
       # no runArgs) so the smoke test validates the IMAGE in isolation.
-      # The real .devcontainer/devcontainer.json wires up init-firewall.sh
-      # + setup.sh --link-only for actual developer sessions — those are
+      # The real .devcontainer/devcontainer.json wires up init-firewall.bash
+      # + setup.bash --link-only for actual developer sessions — those are
       # tested by usage, not here. devcontainers CLI requires the config
       # be named exactly devcontainer.json, so it lives in its own subdir.
       #
@@ -55,4 +55,4 @@ jobs:
           imageTag: latest,${{ github.sha }}
           configFile: .devcontainer/smoke/devcontainer.json
           push: filter
-          runCmd: bash .devcontainer/smoke-check.sh
+          runCmd: bash .devcontainer/smoke-check.bash

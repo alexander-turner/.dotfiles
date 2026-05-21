@@ -13,7 +13,7 @@
 set -euo pipefail
 
 if [[ "$(id -u)" != "0" ]]; then
-    echo "init-firewall.sh: must run as root (try 'sudo')." >&2
+    echo "init-firewall.bash: must run as root (try 'sudo')." >&2
     exit 1
 fi
 

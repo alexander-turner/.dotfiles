@@ -25,7 +25,7 @@
   },
   "workspaceFolder": "/workspaces/.dotfiles",
   "waitFor": "postCreateCommand",
-  "postCreateCommand": "sudo /workspaces/.dotfiles/.devcontainer/init-firewall.sh && bash /workspaces/.dotfiles/setup.sh --link-only",
+  "postCreateCommand": "sudo /workspaces/.dotfiles/.devcontainer/init-firewall.bash && bash /workspaces/.dotfiles/setup.bash --link-only",
   "customizations": {
     "vscode": {
       "extensions": [

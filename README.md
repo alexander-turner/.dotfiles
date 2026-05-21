@@ -179,9 +179,9 @@ feature + Claude Code itself. The MCP filesystem server is **not**
 pre-installed; `.mcp.json`'s `npx --yes` is the single source of truth
 for its version and fetches on first use (allowed by the firewall).
 
-`postCreateCommand` locks egress with `init-firewall.sh` (NET_ADMIN
+`postCreateCommand` locks egress with `init-firewall.bash` (NET_ADMIN
 allowlist of npm, PyPI, Anthropic, GitHub) and then runs
-`setup.sh --link-only` against the container's `$HOME`.
+`setup.bash --link-only` against the container's `$HOME`.
 `waitFor: postCreateCommand` gates the VS Code terminal on the firewall
 being up — no exposed pre-firewall window.
 
@@ -190,7 +190,7 @@ being up — no exposed pre-firewall window.
 - **Non-root runtime** — `remoteUser: vscode`, set by both the
   `mcr.microsoft.com/devcontainers/base` image and the Dockerfile's
   `USER vscode`. Sudo is constrained to a single allow-listed script
-  (`init-firewall.sh`) via `/etc/sudoers.d/init-firewall`.
+  (`init-firewall.bash`) via `/etc/sudoers.d/init-firewall`.
 - **Workspace-only filesystem access** — only the project directory is
   bind-mounted at `/workspaces/.dotfiles`; nothing outside it is visible
   from the container.
@@ -199,7 +199,7 @@ being up — no exposed pre-firewall window.
   not host bind mounts. Container rebuilds keep your auth; a compromised
   container can't grep your host `~/.claude`. The `${devcontainerId}` macro
   hashes the workspace path, so worktrees get independent volumes.
-- **Egress allowlist** — default-DROP OUTPUT chain (`init-firewall.sh`);
+- **Egress allowlist** — default-DROP OUTPUT chain (`init-firewall.bash`);
   only loopback, ESTABLISHED, DNS, SSH, the host subnet, the curated
   domain allowlist (npm/PyPI/Anthropic/GitHub), and GitHub's published
   CIDR ranges can leave the container.
