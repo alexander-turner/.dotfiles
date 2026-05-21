@@ -30,18 +30,8 @@
   "sandbox": {
     "enabled": true,
     "filesystem": {
-      "denyRead": [
-        "~/.ssh/**",
-        "~/.aws/**",
-        "~/.gnupg/**",
-        "**/.env*"
-      ],
-      "denyWrite": [
-        "~/.bashrc",
-        "~/.zshrc",
-        "~/.profile",
-        "~/.config/fish/**"
-      ]
+      "denyRead": ["~/.ssh/**", "~/.aws/**", "~/.gnupg/**", "**/.env*"],
+      "denyWrite": ["~/.bashrc", "~/.zshrc", "~/.profile", "~/.config/fish/**"]
     },
     "network": {
       "allowedDomains": [
@@ -126,7 +116,7 @@
       "Read(//etc/ollama/**)",
       "Read(//private/tmp/**)"
     ]
-  }
+  },
   "enabledPlugins": {
     "code-simplifier@claude-plugins-official": true,
     "plugin-dev@claude-plugins-official": true,
