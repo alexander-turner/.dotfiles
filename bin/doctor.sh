@@ -163,17 +163,25 @@ section "Secrets"
 # binary the scripts actually invoke.
 bw_cmd="${BW_CMD:-$(command -v bw-node 2>/dev/null || command -v bw 2>/dev/null || true)}"
 if [ -n "$bw_cmd" ] && command -v "$bw_cmd" >/dev/null 2>&1; then
+    # Validate the wrapper actually exec's something that responds — catches
+    # the case where bin/bw-node is symlinked but @bitwarden/cli isn't
+    # installed yet (or Node 22 isn't available, etc.).
+    if "$bw_cmd" --version 2>/dev/null | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+'; then
+        pass "bw-node usable ($bw_cmd)"
+    else
+        fail "bw-node" "$bw_cmd doesn't respond to --version (install: pnpm install -g @bitwarden/cli)"
+    fi
     if "$bw_cmd" status --raw 2>/dev/null | grep -qE '"status":"(locked|unlocked)"'; then
         pass "bw is logged in ($bw_cmd)"
     else
         fail "bw login" "not logged in (run: bash bin/bw-login.sh)"
     fi
-    # Warn if the scripts will use Rust bw — known-flaky for scripting.
+    # Warn if the scripts will fall back to Rust bw — known-flaky for scripting.
     if [ "$(basename "$bw_cmd")" = "bw" ] && ! command -v bw-node >/dev/null 2>&1; then
-        skip "bw-node" "Node bw not found; scripts will use $bw_cmd which may misbehave on Rust bw"
+        skip "bw-node" "Node bw not found; scripts will use $bw_cmd which may misbehave"
     fi
 else
-    skip "bw" "bitwarden-cli not installed"
+    skip "bw" "neither bw-node nor bw on PATH (run setup.sh)"
 fi
 
 if command -v envchain >/dev/null 2>&1; then

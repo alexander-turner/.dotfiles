@@ -5,7 +5,8 @@ brew "neovim"
 brew "tmux"
 brew "mosh"
 brew "envchain"
-brew "bitwarden-cli"
+# Bitwarden CLI is installed via pnpm (@bitwarden/cli) — see setup.sh.
+# The Rust brew flavor has scripting quirks our bin/bw-*.sh can't dodge.
 brew "safe-rm"
 brew "xclip"
 brew "gcc"

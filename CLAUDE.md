@@ -113,6 +113,13 @@ real dir → prompt, missing → create.
 - Secrets must never appear on argv. Pipe stdin → stdin between `bw`,
   `envchain`, and child commands. See `bin/bw-add-secret.sh` for the
   pattern.
+- `bin/bw-*.sh` scripts go through `bin/bw-node` (a wrapper around
+  `@bitwarden/cli` from pnpm, pinned to Node 22) instead of the Rust
+  bw CLI. The Rust 2026.x line silently ignores `--passwordenv`, writes
+  ERROR lines to stdout on unlock failure, and doesn't honor session
+  tokens passed by subcommands — all of which break automation.
+  `bw-common.sh:BW_CMD` resolves the wrapper; doctor verifies it
+  responds to `--version`.
 - Public files must not contain credentials. The lint workflow runs
   `gitleaks` against the full git history on every PR — if it flags
   something, rotate the secret first, then fix the commit.
