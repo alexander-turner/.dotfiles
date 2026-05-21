@@ -6,12 +6,16 @@ This directory contains configuration and skills for Claude Code.
 
 ```
 .claude/
-├── settings.json              # Claude Code hooks configuration
+├── settings.json              # Claude Code hooks + statusLine configuration
 ├── hooks/
-│   ├── session-setup.sh      # Runs on session start (installs tools, configures git)
-│   ├── pre-push-check.sh    # Runs before git push / gh pr (build, lint, typecheck)
-│   ├── notify.sh            # Cross-platform desktop notification for Notification hook
-│   └── lib-checks.sh        # Shared bash helpers (exists, has_script)
+│   ├── session-setup.sh      # SessionStart — installs tools, configures git
+│   ├── pre-push-check.sh     # PreToolUse(git push|gh pr) — build/lint/typecheck
+│   ├── notify-dangerous.sh   # PreToolUse(Bash) — desktop heads-up for rm -rf etc.
+│   ├── audit-log.sh          # PostToolUse — append-only JSONL audit at ~/.claude/audit/
+│   ├── scan-input.sh         # UserPromptSubmit — refuse prompts containing secrets
+│   ├── statusline.sh         # statusLine — model · cwd · git branch · mode
+│   ├── notify.sh             # Notification — cross-platform desktop notifier
+│   └── lib-checks.sh         # Shared bash helpers (exists, has_script)
 └── skills/
     └── pr-creation/       # PR creation workflow with self-critique
         ├── SKILL.md       # Main skill entrypoint
@@ -41,6 +45,42 @@ Before `git push` or `gh pr` commands, `pre-push-check.sh` runs any configured c
 - **ruff**: Python linting if applicable
 
 Only runs scripts that are actually configured in `package.json` — skips placeholder scripts.
+
+### Dangerous-Bash Notifier
+
+`notify-dangerous.sh` runs on every `Bash` PreToolUse and pings the desktop
+(via `notify.sh`) when the command matches a short list of hard-to-reverse
+verbs: `rm -rf`, `git push --force`, `git reset --hard`, `git clean -fd`,
+`git branch -D`, `bw delete`, `envchain --unset`, `launchctl unload/bootout`,
+`sudo rm`. It always exits 0 — the hook is a heads-up, not a gate. The
+matcher in `settings.json` scopes the hook to Bash; the regex filter is in
+the script so it's reviewable in one place.
+
+### Audit Log
+
+`audit-log.sh` runs on every `PostToolUse` and appends a single JSONL line
+per tool invocation to `~/.claude/audit/<UTC-date>.jsonl` (`chmod 600`).
+Lines are stamped with `date -u +%FT%TZ` server-side so the model can't
+spoof the timestamp. Tool responses are truncated to 500 chars — the
+`tool_input` is the auditable bit. Failures are silent so the hook can
+never block tool use.
+
+### Prompt Secret Scan
+
+`scan-input.sh` runs on `UserPromptSubmit` and refuses (exit 2) prompts
+that match high-precision secret patterns (AWS keys, GitHub PATs, Anthropic
+keys, Slack tokens, PEM private keys). The matching span is **not** echoed
+back so the rejection reason doesn't re-leak the secret. Bypass with
+`CLAUDE_ALLOW_SECRETS=1` if you genuinely need to discuss a token shape.
+Soft-fails to allow when `jq` is missing — the same prompt would still hit
+`gitleaks` at commit time.
+
+### Status Line
+
+`statusline.sh` formats Claude Code's bottom-bar to
+`model · cwd · git:branch · [permission_mode]`. `cwd` collapses `$HOME`
+to `~` and elides paths longer than 40 chars to `.../basename`. The
+permission-mode chip is omitted when it's the default.
 
 ### Skills
 

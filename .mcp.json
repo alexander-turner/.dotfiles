@@ -3,8 +3,9 @@
     "filesystem": {
       "command": "npx",
       "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
+        "--yes",
+        "--",
+        "@modelcontextprotocol/server-filesystem@2026.1.14",
         "${HOME}/.dotfiles"
       ]
     }

@@ -129,6 +129,100 @@ run_test "notify.sh: no stdin -> falls back to default message, exit 0" '
     expected_rc=0
 '
 
+# --- scan-input.sh ---
+
+run_test "scan-input: clean prompt -> exit 0" '
+    output=$(echo '\''{"prompt":"refactor the doctor script"}'\'' \
+        | bash "'"$HOOKS_DIR"'/scan-input.sh" 2>&1)
+    rc=$?
+    expected_rc=0
+'
+
+run_test "scan-input: AWS-shaped key in prompt -> exit 2 (refuse)" '
+    output=$(echo '\''{"prompt":"please rotate AKIAIOSFODNN7EXAMPLE before deploy"}'\'' \
+        | bash "'"$HOOKS_DIR"'/scan-input.sh" 2>&1)
+    rc=$?
+    expected_rc=2
+    expected_match="refused"
+'
+
+run_test "scan-input: AWS-shaped key with CLAUDE_ALLOW_SECRETS=1 -> exit 0" '
+    output=$(echo '\''{"prompt":"AKIAIOSFODNN7EXAMPLE"}'\'' \
+        | CLAUDE_ALLOW_SECRETS=1 bash "'"$HOOKS_DIR"'/scan-input.sh" 2>&1)
+    rc=$?
+    expected_rc=0
+'
+
+run_test "scan-input: missing prompt field -> exit 0 (soft-fail)" '
+    output=$(echo '\''{}'\'' | bash "'"$HOOKS_DIR"'/scan-input.sh" 2>&1)
+    rc=$?
+    expected_rc=0
+'
+
+# --- audit-log.sh ---
+
+run_test "audit-log: writes a jsonl line to ~/.claude/audit/" '
+    fake_home=$(mktemp -d)
+    output=$(echo '\''{"tool_name":"Read","tool_input":{"file_path":"/x"},"tool_response":"ok"}'\'' \
+        | HOME="$fake_home" bash "'"$HOOKS_DIR"'/audit-log.sh" 2>&1)
+    rc=$?
+    expected_rc=0
+    line_count=$(find "$fake_home/.claude/audit" -name "*.jsonl" -exec wc -l {} + 2>/dev/null \
+        | awk "END{print \$1+0}")
+    output+=$'\''\n--lines--\n'\''"$line_count"
+    rm -rf "$fake_home"
+    expected_match="^1$|--lines--[[:space:]]*1"
+'
+
+run_test "audit-log: missing HOME tree -> still exits 0 (best-effort)" '
+    fake_home=$(mktemp -d)
+    chmod 000 "$fake_home" || true
+    output=$(echo '\''{}'\'' | HOME="$fake_home" bash "'"$HOOKS_DIR"'/audit-log.sh" 2>&1)
+    rc=$?
+    expected_rc=0
+    chmod 700 "$fake_home" 2>/dev/null || true
+    rm -rf "$fake_home"
+'
+
+# --- notify-dangerous.sh ---
+
+run_test "notify-dangerous: benign command -> exit 0, no notify call" '
+    output=$(echo '\''{"tool_input":{"command":"ls -la"}}'\'' \
+        | bash "'"$HOOKS_DIR"'/notify-dangerous.sh" 2>&1)
+    rc=$?
+    expected_rc=0
+'
+
+run_test "notify-dangerous: rm -rf flagged -> exit 0 (heads-up only)" '
+    output=$(echo '\''{"tool_input":{"command":"rm -rf /tmp/scratch"}}'\'' \
+        | bash "'"$HOOKS_DIR"'/notify-dangerous.sh" 2>&1)
+    rc=$?
+    expected_rc=0
+'
+
+run_test "notify-dangerous: missing command field -> exit 0" '
+    output=$(echo '\''{}'\'' | bash "'"$HOOKS_DIR"'/notify-dangerous.sh" 2>&1)
+    rc=$?
+    expected_rc=0
+'
+
+# --- statusline.sh ---
+
+run_test "statusline: well-formed payload -> prints model + cwd" '
+    output=$(echo '\''{"model":{"display_name":"Opus"},"workspace":{"current_dir":"/tmp"}}'\'' \
+        | bash "'"$HOOKS_DIR"'/statusline.sh" 2>&1)
+    rc=$?
+    expected_rc=0
+    expected_match="Opus.*/tmp"
+'
+
+run_test "statusline: empty stdin -> still prints a line" '
+    output=$(bash "'"$HOOKS_DIR"'/statusline.sh" </dev/null 2>&1)
+    rc=$?
+    expected_rc=0
+    expected_match="claude"
+'
+
 echo
 echo "Results: $PASS passed, $FAIL failed"
 if [ "$FAIL" -gt 0 ]; then
