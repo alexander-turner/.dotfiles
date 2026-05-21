@@ -37,21 +37,23 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # devcontainers/ci builds per devcontainer.json (catches devcontainer.json
-      # regressions, not just Dockerfile ones). `runCmd` is asserted post-build,
-      # so a failing build OR a failing smoke check both fail the workflow.
-      # `push: filter` pushes only on push events (never PRs).
+      # devcontainers/ci builds per devcontainer.json. We point at a minimal
+      # smoke config (.devcontainer/smoke/devcontainer.json) that uses the
+      # same Dockerfile but drops postStartCommand — the smoke test validates
+      # the IMAGE, not the dev-experience hooks (firewall + setup.bash) that
+      # layer on top. The real devcontainer.json runs init-firewall.bash; it's
+      # tested by usage, not here, because (a) iptables/ipset in the action's
+      # sandboxed runtime is unreliable, and (b) we don't want a firewall
+      # failure during postStartCommand to mask an image regression.
       #
-      # Note: multi-arch (linux/amd64,linux/arm64) is incompatible with this
-      # action's `runCmd` — setting `platform` forces buildx into OCI-tarball
-      # export mode (--output type=oci) instead of --load, which leaves the
-      # smoke check with no image in the local daemon to exec. Building amd64
-      # only for now; multi-arch can come back as a follow-up if/when needed
-      # (separate two-stage build, or `ubuntu-22.04-arm` runner).
+      # `push: filter` pushes only on push events (never PRs). Multi-arch is
+      # deliberately not set — setting any `platform` forces buildx into
+      # OCI-tarball export, which leaves `runCmd` with no loaded image to exec.
       - name: Build devcontainer, run smoke check, publish to GHCR
         uses: devcontainers/ci@v0.3
         with:
           imageName: ghcr.io/${{ github.repository_owner }}/dotfiles-devcontainer
           imageTag: latest,${{ github.sha }}
+          configFile: .devcontainer/smoke/devcontainer.json
           push: filter
           runCmd: bash .devcontainer/smoke-check.bash
