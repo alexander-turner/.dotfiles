@@ -34,15 +34,20 @@ subcommands:
   uninstall  remove \$HOME symlinks, restore backups (bin/uninstall.sh)
   link       refresh symlinks only (setup.sh --link-only)
   lint       run shellcheck/shfmt/stylua/yamllint/ruff/gitleaks (bin/lint.sh)
+  help       show this message (alias: -h, --help)
 
 Extra args are forwarded to the underlying script.
 EOF
 }
 
 case "${1:-}" in
-"" | -h | --help | help)
+"")
     usage
-    [[ -z "${1:-}" ]] && exit 2 || exit 0
+    exit 2
+    ;;
+-h | --help | help)
+    usage
+    exit 0
     ;;
 doctor)
     shift
