@@ -46,7 +46,7 @@ jobs:
         run: ./bin/lint.sh --ci --fix
 
       - name: Test Claude Code hooks
-        run: bash bin/test-claude-hooks.sh
+        run: pytest -q tests/test_claude_hooks.py
 
       - name: Commit fixes if any
         run: |

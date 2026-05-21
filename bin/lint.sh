@@ -249,19 +249,28 @@ check_gitleaks() {
     fi
 }
 
-# Pytest harness for bin/lib/safe_link.sh — the only function that touches
-# user files. Quiet on pass; surfaces full pytest output on fail.
-check_safe_link_tests() {
-    require_or_skip pytest "safe_link tests" || return 0
-    echo -n "safe_link tests: "
+# Pytest suites under tests/. Each runs in its own check so the failure
+# line names the suite. Quiet on pass; surfaces full pytest output on fail.
+_run_pytest_suite() {
+    local label="$1" file="$2"
+    require_or_skip pytest "$label" || return 0
+    echo -n "$label: "
     local out
-    if out="$(pytest -q tests/test_safe_link.py 2>&1)"; then
+    if out="$(pytest -q "$file" 2>&1)"; then
         echo -e "${GREEN}passed${NC}"
     else
         echo -e "${RED}failed${NC}"
         printf '%s\n' "$out"
         return 1
     fi
+}
+
+check_safe_link_tests() {
+    _run_pytest_suite "safe_link tests" "tests/test_safe_link.py"
+}
+
+check_claude_hook_tests() {
+    _run_pytest_suite "Claude hook tests" "tests/test_claude_hooks.py"
 }
 
 # Run all checks
@@ -276,6 +285,7 @@ check_json || FAILED=1
 check_python || FAILED=1
 check_gitleaks || FAILED=1
 check_safe_link_tests || FAILED=1
+check_claude_hook_tests || FAILED=1
 
 if [ $FAILED -ne 0 ]; then
     echo -e "\n${RED}Lint checks failed.${NC}"
