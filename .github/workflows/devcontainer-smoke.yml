@@ -46,13 +46,19 @@ jobs:
       # devcontainers/ci builds per devcontainer.json (catches devcontainer.json
       # regressions, not just Dockerfile ones). `runCmd` is asserted post-build,
       # so a failing build OR a failing smoke check both fail the workflow.
-      # `push: filter` pushes only on push events (not PRs); `platform:` produces
-      # a multi-arch manifest list.
+      #
+      # `platform` is conditional: PR runs build amd64-only because multi-arch
+      # forces buildx to export to an OCI tarball rather than load into the
+      # local daemon — which leaves `runCmd` with no image to exec. push-to-main
+      # runs (which actually publish) get the full linux/amd64,linux/arm64
+      # manifest list so Apple Silicon + arm64 home-server boxes pull native.
+      #
+      # `push: filter` pushes only on push events (never PRs).
       - name: Build devcontainer, run smoke check, publish to GHCR
         uses: devcontainers/ci@v0.3
         with:
           imageName: ghcr.io/${{ github.repository_owner }}/dotfiles-devcontainer
           imageTag: latest,${{ github.sha }}
-          platform: linux/amd64,linux/arm64
+          platform: ${{ github.event_name == 'push' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
           push: filter
           runCmd: bash .devcontainer/smoke-check.bash
