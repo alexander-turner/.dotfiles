@@ -1,0 +1,58 @@
+name: Devcontainer smoke
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - ".devcontainer/**"
+      - "bin/check-devcontainer.bash"
+      - ".github/workflows/devcontainer-smoke.yml"
+  pull_request:
+    branches: [main, master]
+    paths:
+      - ".devcontainer/**"
+      - "bin/check-devcontainer.bash"
+      - ".github/workflows/devcontainer-smoke.yml"
+
+# packages:write lets the action push to GHCR on main; read-only otherwise.
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  smoke:
+    name: Build .devcontainer image and verify installed tools
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # QEMU enables building the arm64 image on the amd64 runner so
+      # Apple Silicon Mac minis + arm64 home-server boxes get a native
+      # pull instead of falling back to QEMU at runtime.
+      - name: Set up QEMU for cross-arch builds
+        uses: docker/setup-qemu-action@v3
+
+      # Auth to GHCR only on actual pushes to main — PRs from forks can't
+      # mint a token with packages:write anyway, and `push: filter` below
+      # already skips the push step on pull_request events.
+      - name: Log in to GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # devcontainers/ci builds per devcontainer.json (catches devcontainer.json
+      # regressions, not just Dockerfile ones). `runCmd` is asserted post-build,
+      # so a failing build OR a failing smoke check both fail the workflow.
+      # `push: filter` pushes only on push events (not PRs); `platform:` produces
+      # a multi-arch manifest list.
+      - name: Build devcontainer, run smoke check, publish to GHCR
+        uses: devcontainers/ci@v0.3
+        with:
+          imageName: ghcr.io/${{ github.repository_owner }}/dotfiles-devcontainer
+          imageTag: latest,${{ github.sha }}
+          platform: linux/amd64,linux/arm64
+          push: filter
+          runCmd: bash .devcontainer/smoke-check.bash

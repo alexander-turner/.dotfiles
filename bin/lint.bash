@@ -49,7 +49,7 @@ require_or_skip() {
 check_shfmt() {
     require_or_skip shfmt "Shfmt" || return 0
     echo -n "Shfmt: "
-    local shfmt_targets=(setup.bash bin/*.sh bin/*.bash bin/lib/*.sh bin/dotfiles .hooks/*.bash .hooks/pre-push .hooks/pre-commit .hooks/commit-msg .claude/hooks/*.bash .bashrc)
+    local shfmt_targets=(setup.bash bin/*.sh bin/*.bash bin/lib/*.sh bin/dotfiles .hooks/*.bash .hooks/pre-push .hooks/pre-commit .hooks/commit-msg .claude/hooks/*.bash .devcontainer/*.bash .bashrc)
     if [[ "$FIX_MODE" == true ]]; then
         shfmt -w -i 4 "${shfmt_targets[@]}" 2>/dev/null || true
         echo -e "${GREEN}fixed${NC}"
@@ -69,7 +69,7 @@ check_shellcheck() {
     echo -n "Shellcheck: "
     if [[ "$FIX_MODE" == true ]]; then
         local diff_output
-        diff_output=$(shellcheck -e SC2016 --format=diff setup.bash bin/*.sh bin/*.bash bin/lib/*.sh bin/dotfiles .hooks/*.bash .hooks/pre-push .hooks/pre-commit .hooks/commit-msg .claude/hooks/*.bash 2>/dev/null || true)
+        diff_output=$(shellcheck -e SC2016 --format=diff setup.bash bin/*.sh bin/*.bash bin/lib/*.sh bin/dotfiles .hooks/*.bash .hooks/pre-push .hooks/pre-commit .hooks/commit-msg .claude/hooks/*.bash .devcontainer/*.bash 2>/dev/null || true)
         diff_output+=$(shellcheck -s bash -e SC2148 -e SC1090 -e SC1091 -e SC2015 --format=diff .bashrc 2>/dev/null || true)
         if [ -n "$diff_output" ]; then
             echo "$diff_output" | git apply --allow-empty 2>/dev/null || true
@@ -78,7 +78,7 @@ check_shellcheck() {
             echo -e "${GREEN}passed${NC}"
         fi
     else
-        if shellcheck -e SC2016 setup.bash bin/*.sh bin/*.bash bin/lib/*.sh bin/dotfiles .hooks/*.bash .hooks/pre-push .hooks/pre-commit .hooks/commit-msg .claude/hooks/*.bash 2>/dev/null &&
+        if shellcheck -e SC2016 setup.bash bin/*.sh bin/*.bash bin/lib/*.sh bin/dotfiles .hooks/*.bash .hooks/pre-push .hooks/pre-commit .hooks/commit-msg .claude/hooks/*.bash .devcontainer/*.bash 2>/dev/null &&
             shellcheck -s bash -e SC2148 -e SC1090 -e SC1091 -e SC2015 .bashrc 2>/dev/null; then
             echo -e "${GREEN}passed${NC}"
         else
