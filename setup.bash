@@ -41,7 +41,7 @@ touch "$HOME"/.vimextras
 
 if [ "$LINK_ONLY" = true ]; then
     status_msg "Symlinks refreshed."
-    bash "$DOTFILES_DIR/bin/doctor.sh" --quiet || true
+    bash "$DOTFILES_DIR/bin/doctor.bash" --quiet || true
     exit 0
 fi
 
@@ -79,7 +79,7 @@ brew_quiet_install() {
 
 # Install all brew packages from Brewfile. Retry on transient failure —
 # GitHub's HTTP/2 frontend occasionally drops `git clone` mid-tap, and a
-# second attempt almost always succeeds. doctor.sh at the end of setup
+# second attempt almost always succeeds. doctor.bash at the end of setup
 # catches anything that's still missing after 3 tries.
 status_msg "Installing from Brewfile..."
 for attempt in 1 2 3; do
@@ -98,7 +98,7 @@ done
 # credentials and the master password in macOS Keychain so the seeder
 # can run unattended at shell startup.
 #
-# All prompts inside bw-login.sh are skippable (empty input).
+# All prompts inside bw-login.bash are skippable (empty input).
 if command_exists bw && [ -t 0 ]; then
     # `bw status` exits 0 with JSON containing status: "unauthenticated" |
     # "locked" | "unlocked". We grep for the logged-in markers; absence ==
@@ -107,8 +107,8 @@ if command_exists bw && [ -t 0 ]; then
         status_msg "Bitwarden CLI not logged in."
         read -rp "Run bw login bootstrap now? (y/N) " choice
         case "$choice" in
-        y | Y) bash "$DOTFILES_DIR/bin/bw-login.sh" || status_msg "bw bootstrap skipped/failed; rerun bin/bw-login.sh later." ;;
-        *) status_msg "Skipping. Rerun later with: bash $DOTFILES_DIR/bin/bw-login.sh" ;;
+        y | Y) bash "$DOTFILES_DIR/bin/bw-login.bash" || status_msg "bw bootstrap skipped/failed; rerun bin/bw-login.bash later." ;;
+        *) status_msg "Skipping. Rerun later with: bash $DOTFILES_DIR/bin/bw-login.bash" ;;
         esac
     fi
 elif ! command_exists bw; then
@@ -120,7 +120,7 @@ if ! command_exists gh; then
     brew_quiet_install gh
 fi
 if ! gh auth status &>/dev/null; then
-    if bash "$DOTFILES_DIR/bin/gh-auth-from-bw.sh" 2>/dev/null; then
+    if bash "$DOTFILES_DIR/bin/gh-auth-from-bw.bash" 2>/dev/null; then
         status_msg "gh authenticated from Bitwarden."
     elif [ -t 0 ]; then
         status_msg "Falling back to interactive gh auth (scopes needed: repo, read:org)."
@@ -131,7 +131,7 @@ if ! gh auth status &>/dev/null; then
 fi
 
 # Install fish and configure
-"$DOTFILES_DIR"/bin/install_fish.sh
+"$DOTFILES_DIR"/bin/install_fish.bash
 
 if [ "$(uname)" = "Darwin" ]; then
     status_msg "Configuring macOS packages..."
@@ -254,7 +254,7 @@ if command_exists pnpm; then
     *) export PATH="$PNPM_HOME:$PATH" ;;
     esac
     pnpm install -g prettier
-    # @bitwarden/cli (Node bw) is required for bin/bw-*.sh scripts — the
+    # @bitwarden/cli (Node bw) is required for bin/bw-*.bash scripts — the
     # Rust bw 2026.x has scripting quirks the helpers can't work around.
     pnpm install -g @bitwarden/cli
 fi
@@ -274,5 +274,5 @@ for directory in ~/.local/{share,state}/nvim ~/.cache/nvim; do
     cp -r "$directory"{,.bak} >/dev/null 2>&1 || true
 done
 
-status_msg "Setup complete. Running doctor.sh..."
-bash "$DOTFILES_DIR/bin/doctor.sh" || true
+status_msg "Setup complete. Running doctor.bash..."
+bash "$DOTFILES_DIR/bin/doctor.bash" || true

@@ -43,10 +43,10 @@ jobs:
         run: pip install yamllint ruff pytest
 
       - name: Auto-fix lint issues
-        run: ./bin/lint.sh --ci --fix
+        run: ./bin/lint.bash --ci --fix
 
       - name: Test Claude Code hooks
-        run: bash bin/test-claude-hooks.sh
+        run: bash bin/test-claude-hooks.bash
 
       - name: Commit fixes if any
         run: |

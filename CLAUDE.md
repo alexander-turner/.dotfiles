@@ -1,18 +1,18 @@
 # CLAUDE.md
 
 Guidance for Claude Code when working in this dotfiles repo. Optimized for
-keeping `setup.sh`, `doctor.sh`, and CI honest with each other.
+keeping `setup.bash`, `doctor.bash`, and CI honest with each other.
 
 ## Layout
 
-- `setup.sh` — top-level installer; idempotent, supports `--link-only`.
-  Always finishes by running `bin/doctor.sh` so the user sees a green
+- `setup.bash` — top-level installer; idempotent, supports `--link-only`.
+  Always finishes by running `bin/doctor.bash` so the user sees a green
   health summary (or knows exactly what's still broken).
 - `bin/lib/safe_link.sh` — the only place that creates user-facing symlinks.
   Backs up real files to `~/.dotfiles-backup/<UTC-timestamp>/` before
   overwriting.
-- `bin/doctor.sh` — read-only health check; mirrors what `setup.sh` builds.
-- `bin/uninstall.sh` — reverses `setup.sh`'s symlink creation, restoring
+- `bin/doctor.bash` — read-only health check; mirrors what `setup.bash` builds.
+- `bin/uninstall.bash` — reverses `setup.bash`'s symlink creation, restoring
   the most recent backup when one exists.
 - `apps/fish/config.fish`, `.bashrc` — interactive shell config. `.bashrc`
   hands off to fish for interactive use.
@@ -26,31 +26,31 @@ keeping `setup.sh`, `doctor.sh`, and CI honest with each other.
   pick up the same project context Claude Code uses.
 - `.mcp.json` — Claude Code MCP server config; currently registers the
   filesystem MCP scoped to `~/.dotfiles`.
-- `.claude/hooks/notify.sh` — cross-platform desktop notification for
+- `.claude/hooks/notify.bash` — cross-platform desktop notification for
   the Notification lifecycle hook.
 - `Brewfile` — package manifest, gated by `if OS.mac?` for cask blocks.
 - `launchagents/`, `etc/sudoers.d/` — `__USERNAME__` templates rendered
   during install.
 - `.github/workflows/lint.yml` — shellcheck + shfmt + stylua + yamllint
   + ruff + gitleaks. Auto-fixes and pushes a `style:` commit.
-- `.github/workflows/idempotency.yml` — runs `setup.sh --link-only` twice
+- `.github/workflows/idempotency.yml` — runs `setup.bash --link-only` twice
   on both `ubuntu-latest` and `macos-latest`, asserts identical symlink
   set + clean doctor output. The macOS leg covers the `if [ "$(uname)"
   = "Darwin" ]` branches that Ubuntu can't.
 
 ## Maintenance invariants
 
-Whenever you add anything to `setup.sh`, `safe_link`, or related scripts,
+Whenever you add anything to `setup.bash`, `safe_link`, or related scripts,
 update the matching observer.
 
 ### Doctor upkeep
 
-`doctor.sh` is the contract for "this dotfiles install is healthy."
+`doctor.bash` is the contract for "this dotfiles install is healthy."
 Every new symlink, daemon, or required external dependency added to
-`setup.sh` must get a corresponding check in `doctor.sh`. Concretely:
+`setup.bash` must get a corresponding check in `doctor.bash`. Concretely:
 
-- New `safe_link` call in `setup.sh` → new `check_symlink` line in
-  `doctor.sh`'s "Symlinks" section.
+- New `safe_link` call in `setup.bash` → new `check_symlink` line in
+  `doctor.bash`'s "Symlinks" section.
 - New `brew install` of a tool that's expected at runtime (i.e. used by
   `config.fish` or shell wrappers) → new `check_command` entry.
 - New `launchctl load` / launchd plist symlink → new check in the
@@ -60,30 +60,30 @@ Every new symlink, daemon, or required external dependency added to
   it in the "Secrets" section comment so users know to seed it.
 
 A doctor check that requires an optional tool should `skip` (not `fail`)
-when the tool isn't installed — `doctor.sh` is meant to be safe to run on
+when the tool isn't installed — `doctor.bash` is meant to be safe to run on
 a partially-bootstrapped machine.
 
 ### Uninstall upkeep
 
-`bin/uninstall.sh` is the inverse of `setup.sh` for symlinks in `$HOME`.
-Every new `safe_link` in `setup.sh` whose target lives in `$HOME` must
-get a matching `remove_dotfile_symlink` call in `uninstall.sh`. The
+`bin/uninstall.bash` is the inverse of `setup.bash` for symlinks in `$HOME`.
+Every new `safe_link` in `setup.bash` whose target lives in `$HOME` must
+get a matching `remove_dotfile_symlink` call in `uninstall.bash`. The
 mirror set is:
 
-- `safe_link "$DOTFILES_DIR/foo" "$HOME/.foo"` in `setup.sh` →
+- `safe_link "$DOTFILES_DIR/foo" "$HOME/.foo"` in `setup.bash` →
   `remove_dotfile_symlink "$HOME/.foo" "$DOTFILES_DIR/foo"` in
-  `uninstall.sh`.
-- macOS-only links go inside `if $IS_MAC` in `uninstall.sh`, same as the
-  `if [ "$(uname)" = "Darwin" ]` block in `setup.sh`.
+  `uninstall.bash`.
+- macOS-only links go inside `if $IS_MAC` in `uninstall.bash`, same as the
+  `if [ "$(uname)" = "Darwin" ]` block in `setup.bash`.
 - Loops over a directory (e.g. `for aider_file in ...`) should iterate
   the same source list in both files — don't hard-code the names.
 
-`uninstall.sh` MUST NOT touch the in-repo `.hooks/pre-push` symlink (that
+`uninstall.bash` MUST NOT touch the in-repo `.hooks/pre-push` symlink (that
 one's repo plumbing, not a user dotfile).
 
 ### Idempotency upkeep
 
-`setup.sh --link-only` MUST be safe to run repeatedly. CI enforces this.
+`setup.bash --link-only` MUST be safe to run repeatedly. CI enforces this.
 When editing the `--link-only` path:
 
 - Don't add `read -rp` prompts on the success path — use `safe_link`,
@@ -97,10 +97,10 @@ When editing the `--link-only` path:
 ### Linker upkeep
 
 `safe_link` is the sole entry point for symlink creation. If you find
-yourself writing `ln -s` directly in `setup.sh`, route it through
+yourself writing `ln -s` directly in `setup.bash`, route it through
 `safe_link` instead so the backup-on-clobber behaviour is uniform.
 
-The neovim config block in `setup.sh` predates `safe_link` and handles
+The neovim config block in `setup.bash` predates `safe_link` and handles
 directory targets specially. If you extend it (e.g. for a new IDE config
 dir), keep the three-branch structure: already-correct symlink → no-op,
 real dir → prompt, missing → create.
@@ -111,9 +111,9 @@ real dir → prompt, missing → create.
   per-machine runtime cache (auto-unlocked via macOS Keychain at GUI
   login). Don't add a third secrets layer.
 - Secrets must never appear on argv. Pipe stdin → stdin between `bw`,
-  `envchain`, and child commands. See `bin/bw-add-secret.sh` for the
+  `envchain`, and child commands. See `bin/bw-add-secret.bash` for the
   pattern.
-- `bin/bw-*.sh` scripts go through `bin/bw-node` (a wrapper around
+- `bin/bw-*.bash` scripts go through `bin/bw-node` (a wrapper around
   `@bitwarden/cli` from pnpm, pinned to Node 22) instead of the Rust
   bw CLI. The Rust 2026.x line silently ignores `--passwordenv`, writes
   ERROR lines to stdout on unlock failure, and doesn't honor session
@@ -142,14 +142,22 @@ real dir → prompt, missing → create.
   branch for distros, and we don't support WSL.
 - Cask entries belong inside the `if OS.mac?` block in `Brewfile`. Brews
   that exist on both platforms go above it.
-- macOS-only paths in `setup.sh` (launchd agents, defaults writes,
+- macOS-only paths in `setup.bash` (launchd agents, defaults writes,
   iTerm2 integration) live inside `if [ "$(uname)" = "Darwin" ]`.
 
 ## Conventions
 
 - Bash scripts: `set -euo pipefail` at the top. Use `command_exists` for
-  tool detection. Use `status_msg "..."` (defined in `setup.sh`) for
+  tool detection. Use `status_msg "..."` (defined in `setup.bash`) for
   visible progress lines so output stays consistent.
+- Script extensions: `.bash` for scripts with a `#!/bin/bash` or
+  `#!/usr/bin/env bash` shebang (the macOS `/bin/sh` is bash 3.2 in
+  POSIX mode, so a bash-shebang script under a `.sh` name silently lies
+  about what it needs). `.sh` is reserved for `#!/bin/sh` POSIX scripts
+  (e.g. `bin/aider-redpill-shim.sh`) and for sourced libraries under
+  `bin/lib/` that declare `# shellcheck shell=bash` instead of carrying
+  a shebang. `bin/lint.bash`'s `check_sh_extension` enforces this in
+  CI — adding a new `.sh` file with a bash shebang fails the lint job.
 - Prefer fish abbreviations (`abbr -a`) over functions when the only
   job is text expansion — abbrs preserve history readability.
 - Use `command <name>` to bypass fish/bash function shadowing
@@ -167,11 +175,11 @@ real dir → prompt, missing → create.
 Inline `run: |` blocks in `.github/workflows/*.yml` are invisible to
 shellcheck/shfmt and skip the auto-fix pipeline. Anything beyond a
 trivial 1-3 line install incantation should be extracted to
-`bin/<name>.sh` and invoked from the workflow as `run: bash
-bin/<name>.sh` — `bin/lint.sh`'s shellcheck glob (`bin/*.sh`) then
-covers it automatically.
+`bin/<name>.bash` and invoked from the workflow as `run: bash
+bin/<name>.bash` — `bin/lint.bash`'s shellcheck glob (`bin/*.bash`)
+then covers it automatically.
 
-Reference: `bin/check-idempotency.sh` is invoked from
+Reference: `bin/check-idempotency.bash` is invoked from
 `.github/workflows/idempotency.yml` with `TEST_HOME` / `SCRATCH` passed
 via `env:`. The script defaults both to `mktemp` so it's runnable
 locally too.
@@ -199,26 +207,26 @@ in `alexander-turner/claude-automation-template`.
   incident: rotate the leaked credential, then either rewrite the
   commit (if local) or add an allowlist entry justifying the false
   positive.
-- `idempotency.yml` failure usually means a new step in `setup.sh` is
+- `idempotency.yml` failure usually means a new step in `setup.bash` is
   not safely re-runnable. The diff between `links1.txt` and `links2.txt`
   in the run log shows which symlink mutated.
 
 ## Local quick reference
 
 ```bash
-bash setup.sh --link-only       # refresh symlinks only (also runs doctor)
-bash bin/doctor.sh              # health check
-bash bin/doctor.sh --quiet      # show only failures/skips
-bash bin/uninstall.sh           # remove $HOME symlinks, restore backups
-bash bin/uninstall.sh --yes     # ... non-interactive
-bash bin/lint.sh                # run all linters locally
-bash bin/lint.sh --fix          # auto-fix what we can
+bash setup.bash --link-only       # refresh symlinks only (also runs doctor)
+bash bin/doctor.bash              # health check
+bash bin/doctor.bash --quiet      # show only failures/skips
+bash bin/uninstall.bash           # remove $HOME symlinks, restore backups
+bash bin/uninstall.bash --yes     # ... non-interactive
+bash bin/lint.bash                # run all linters locally
+bash bin/lint.bash --fix          # auto-fix what we can
 bwseed                          # force Bitwarden → envchain refresh
 
-# After setup.sh has run once, the same chores are reachable via the
+# After setup.bash has run once, the same chores are reachable via the
 # dispatcher symlinked at ~/.local/bin/dotfiles (with fish completions):
-dotfiles doctor                 # → bin/doctor.sh
-dotfiles uninstall --yes        # → bin/uninstall.sh
-dotfiles link                   # → setup.sh --link-only
-dotfiles lint --fix             # → bin/lint.sh
+dotfiles doctor                 # → bin/doctor.bash
+dotfiles uninstall --yes        # → bin/uninstall.bash
+dotfiles link                   # → setup.bash --link-only
+dotfiles lint --fix             # → bin/lint.bash
 ```

@@ -8,7 +8,7 @@ HEX=$(mktemp /tmp/ergodox-XXXXXX.hex)
 trap 'rm -f "$HEX"' EXIT
 
 if ! curl -fsSL "$URL" -o "$HEX"; then
-    echo "keyboard_flash.sh: failed to download firmware from $URL" >&2
+    echo "keyboard_flash.bash: failed to download firmware from $URL" >&2
     exit 1
 fi
 

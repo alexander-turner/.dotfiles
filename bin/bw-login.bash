@@ -81,7 +81,7 @@ cache_master_and_seed() {
     prompt_skippable "Bitwarden master password" MASTER hidden
     if [ -z "${MASTER:-}" ]; then
         echo "Logged in but skipping unlock-cache and initial seed."
-        echo "Run later: bash $DOTFILES_DIR/bin/bw-seed-envchain.sh"
+        echo "Run later: bash $DOTFILES_DIR/bin/bw-seed-envchain.bash"
         return 0
     fi
 
@@ -97,12 +97,12 @@ cache_master_and_seed() {
     local rc=$?
     unset MASTER
     if [ "$rc" -ne 0 ] || [ -z "$BW_SESSION" ]; then
-        echo "bw unlock failed (wrong password, network error, or bw binary issue). Re-run bin/bw-login.sh." >&2
+        echo "bw unlock failed (wrong password, network error, or bw binary issue). Re-run bin/bw-login.bash." >&2
         return 1
     fi
     export BW_SESSION
 
-    bash "$DOTFILES_DIR/bin/bw-seed-envchain.sh"
+    bash "$DOTFILES_DIR/bin/bw-seed-envchain.bash"
     echo "bw login + initial envchain seed complete."
 }
 

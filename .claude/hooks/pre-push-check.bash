@@ -5,8 +5,8 @@
 set -uo pipefail
 
 HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
-# shellcheck source=.claude/hooks/lib-checks.sh
-source "$HOOK_DIR/lib-checks.sh"
+# shellcheck source=.claude/hooks/lib-checks.bash
+source "$HOOK_DIR/lib-checks.bash"
 
 FAILED=0
 

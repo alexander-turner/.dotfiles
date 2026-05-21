@@ -1,9 +1,9 @@
 """Setup → uninstall round-trip.
 
-Enforces CLAUDE.md's "Uninstall upkeep" invariant: every safe_link in setup.sh
-whose target lives in $HOME has a matching remove in uninstall.sh (typically
-via bin/lib/symlinks.sh). Scope matches uninstall.sh — symlinks only, not the
-touch-files setup.sh creates.
+Enforces CLAUDE.md's "Uninstall upkeep" invariant: every safe_link in setup.bash
+whose target lives in $HOME has a matching remove in uninstall.bash (typically
+via bin/lib/symlinks.sh). Scope matches uninstall.bash — symlinks only, not the
+touch-files setup.bash creates.
 """
 
 from __future__ import annotations
@@ -35,14 +35,14 @@ def _run(script: str, *args: str, home: Path) -> None:
 
 
 def test_uninstall_removes_every_setup_symlink(tmp_path: Path) -> None:
-    _run("setup.sh", "--link-only", home=tmp_path)
+    _run("setup.bash", "--link-only", home=tmp_path)
     installed = _repo_symlinks(tmp_path)
-    assert installed, "setup.sh --link-only produced zero repo symlinks — test is no longer testing anything"
+    assert installed, "setup.bash --link-only produced zero repo symlinks — test is no longer testing anything"
 
-    _run("bin/uninstall.sh", "--yes", home=tmp_path)
+    _run("bin/uninstall.bash", "--yes", home=tmp_path)
     leftover = _repo_symlinks(tmp_path)
     assert not leftover, (
-        "uninstall.sh left repo-pointing symlinks in $HOME. Likely cause: a "
-        "safe_link in setup.sh has no matching entry in bin/lib/symlinks.sh. "
+        "uninstall.bash left repo-pointing symlinks in $HOME. Likely cause: a "
+        "safe_link in setup.bash has no matching entry in bin/lib/symlinks.sh. "
         f"Leftover: {leftover}"
     )
