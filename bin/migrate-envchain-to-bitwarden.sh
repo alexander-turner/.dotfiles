@@ -89,13 +89,14 @@ migrate_var() {
             echo "  FAIL   $item_name (bw get item returned empty)"
             return 0
         fi
-        if (
-            export SECRET="$value"
+        # Inline env on jq only — SECRET is scoped to that single process,
+        # no subshell needed, no stale-export risk.
+        if {
             printf '%s' "$item_json" |
-                jq '.login.password=env.SECRET' |
+                SECRET="$value" jq '.login.password=env.SECRET' |
                 "$BW_CMD" encode |
                 "$BW_CMD" edit item --session "$BW_SESSION" "$id" >/dev/null
-        ) 2>/dev/null; then
+        } 2>/dev/null; then
             echo "  fill   $item_name"
         else
             echo "  FAIL   $item_name (bw edit failed)"
@@ -110,16 +111,12 @@ migrate_var() {
         return 0
     fi
 
-    # Run in a subshell so the SECRET export doesn't persist in the parent
-    # shell across loop iterations. jq reads env.SECRET from its own env.
-    (
-        export SECRET="$value"
-        "$BW_CMD" get template item |
-            jq --arg n "$item_name" --arg fid "$folder_id" \
-                '.name=$n | .folderId=$fid | .login={"username":null,"password":env.SECRET,"totp":null,"uris":[]} | .notes=null' |
-            "$BW_CMD" encode |
-            "$BW_CMD" create item --session "$BW_SESSION" >/dev/null
-    )
+    # Inline env on jq only — SECRET is scoped to that single process.
+    "$BW_CMD" get template item |
+        SECRET="$value" jq --arg n "$item_name" --arg fid "$folder_id" \
+            '.name=$n | .folderId=$fid | .login={"username":null,"password":env.SECRET,"totp":null,"uris":[]} | .notes=null' |
+        "$BW_CMD" encode |
+        "$BW_CMD" create item --session "$BW_SESSION" >/dev/null
     unset value
     echo "  ok     $item_name"
 }
