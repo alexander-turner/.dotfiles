@@ -7,8 +7,7 @@
       "CLAUDE_CODE_VERSION": "latest",
       "GIT_DELTA_VERSION": "0.18.2",
       "ZSH_IN_DOCKER_VERSION": "1.2.0"
-    },
-    "cacheFrom": "ghcr.io/alexander-turner/dotfiles-devcontainer:latest"
+    }
   },
   "runArgs": [
     "--cap-add=NET_ADMIN",
