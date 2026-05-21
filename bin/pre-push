@@ -30,4 +30,9 @@ if [ -n "$log_opts" ]; then
     export GITLEAKS_LOG_OPTS="${log_opts# }"
 fi
 
+# Flip lint.sh's check_gitleaks from SKIP-on-missing to FAIL-on-missing. A
+# separate var (not overloading GITLEAKS_LOG_OPTS) so a stray export in the
+# user's shell can't hard-fail their normal `bash bin/lint.sh` runs.
+export GITLEAKS_REQUIRED=1
+
 "$git_root/bin/lint.sh"
