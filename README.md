@@ -171,85 +171,36 @@ Values pipe stdin→stdin from envchain into `bw create item`; nothing is logged
 
 ## Devcontainer
 
-`.devcontainer/` ships a sandboxed image for hacking on this repo with
-Claude Code: Ubuntu 22.04 base + Node 20 (NodeSource) + the lint/test
-toolchain (shellcheck, shfmt, ruff/pytest, yamllint, fish, gitleaks,
-stylua) + the `gh` CLI via the official `github-cli` devcontainer
-feature + Claude Code itself. The MCP filesystem server is **not**
-pre-installed; `.mcp.json`'s `npx --yes` is the single source of truth
-for its version and fetches on first use (allowed by the firewall).
+`.devcontainer/` ships a sandboxed image for Claude Code work on this
+repo. Multi-arch (`linux/amd64,linux/arm64`), pinned base by digest,
+built and published to `ghcr.io/alexander-turner/dotfiles-devcontainer`
+on every push to `main`. Both devcontainer configs use it as
+`build.cacheFrom`, so cold rebuilds pull layers instead of rebuilding
+(~1 min vs ~5-10).
 
-`postCreateCommand` locks egress with `init-firewall.bash` (NET_ADMIN
-allowlist of npm, PyPI, Anthropic, GitHub) and then runs
-`setup.bash --link-only` against the container's `$HOME`.
-`waitFor: postCreateCommand` gates the VS Code terminal on the firewall
-being up — no exposed pre-firewall window.
+Sandbox posture: non-root `vscode` user; sudo limited to
+`init-firewall.bash`; only the project dir is bind-mounted; `~/.claude`
+and shell history are *named volumes* per workspace path so worktrees
+don't bleed into each other; egress default-DROP with a curated
+allowlist (npm/PyPI/Anthropic/GitHub + read-only references like
+Wikipedia, MDN, Python/Node/Go docs); capabilities `NET_ADMIN` /
+`NET_RAW` only; `--pids-limit=512`; no Docker-socket mount.
+`waitFor: postCreateCommand` blocks the terminal until the firewall is
+up so there's no pre-lockdown window.
 
-### Sandbox posture (what's enforced)
+GHCR packages default to private — after the first publish, mark public
+at <https://github.com/users/alexander-turner/packages> for anonymous
+`docker pull` and `cacheFrom`. Otherwise: `docker login ghcr.io`.
 
-- **Non-root runtime** — `remoteUser: vscode`, set by both the
-  `mcr.microsoft.com/devcontainers/base` image and the Dockerfile's
-  `USER vscode`. Sudo is constrained to a single allow-listed script
-  (`init-firewall.bash`) via `/etc/sudoers.d/init-firewall`.
-- **Workspace-only filesystem access** — only the project directory is
-  bind-mounted at `/workspaces/.dotfiles`; nothing outside it is visible
-  from the container.
-- **Auth persistence without host bleed** — `~/.claude` and shell history
-  live in *named volumes* (`dotfiles-claude-{config,history}-${devcontainerId}`),
-  not host bind mounts. Container rebuilds keep your auth; a compromised
-  container can't grep your host `~/.claude`. The `${devcontainerId}` macro
-  hashes the workspace path, so worktrees get independent volumes.
-- **Egress allowlist** — default-DROP OUTPUT chain (`init-firewall.bash`);
-  only loopback, ESTABLISHED, DNS, SSH, the host subnet, the curated
-  domain allowlist (npm/PyPI/Anthropic/GitHub), and GitHub's published
-  CIDR ranges can leave the container.
-- **Capabilities scoped to the firewall** — `NET_ADMIN` and `NET_RAW`
-  added explicitly; nothing else.
-- **Process limit** — `--pids-limit=512` caps runaway fork loops.
-- **No Docker-socket mount** — the container has no way to control the
-  host daemon; nothing in `mounts:` references `/var/run/docker.sock`.
-- **Destructive Bash refused by the harness** — `permissions.deny` in
-  `.claude/settings.json` blocks `rm -rf*`, `sudo rm*`, `git push --force*`,
-  `git reset --hard*`, `git clean -f[dx]*`, `git branch -D*`, `bw delete*`,
-  `envchain --unset*` before any tool call runs.
-
-### Pulling the prebuilt image
-
-`.github/workflows/devcontainer-smoke.yml` publishes the image to
-`ghcr.io/alexander-turner/dotfiles-devcontainer:latest` (plus a tag
-per commit SHA) on every push to `main`. Both devcontainer configs
-declare it as `build.cacheFrom`, so a cold-machine build pulls the
-cached layers (~1 min) instead of rebuilding from scratch (~5-10 min).
-Local edits to the Dockerfile still rebuild only the affected layers.
-
-To pull explicitly (e.g. for `docker run` outside VS Code):
-
-```bash
-docker pull ghcr.io/alexander-turner/dotfiles-devcontainer:latest
-```
-
-GHCR packages default to **private**. After the first publish, mark the
-package public at <https://github.com/users/alexander-turner/packages>
-so anonymous `docker pull` (and the `build.cacheFrom` in
-`.devcontainer/devcontainer.json`) work without `docker login ghcr.io`.
-
-### Multiple Claude sessions on the same repo
-
-Use a `git worktree` per session — the container is the protection
-boundary, the session is just an invocation. Each worktree is a
-different *workspace path*, so the `${devcontainerId}` macro in
-`mounts:` hashes to a different value, and the
-`dotfiles-claude-history-*` / `dotfiles-claude-config-*` named
-volumes resolve to *different* volumes per worktree. Full
-shell-history / Claude-config isolation; near-zero disk overhead
-(worktrees share `.git`).
+For multiple Claude sessions on the same repo, use `git worktree`:
 
 ```bash
 git worktree add ../dotfiles-feature-b feature-b
-# Open ../dotfiles-feature-b in a second VS Code window and Reopen in Container.
-# Or, without VS Code:
-devcontainer up --workspace-folder ../dotfiles-feature-b
+devcontainer up --workspace-folder ../dotfiles-feature-b  # or "Reopen in Container" in VS Code
 ```
+
+Each worktree's `${devcontainerId}` hashes its path, so each gets its
+own named volumes — no cross-session interference.
 
 ## Other notes
 

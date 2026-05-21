@@ -4,7 +4,17 @@
 # stylua. The gh CLI is installed by the devcontainer feature
 # `github-cli` declared in devcontainer.json — not by this Dockerfile.
 # Egress is restricted at first boot by init-firewall.bash.
-FROM mcr.microsoft.com/devcontainers/base:ubuntu-22.04
+#
+# Base image is pinned by digest (multi-arch index) so the build is
+# reproducible across rebuilds even when MS retags ubuntu-22.04 upstream.
+# Dependabot's docker ecosystem can keep the digest fresh — see
+# .github/dependabot.yml.
+FROM mcr.microsoft.com/devcontainers/base:ubuntu-22.04@sha256:81380e4c9c14e8a629ff39029639e4b7893e67400246fa7782a0fe7dc193a02a
+
+# BuildKit auto-populates TARGETARCH ("amd64" or "arm64") per target
+# platform when building with `docker buildx build --platform=...`. The
+# devcontainers/ci action wires this through automatically.
+ARG TARGETARCH
 
 ARG TZ=UTC
 ENV TZ="$TZ"
@@ -43,21 +53,16 @@ RUN apt-get update \
 # Python tooling used by bin/lint.bash and tests/.
 RUN pip3 install --no-cache-dir ruff==0.6.9 pytest==8.3.3
 
-# gitleaks — pinned so devcontainer rebuilds are reproducible. No official
-# devcontainer feature exists; the third-party features in the registry
-# (frntn/, jsburckhardt/) aren't appropriate for a security-scanning tool.
+# gitleaks + stylua — pinned versions, multi-arch. Arch mapping (amd64 →
+# x64/x86_64, arm64 → arm64/aarch64) lives in install-vendor-binaries.bash
+# so a new target arch only needs editing one file.
 ARG GITLEAKS_VERSION=8.21.2
-RUN curl -fsSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
-        | tar -xz -C /usr/local/bin gitleaks \
-    && chmod +x /usr/local/bin/gitleaks
-
-# StyLua — same source as the CI install step in .github/workflows/lint.yml.
-# No devcontainer feature exists for stylua in the canonical registry.
 ARG STYLUA_VERSION=2.0.2
-RUN curl -fsSL -o /tmp/stylua.zip "https://github.com/JohnnyMorganz/StyLua/releases/download/v${STYLUA_VERSION}/stylua-linux-x86_64.zip" \
-    && unzip -q /tmp/stylua.zip -d /usr/local/bin \
-    && rm /tmp/stylua.zip \
-    && chmod +x /usr/local/bin/stylua
+COPY install-vendor-binaries.bash /tmp/install-vendor-binaries.bash
+RUN GITLEAKS_VERSION="$GITLEAKS_VERSION" STYLUA_VERSION="$STYLUA_VERSION" \
+    TARGETARCH="$TARGETARCH" \
+    bash /tmp/install-vendor-binaries.bash \
+    && rm /tmp/install-vendor-binaries.bash
 
 # Node.js via NodeSource. apt's default `nodejs` package on 22.04 is 12.x,
 # which can't parse Claude Code's install.cjs (uses `?.`). Pinning the

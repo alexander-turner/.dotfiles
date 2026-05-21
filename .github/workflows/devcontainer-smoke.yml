@@ -28,6 +28,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # QEMU is needed to build the arm64 image on the amd64 runner.
+      # binfmt registration is host-wide and idempotent.
+      - name: Set up QEMU for cross-arch builds
+        uses: docker/setup-qemu-action@v3
+
       # Auth to GHCR only on actual pushes to main — PRs from forks can't
       # mint a token with packages:write anyway, and `push: filter` below
       # already skips the push step on pull_request events.
@@ -46,6 +51,12 @@ jobs:
       # tested by usage, not here. devcontainers CLI requires the config
       # be named exactly devcontainer.json, so it lives in its own subdir.
       #
+      # `platform: linux/amd64,linux/arm64` produces a multi-arch manifest
+      # list so Apple Silicon Mac minis and ARM64 home-server boxes (HA
+      # Green) can pull a native image. The smoke check still runs on the
+      # native runner arch only (amd64); the arm64 image is built but not
+      # exec'd — adding `ubuntu-22.04-arm` runners would close that gap.
+      #
       # `push: filter` only pushes when the workflow ran on push (not PR),
       # so the registry image only updates after a merge to main.
       - name: Build devcontainer, run smoke check, publish to GHCR
@@ -54,5 +65,6 @@ jobs:
           imageName: ghcr.io/${{ github.repository_owner }}/dotfiles-devcontainer
           imageTag: latest,${{ github.sha }}
           configFile: .devcontainer/smoke/devcontainer.json
+          platform: linux/amd64,linux/arm64
           push: filter
           runCmd: bash .devcontainer/smoke-check.bash

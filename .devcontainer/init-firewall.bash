@@ -30,11 +30,8 @@ iptables -P FORWARD ACCEPT
 ipset destroy allowed-domains 2>/dev/null || true
 
 ALLOW_DOMAINS=(
+    # Package registries + sources Claude/setup.sh genuinely need to fetch.
     registry.npmjs.org
-    api.anthropic.com
-    statsig.anthropic.com
-    statsig.com
-    sentry.io
     pypi.org
     files.pythonhosted.org
     github.com
@@ -42,6 +39,34 @@ ALLOW_DOMAINS=(
     objects.githubusercontent.com
     codeload.github.com
     raw.githubusercontent.com
+
+    # Anthropic API + telemetry endpoints used by Claude Code itself.
+    api.anthropic.com
+    statsig.anthropic.com
+    statsig.com
+    sentry.io
+
+    # Read-only reference material — lets Claude look up facts during
+    # dev work without yanking on the firewall every time. All accept
+    # GET-by-default; treated as low exfil risk because they're not the
+    # user's data-plane.
+    en.wikipedia.org
+    en.m.wikipedia.org
+    upload.wikimedia.org
+    developer.mozilla.org
+    docs.python.org
+    nodejs.org
+    pkg.go.dev
+    proxy.golang.org
+    docs.rs
+    crates.io
+    man7.org
+    stackoverflow.com
+    api.stackexchange.com
+
+    # turntrout.com — owner's personal site / writing reference.
+    turntrout.com
+    www.turntrout.com
 )
 
 resolved=()
