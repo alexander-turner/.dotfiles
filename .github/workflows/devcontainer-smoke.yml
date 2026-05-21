@@ -52,9 +52,7 @@ jobs:
         uses: devcontainers/ci@v0.3
         with:
           imageName: ghcr.io/${{ github.repository_owner }}/dotfiles-devcontainer
-          imageTag: |
-            latest
-            ${{ github.sha }}
+          imageTag: latest,${{ github.sha }}
           configFile: .devcontainer/smoke/devcontainer.json
           push: filter
           runCmd: bash .devcontainer/smoke-check.sh
