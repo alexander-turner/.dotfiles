@@ -113,6 +113,13 @@ real dir → prompt, missing → create.
 - Secrets must never appear on argv. Pipe stdin → stdin between `bw`,
   `envchain`, and child commands. See `bin/bw-add-secret.sh` for the
   pattern.
+- `bin/bw-*.sh` scripts go through `bin/bw-node` (a wrapper around
+  `@bitwarden/cli` from pnpm, pinned to Node 22) instead of the Rust
+  bw CLI. The Rust 2026.x line silently ignores `--passwordenv`, writes
+  ERROR lines to stdout on unlock failure, and doesn't honor session
+  tokens passed by subcommands — all of which break automation.
+  `bw-common.sh:BW_CMD` resolves the wrapper; doctor verifies it
+  responds to `--version`.
 - Public files must not contain credentials. The lint workflow runs
   `gitleaks` against the full git history on every PR — if it flags
   something, rotate the secret first, then fix the commit.
@@ -154,6 +161,34 @@ real dir → prompt, missing → create.
   `.github/workflows/uninstall.yml`. Avoid non-trivial shell in workflow
   `run:` blocks for the same reason: it skips static analysis. A `run:`
   block of more than a handful of meaningful lines is the smell.
+
+## Workflow shell scripts live in `bin/`, not inline in `.yml`
+
+Inline `run: |` blocks in `.github/workflows/*.yml` are invisible to
+shellcheck/shfmt and skip the auto-fix pipeline. Anything beyond a
+trivial 1-3 line install incantation should be extracted to
+`bin/<name>.sh` and invoked from the workflow as `run: bash
+bin/<name>.sh` — `bin/lint.sh`'s shellcheck glob (`bin/*.sh`) then
+covers it automatically.
+
+Reference: `bin/check-idempotency.sh` is invoked from
+`.github/workflows/idempotency.yml` with `TEST_HOME` / `SCRATCH` passed
+via `env:`. The script defaults both to `mktemp` so it's runnable
+locally too.
+
+**Don't extract from template-synced workflows.** `template-sync.yaml`
+copies these files verbatim from the upstream template on every daily
+run, so any local edits get clobbered:
+
+- `.github/workflows/template-sync.yaml`
+- `.github/workflows/dependabot-auto-merge.yaml`
+- `.github/workflows/claude.yaml`
+- `.github/workflows/phone-home.yaml`
+- `.github/workflows/security-vulnerability-scan.yaml`
+
+The full list is in `template-sync.yaml`'s `SYNC_PATHS` env. Any
+refactor for shellcheck coverage of those scripts has to land upstream
+in `alexander-turner/claude-automation-template`.
 
 ## When fixing CI failures
 

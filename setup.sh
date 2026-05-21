@@ -303,6 +303,16 @@ if command_exists pnpm; then
     *) export PATH="$PNPM_HOME:$PATH" ;;
     esac
     pnpm install -g prettier
+    # @bitwarden/cli (Node bw) is required for bin/bw-*.sh scripts — the
+    # Rust bw 2026.x has scripting quirks the helpers can't work around.
+    pnpm install -g @bitwarden/cli
+fi
+
+# Make sure mise has a Node 22 install available for bin/bw-node, which
+# pins Node 22 to avoid the inquirer/readline crash on Node 26+. Doesn't
+# change the user's per-project Node default.
+if command_exists mise; then
+    mise install node@22 2>/dev/null || status_msg "WARN: mise install node@22 failed; bin/bw-node will fall back to PATH's node."
 fi
 
 # devcontainer CLI — used by the host-side `claude` wrappers (bin/claude and

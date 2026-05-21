@@ -11,6 +11,20 @@
 # shellcheck source=bin/lib/secret-store.sh disable=SC1091
 source "${BASH_SOURCE[0]%/*}/secret-store.sh"
 
+# Which bw binary to invoke. The Node CLI (@bitwarden/cli on npm/pnpm) is
+# the well-behaved scripting target: --passwordenv works, BW_SESSION is
+# honored, errors go to stderr. The newer Rust bw (>=2026) has a faster
+# startup but enough scripting quirks that we keep it out of these
+# scripts. Resolution order:
+#   1. $BW_CMD if explicitly set
+#   2. `bw-node` if you've symlinked the Node CLI under that name
+#   3. `bw` from PATH (whatever you've got)
+#
+# To install the Node CLI alongside Rust bw:
+#   pnpm add -g @bitwarden/cli
+#   ln -sf "$(pnpm bin -g)/bw" ~/.local/bin/bw-node   # or set BW_CMD instead
+BW_CMD="${BW_CMD:-$(command -v bw-node 2>/dev/null || command -v bw 2>/dev/null || echo bw)}"
+
 # Verify the required external commands are on PATH. Usage:
 #   bw_require_cmds bw jq envchain security
 # Empty arguments are skipped — callers can splice in
@@ -31,7 +45,7 @@ bw_require_cmds() {
 
 # Return 0 if bw has any session at all (locked or unlocked), 1 otherwise.
 bw_is_logged_in() {
-    bw status --raw 2>/dev/null | grep -qE '"status":"(locked|unlocked)"'
+    "$BW_CMD" status --raw 2>/dev/null | grep -qE '"status":"(locked|unlocked)"'
 }
 
 # Exit-style guard: errors out if not logged in.
@@ -44,9 +58,10 @@ bw_require_logged_in() {
 
 # Ensure $BW_SESSION is exported, unlocking via the master password cached
 # in the OS secret store (service `bw-master-password`, see
-# bin/lib/secret-store.sh) if needed. Password is written to a 0600 temp
-# file and passed via `--passwordfile` — the Rust bw CLI doesn't reliably
-# read /dev/stdin as a file, and keeping the value off argv matters.
+# bin/lib/secret-store.sh) if needed. Password is passed via env var to
+# `--passwordenv` — Node bw silently ignores `--passwordfile` and falls
+# back to an interactive prompt that crashes inquirer on piped stdin
+# ("readline was closed" on Node 20+). Env var scoped to the subprocess.
 bw_ensure_session() {
     if [ -n "${BW_SESSION:-}" ]; then
         export BW_SESSION
@@ -58,18 +73,18 @@ bw_ensure_session() {
         echo "bw: locked and no cached master password. Run bin/bw-login.sh." >&2
         return 1
     fi
-    local pwfile
-    pwfile=$(mktemp -t bwpw)
-    chmod 600 "$pwfile"
-    printf '%s\n' "$mp" >"$pwfile"
+    local out rc
+    out=$(BW_PASSWORD="$mp" "$BW_CMD" unlock --raw --passwordenv BW_PASSWORD 2>/dev/null)
+    rc=$?
     unset mp
-    BW_SESSION=$(bw unlock --raw --passwordfile "$pwfile" 2>/dev/null)
-    local rc=$?
-    rm -f "$pwfile"
-    if [ "$rc" -ne 0 ] || [ -z "$BW_SESSION" ]; then
-        echo "bw unlock: cached master password rejected or empty session. Re-run bin/bw-login.sh." >&2
+    # Rust bw 2026.x writes ERROR lines to stdout on unlock failure, so a
+    # non-empty $out doesn't prove success. A real session is a single
+    # base64-ish line with no whitespace; bail on anything else.
+    if [ "$rc" -ne 0 ] || [ -z "$out" ] || [[ "$out" == *[[:space:]]* ]] || [[ "$out" == ERROR* ]]; then
+        echo "bw unlock: cached master password rejected. Re-run bin/bw-login.sh." >&2
         return 1
     fi
+    BW_SESSION="$out"
     export BW_SESSION
 }
 
@@ -78,7 +93,7 @@ bw_ensure_session() {
 # shellcheck disable=SC2119  # callers intentionally invoke without args
 bw_envchain_folder_id() {
     local fid
-    fid=$(bw list folders --session "$BW_SESSION" |
+    fid=$("$BW_CMD" list folders --session "$BW_SESSION" |
         jq -r '.[] | select(.name=="envchain") | .id' | head -n1)
     if [ -n "$fid" ]; then
         printf '%s\n' "$fid"
@@ -88,16 +103,16 @@ bw_envchain_folder_id() {
         echo "No 'envchain' folder in vault." >&2
         return 1
     fi
-    bw get template folder |
+    "$BW_CMD" get template folder |
         jq '.name="envchain"' |
-        bw encode |
-        bw create folder --session "$BW_SESSION" |
+        "$BW_CMD" encode |
+        "$BW_CMD" create folder --session "$BW_SESSION" |
         jq -r '.id'
 }
 
 # Return 0 if an item with the given name exists in the given folder.
 bw_item_exists() {
     local folder_id="$1" name="$2"
-    bw list items --folderid "$folder_id" --session "$BW_SESSION" |
+    "$BW_CMD" list items --folderid "$folder_id" --session "$BW_SESSION" |
         jq -e --arg n "$name" '.[] | select(.name==$n)' >/dev/null
 }
