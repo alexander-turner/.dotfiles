@@ -6,11 +6,10 @@ This directory contains configuration and skills for Claude Code.
 
 ```
 .claude/
-├── settings.json              # Claude Code hooks + statusLine configuration
+├── settings.json              # Hooks + statusLine + permissions.deny
 ├── hooks/
 │   ├── session-setup.sh      # SessionStart — installs tools, configures git
 │   ├── pre-push-check.sh     # PreToolUse(git push|gh pr) — build/lint/typecheck
-│   ├── notify-dangerous.sh   # PreToolUse(Bash) — desktop heads-up for rm -rf etc.
 │   ├── audit-log.sh          # PostToolUse — append-only JSONL audit at ~/.claude/audit/
 │   ├── scan-input.sh         # UserPromptSubmit — refuse prompts containing secrets
 │   ├── statusline.sh         # statusLine — model · cwd · git branch · mode
@@ -46,15 +45,16 @@ Before `git push` or `gh pr` commands, `pre-push-check.sh` runs any configured c
 
 Only runs scripts that are actually configured in `package.json` — skips placeholder scripts.
 
-### Dangerous-Bash Notifier
+### Destructive-Bash Block
 
-`notify-dangerous.sh` runs on every `Bash` PreToolUse and pings the desktop
-(via `notify.sh`) when the command matches a short list of hard-to-reverse
-verbs: `rm -rf`, `git push --force`, `git reset --hard`, `git clean -fd`,
-`git branch -D`, `bw delete`, `envchain --unset`, `launchctl unload/bootout`,
-`sudo rm`. It always exits 0 — the hook is a heads-up, not a gate. The
-matcher in `settings.json` scopes the hook to Bash; the regex filter is in
-the script so it's reviewable in one place.
+Hard-to-reverse Bash commands are blocked outright via `permissions.deny`
+in `settings.json`, not by a script. Anything matching `rm -rf*`, `rm -fr*`,
+`rm -Rf*`, `sudo rm*`, `git push --force*`, `git push -f*`,
+`git reset --hard*`, `git clean -f[dx]*`, `git branch -D*`, `bw delete*`,
+`envchain --unset*`, or `launchctl unload|bootout*` is refused by the
+harness before the tool call runs. To run such a command intentionally,
+do it in your own shell — Claude Code shouldn't be the one pulling the
+trigger.
 
 ### Audit Log
 

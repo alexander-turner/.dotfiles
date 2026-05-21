@@ -184,27 +184,8 @@ run_test "audit-log: missing HOME tree -> still exits 0 (best-effort)" '
     rm -rf "$fake_home"
 '
 
-# --- notify-dangerous.sh ---
-
-run_test "notify-dangerous: benign command -> exit 0, no notify call" '
-    output=$(echo '\''{"tool_input":{"command":"ls -la"}}'\'' \
-        | bash "'"$HOOKS_DIR"'/notify-dangerous.sh" 2>&1)
-    rc=$?
-    expected_rc=0
-'
-
-run_test "notify-dangerous: rm -rf flagged -> exit 0 (heads-up only)" '
-    output=$(echo '\''{"tool_input":{"command":"rm -rf /tmp/scratch"}}'\'' \
-        | bash "'"$HOOKS_DIR"'/notify-dangerous.sh" 2>&1)
-    rc=$?
-    expected_rc=0
-'
-
-run_test "notify-dangerous: missing command field -> exit 0" '
-    output=$(echo '\''{}'\'' | bash "'"$HOOKS_DIR"'/notify-dangerous.sh" 2>&1)
-    rc=$?
-    expected_rc=0
-'
+# --- notify-dangerous.sh: removed; destructive Bash is blocked via
+# permissions.deny in .claude/settings.json, no script needed.
 
 # --- statusline.sh ---
 
