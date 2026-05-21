@@ -2,7 +2,7 @@
 # Add (or update) a secret in the Bitwarden vault and in envchain in one shot.
 #
 # Usage:
-#   bw-add-secret.sh [--update] <namespace> <VAR_NAME>
+#   bw-add-secret.bash [--update] <namespace> <VAR_NAME>
 #
 # Reads the secret value from stdin (pipe one in) or interactively prompts
 # without echo. The value flows into envchain via stdin and into bw via

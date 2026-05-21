@@ -2,7 +2,7 @@
 # Authenticate `gh` non-interactively using a PAT stored in Bitwarden.
 #
 # Looks up the Login item `envchain/github/PAT` (created via
-# `bin/bw-add-secret.sh github PAT`) in the unlocked vault and pipes its
+# `bin/bw-add-secret.bash github PAT`) in the unlocked vault and pipes its
 # password field to `gh auth login --with-token`. Exits non-zero if
 # anything is missing, so callers can fall back to an interactive flow.
 
@@ -20,7 +20,7 @@ item_name="envchain/github/PAT"
 pat=$("$BW_CMD" get item --session "$BW_SESSION" "$item_name" 2>/dev/null |
     jq -r '.login.password // empty')
 [ -n "$pat" ] || {
-    echo "gh-auth-from-bw: no '$item_name' item in vault. Add with: bin/bw-add-secret.sh github PAT" >&2
+    echo "gh-auth-from-bw: no '$item_name' item in vault. Add with: bin/bw-add-secret.bash github PAT" >&2
     exit 1
 }
 

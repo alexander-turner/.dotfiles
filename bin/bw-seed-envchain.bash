@@ -6,7 +6,7 @@
 # bw and envchain — never on argv, never logged.
 #
 # Auth: bw must already be `bw login`-ed (one-time per machine via
-# bin/bw-login.sh). This script picks up $BW_SESSION if exported, else
+# bin/bw-login.bash). This script picks up $BW_SESSION if exported, else
 # unlocks via the cached master password (see bin/lib/bw-common.sh).
 #
 # Flags:

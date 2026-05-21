@@ -144,7 +144,7 @@ if $IS_MAC
 end
 
 function flash
-    sh "$DOTFILES_DIR/bin/keyboard_flash.sh"
+    sh "$DOTFILES_DIR/bin/keyboard_flash.bash"
 end
 
 function pytest
@@ -318,7 +318,7 @@ set -xg NODE_NO_WARNINGS 1
 # Secret wrappers: envchain reads secrets from the macOS Keychain, which is
 # auto-unlocked at GUI login (zero-prompt runtime). Bitwarden is the
 # cross-machine source of truth; values are pulled into envchain by
-# bin/bw-seed-envchain.sh (run on demand via `bwseed` and as a throttled
+# bin/bw-seed-envchain.bash (run on demand via `bwseed` and as a throttled
 # shell-startup background job below). See README for the data flow.
 
 function ai_secrets_wrap
@@ -360,11 +360,11 @@ end
 # Auto-sync on shell startup is throttled by ~/.cache/bw-envchain-sync.stamp.
 
 function bwseed --description 'Refresh envchain from Bitwarden vault'
-    bash "$DOTFILES_DIR/bin/bw-seed-envchain.sh" $argv
+    bash "$DOTFILES_DIR/bin/bw-seed-envchain.bash" $argv
 end
 
 function bwadd --description 'Add a new secret to Bitwarden + envchain'
-    bash "$DOTFILES_DIR/bin/bw-add-secret.sh" $argv
+    bash "$DOTFILES_DIR/bin/bw-add-secret.bash" $argv
 end
 
 function _bw_envchain_autosync
@@ -379,7 +379,7 @@ function _bw_envchain_autosync
     if test (math (date +%s) - $mtime) -lt $interval
         return 0
     end
-    fish -c "if bash '$DOTFILES_DIR/bin/bw-seed-envchain.sh' --quiet >/dev/null 2>&1; touch '$stamp'; end" &
+    fish -c "if bash '$DOTFILES_DIR/bin/bw-seed-envchain.bash' --quiet >/dev/null 2>&1; touch '$stamp'; end" &
     disown
 end
 
