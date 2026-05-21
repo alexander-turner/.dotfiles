@@ -18,9 +18,7 @@
       "Bash(git clean -fx:*)",
       "Bash(git branch -D:*)",
       "Bash(bw delete:*)",
-      "Bash(envchain --unset:*)",
-      "Bash(launchctl unload:*)",
-      "Bash(launchctl bootout:*)"
+      "Bash(envchain --unset:*)"
     ]
   },
   "hooks": {

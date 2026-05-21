@@ -51,8 +51,8 @@ Hard-to-reverse Bash commands are blocked outright via `permissions.deny`
 in `settings.json`, not by a script. Anything matching `rm -rf*`, `rm -fr*`,
 `rm -Rf*`, `sudo rm*`, `git push --force*`, `git push -f*`,
 `git reset --hard*`, `git clean -f[dx]*`, `git branch -D*`, `bw delete*`,
-`envchain --unset*`, or `launchctl unload|bootout*` is refused by the
-harness before the tool call runs. To run such a command intentionally,
+or `envchain --unset*` is refused by the harness before the tool call
+runs. To run such a command intentionally,
 do it in your own shell — Claude Code shouldn't be the one pulling the
 trigger.
 
