@@ -2,9 +2,9 @@
 # In-container smoke check for the dotfiles devcontainer.
 #
 # Source of truth for the tool list is $DOTFILES_TOOLS, set by ENV in
-# .devcontainer/Dockerfile. The MCP filesystem server version is read
-# from .mcp.json — the runtime config is canonical, the Dockerfile pin
-# is checked against it.
+# .devcontainer/Dockerfile. The MCP filesystem server is NOT pre-installed
+# (it's `npx --yes`'d from .mcp.json on first use), so the only MCP pin
+# lives in .mcp.json — nothing to assert here.
 #
 # Invoked two ways:
 #   * CI:    devcontainers/ci@v0.3 runCmd: bash .devcontainer/smoke-check.sh
@@ -23,12 +23,5 @@ for cmd in $DOTFILES_TOOLS; do
     fi
 done
 [[ $missing -eq 0 ]]
-
-# The MCP filesystem server is a node package, not a $PATH binary. Read the
-# canonical version from .mcp.json and assert npm has it installed globally
-# — the Dockerfile's MCP_FS_VERSION ARG should match this.
-mcp_pin="$(jq -r '.mcpServers.filesystem.args[] | select(startswith("@modelcontextprotocol/server-filesystem@"))' .mcp.json)"
-echo "==> Asserting MCP filesystem server == $mcp_pin"
-npm ls --global --depth=0 2>/dev/null | grep -F "$mcp_pin"
 
 echo "==> Smoke check passed"

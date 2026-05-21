@@ -4,6 +4,9 @@
   "build": {
     "dockerfile": "Dockerfile"
   },
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
   "remoteUser": "vscode",
   "workspaceFolder": "/workspaces/.dotfiles"
 }
