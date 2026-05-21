@@ -45,9 +45,12 @@ Features (configurable by changing `setup.bash`):
     - `mods` (Charm) for piping shell output to an LLM, e.g. `<failing-cmd> 2>&1 | mods 'what broke?'`. Routes through Venice via `apps/mods/mods.yml`.
 11. Modern Unix toolkit installed via `Brewfile`:
     - `eza` — drop-in `ls` replacement with git-aware listing and tree view; the fish `ls` function prefers it when present.
+      ![eza directory listing with colored output and git status.](https://github.com/eza-community/eza/raw/main/docs/images/screenshots.png)
     - `ripgrep` (`rg`), `fd`, `bat` — faster grep / find / cat. In interactive fish, `grep` dispatches to `rg` and `cat` to `bat`; bash scripts and subshells still get the real binaries. (`find` is intentionally not shadowed — the argument grammars don't line up.) Use `command grep` or `\grep` to bypass the wrapper.
+      ![bat displaying a source file with syntax highlighting and line numbers.](https://imgur.com/rGsdnDe.png)
     - `fzf` plus the [`PatrickF1/fzf.fish`](https://github.com/PatrickF1/fzf.fish) plugin: Ctrl-R history search, Ctrl-Alt-F file picker, etc., all with `bat` previews.
     - `git-delta` — paged, syntax-highlighted git diffs, wired up in `.gitconfig`.
+      ![git-delta side-by-side diff with syntax highlighting and line numbers.](https://user-images.githubusercontent.com/52205/87230973-412eb900-c381-11ea-8aec-cc200290bd1b.png)
     - `mise` — single tool for Node, Python, Ruby, Go versions; auto-activated in fish via `apps/fish/conf.d/mise.fish`.
     - `tokei` (LOC), `dust` (`du` with bars), `bottom` (`btm`, htop-alike).
     - `carapace` — universal completion engine, auto-activated for fish.
