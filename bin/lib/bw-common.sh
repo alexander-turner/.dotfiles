@@ -10,20 +10,12 @@
 
 # shellcheck source=bin/lib/secret-store.sh disable=SC1091
 source "${BASH_SOURCE[0]%/*}/secret-store.sh"
+# shellcheck source=bin/lib/keychain.sh disable=SC1091
+source "${BASH_SOURCE[0]%/*}/keychain.sh"
 
-# Which bw binary to invoke. The Node CLI (@bitwarden/cli on npm/pnpm) is
-# the well-behaved scripting target: --passwordenv works, BW_SESSION is
-# honored, errors go to stderr. The newer Rust bw (>=2026) has a faster
-# startup but enough scripting quirks that we keep it out of these
-# scripts. Resolution order:
-#   1. $BW_CMD if explicitly set
-#   2. `bw-node` if you've symlinked the Node CLI under that name
-#   3. `bw` from PATH (whatever you've got)
-#
-# To install the Node CLI alongside Rust bw:
-#   pnpm add -g @bitwarden/cli
-#   ln -sf "$(pnpm bin -g)/bw" ~/.local/bin/bw-node   # or set BW_CMD instead
-BW_CMD="${BW_CMD:-$(command -v bw-node 2>/dev/null || command -v bw 2>/dev/null || echo bw)}"
+# Scripts require Node bw (`bw-node`, set up by setup.sh). Rust bw isn't
+# a fallback — it has session/output quirks these scripts can't dodge.
+BW_CMD="${BW_CMD:-bw-node}"
 
 # Verify the required external commands are on PATH. Usage:
 #   bw_require_cmds bw jq envchain security

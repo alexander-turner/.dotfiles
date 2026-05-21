@@ -171,13 +171,10 @@ fi
 # ── Bitwarden / envchain ────────────────────────────────────────────────────
 section "Secrets"
 
-# Mirror bin/lib/bw-common.sh's BW_CMD resolution so we check the same
-# binary the scripts actually invoke.
-bw_cmd="${BW_CMD:-$(command -v bw-node 2>/dev/null || command -v bw 2>/dev/null || true)}"
-if [ -n "$bw_cmd" ] && command -v "$bw_cmd" >/dev/null 2>&1; then
-    # Validate the wrapper actually exec's something that responds — catches
-    # the case where bin/bw-node is symlinked but @bitwarden/cli isn't
-    # installed yet (or Node 22 isn't available, etc.).
+# Mirror bin/lib/bw-common.sh's BW_CMD resolution. No fallback to `bw`:
+# Rust bw is intentionally never used from scripts.
+bw_cmd="${BW_CMD:-bw-node}"
+if command -v "$bw_cmd" >/dev/null 2>&1; then
     if "$bw_cmd" --version 2>/dev/null | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+'; then
         pass "bw-node usable ($bw_cmd)"
     else
@@ -187,10 +184,6 @@ if [ -n "$bw_cmd" ] && command -v "$bw_cmd" >/dev/null 2>&1; then
         pass "bw is logged in ($bw_cmd)"
     else
         fail "bw login" "not logged in (run: bash bin/bw-login.bash)"
-    fi
-    # Warn if the scripts will fall back to Rust bw — known-flaky for scripting.
-    if [ "$(basename "$bw_cmd")" = "bw" ] && ! command -v bw-node >/dev/null 2>&1; then
-        skip "bw-node" "Node bw not found; scripts will use $bw_cmd which may misbehave"
     fi
 else
     skip "bw" "neither bw-node nor bw on PATH (run setup.bash)"
