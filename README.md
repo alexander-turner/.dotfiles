@@ -12,6 +12,8 @@ You can also run `bash setup.sh --link-only` to refresh symlinks without reinsta
 
 To verify health at any time: `bash bin/doctor.sh` (or `--quiet` for failures-only). To reverse the install — removing only symlinks that point into this repo and restoring the most recent backup — run `bash bin/uninstall.sh` (add `--yes` for non-interactive). The dotfiles repo itself is left untouched.
 
+Once setup has run, those chores are also reachable through the `dotfiles` dispatcher symlinked at `~/.local/bin/dotfiles` (fish completions included): `dotfiles doctor | uninstall | link | lint`.
+
 Two CI workflows guard the install:
 
 - `lint.yml` — shellcheck + fish syntax + stylua + yamllint + ruff, plus a `gitleaks` scan of the full git history (auto-fixes the formatters).
