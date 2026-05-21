@@ -4,9 +4,9 @@
 # Git's pre-push protocol feeds us one line per ref being pushed:
 #   <local-ref> <local-sha> <remote-ref> <remote-sha>
 # We translate each into a git-log range and hand it to gitleaks via
-# GITLEAKS_LOG_OPTS so bin/lint.sh only scans the commits this push adds
+# GITLEAKS_LOG_OPTS so bin/lint.bash only scans the commits this push adds
 # (full-history scans run in CI). Falls back to a full scan when stdin
-# isn't a git hook — e.g. running `bash bin/lint.sh` directly.
+# isn't a git hook — e.g. running `bash bin/lint.bash` directly.
 set -euo pipefail
 
 git_root="$(git rev-parse --show-toplevel)"
@@ -30,9 +30,9 @@ if [ -n "$log_opts" ]; then
     export GITLEAKS_LOG_OPTS="${log_opts# }"
 fi
 
-# Flip lint.sh's check_gitleaks from SKIP-on-missing to FAIL-on-missing. A
+# Flip lint.bash's check_gitleaks from SKIP-on-missing to FAIL-on-missing. A
 # separate var (not overloading GITLEAKS_LOG_OPTS) so a stray export in the
-# user's shell can't hard-fail their normal `bash bin/lint.sh` runs.
+# user's shell can't hard-fail their normal `bash bin/lint.bash` runs.
 export GITLEAKS_REQUIRED=1
 
-"$git_root/bin/lint.sh"
+"$git_root/bin/lint.bash"
