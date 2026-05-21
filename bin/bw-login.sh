@@ -95,7 +95,7 @@ cache_master_and_seed() {
     chmod 600 "$pwfile"
     printf '%s\n' "$MASTER" >"$pwfile"
     unset MASTER
-    
+
     # Pass via --passwordenv (scoped to the bw subprocess) — bw on newer
     # Node versions has an inquirer bug that crashes on stdin pipes.
     # 2>/dev/null suppresses the Node.js/inquirer crash noise on newer bw builds;
