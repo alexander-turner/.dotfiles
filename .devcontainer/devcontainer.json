@@ -4,7 +4,8 @@
     "dockerfile": "Dockerfile",
     "args": {
       "TZ": "${localEnv:TZ:UTC}"
-    }
+    },
+    "cacheFrom": "ghcr.io/alexander-turner/dotfiles-devcontainer:latest"
   },
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {}

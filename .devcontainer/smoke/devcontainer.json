@@ -3,7 +3,8 @@
   "name": "dotfiles-smoke",
   "build": {
     "dockerfile": "../Dockerfile",
-    "context": ".."
+    "context": "..",
+    "cacheFrom": "ghcr.io/alexander-turner/dotfiles-devcontainer:latest"
   },
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {}

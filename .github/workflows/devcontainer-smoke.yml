@@ -16,6 +16,11 @@ on:
       - "bin/check-devcontainer.sh"
       - ".github/workflows/devcontainer-smoke.yml"
 
+# packages:write lets the action push to GHCR on main; read-only otherwise.
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   smoke:
     name: Build .devcontainer image and verify installed tools
@@ -23,15 +28,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Auth to GHCR only on actual pushes to main — PRs from forks can't
+      # mint a token with packages:write anyway, and `push: filter` below
+      # already skips the push step on pull_request events.
+      - name: Log in to GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       # Uses .devcontainer/smoke/devcontainer.json (no postCreateCommand,
       # no runArgs) so the smoke test validates the IMAGE in isolation.
       # The real .devcontainer/devcontainer.json wires up init-firewall.sh
       # + setup.sh --link-only for actual developer sessions — those are
       # tested by usage, not here. devcontainers CLI requires the config
       # be named exactly devcontainer.json, so it lives in its own subdir.
-      - name: Build devcontainer and run smoke check
+      #
+      # `push: filter` only pushes when the workflow ran on push (not PR),
+      # so the registry image only updates after a merge to main.
+      - name: Build devcontainer, run smoke check, publish to GHCR
         uses: devcontainers/ci@v0.3
         with:
-          imageName: dotfiles-devcontainer-smoke
+          imageName: ghcr.io/${{ github.repository_owner }}/dotfiles-devcontainer
+          imageTag: |
+            latest
+            ${{ github.sha }}
           configFile: .devcontainer/smoke/devcontainer.json
+          push: filter
           runCmd: bash .devcontainer/smoke-check.sh
