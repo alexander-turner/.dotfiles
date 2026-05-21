@@ -1,18 +1,7 @@
 #!/bin/sh
-# Wrapper that runs @bitwarden/cli (the Node bw) under a pinned Node 22.
-#
-# Why pin Node: Node 26+ crashes the inquirer prompt during `bw unlock`
-# ("readline was closed"), even when --passwordenv is set. Node 22 works.
-#
-# Why Node bw and not the Rust bw: the 2026.x Rust CLI has scripting
-# quirks (ignores --passwordenv, ERROR lines on stdout, --session not
-# honored by subcommands) that make the bin/bw-*.sh scripts unreliable.
-# See bin/lib/bw-common.sh:BW_CMD.
-#
-# Lookup order:
-#   1. $BW_NODE_BIN if explicitly set
-#   2. Common pnpm/npm global install paths
-#   3. `bw` on PATH (last resort — may be the Rust one; will probably misbehave)
+# Runs @bitwarden/cli (Node bw) under pinned Node 22. Node 26+ crashes
+# inquirer on `bw unlock`; the Rust bw isn't acceptable as a fallback
+# either (see bin/lib/bw-common.sh:BW_CMD).
 set -eu
 
 find_node22() {
@@ -25,6 +14,9 @@ find_node22() {
     return 1
 }
 
+# Locate @bitwarden/cli. Override with $BW_NODE_BIN; otherwise check
+# common pnpm/npm global install paths. Never falls back to `bw` on PATH
+# — that's probably the Rust CLI, which would misbehave silently.
 find_bw() {
     if [ -n "${BW_NODE_BIN:-}" ] && [ -x "$BW_NODE_BIN" ]; then
         printf '%s\n' "$BW_NODE_BIN"
@@ -45,10 +37,6 @@ find_bw() {
             printf '%s\n' "$prefix/bin/bw"
             return 0
         fi
-    fi
-    if command -v bw >/dev/null 2>&1; then
-        command -v bw
-        return 0
     fi
     return 1
 }
