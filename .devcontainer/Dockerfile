@@ -1,4 +1,15 @@
-FROM node:20
+# Devcontainer for hacking on this dotfiles repo with Claude Code.
+# Layer 1 of the three-layer sandbox (container isolation); Layers 2-3
+# (OS-level sandbox + permission rules) come from ai/prompting/settings.json.
+#
+# Base image is pinned by digest so a silent retag of node:20 upstream
+# doesn't change the build out from under us. Dependabot's docker
+# ecosystem keeps the digest fresh; see .github/dependabot.yml.
+FROM node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5
+
+# BuildKit auto-populates TARGETARCH per --platform target. Used below
+# for the git-delta install so cross-arch builds pick the right binary.
+ARG TARGETARCH
 
 ARG TZ
 ENV TZ="$TZ"
@@ -49,11 +60,12 @@ RUN mkdir -p /workspace /home/node/.claude && \
 
 WORKDIR /workspace
 
+# git-delta — use TARGETARCH so multi-arch builds pull the right .deb.
+# TARGETARCH ("amd64"/"arm64") happens to align with delta's release naming.
 ARG GIT_DELTA_VERSION=0.18.2
-RUN ARCH=$(dpkg --print-architecture) && \
-  wget "https://github.com/dandavison/delta/releases/download/${GIT_DELTA_VERSION}/git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb" && \
-  sudo dpkg -i "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb" && \
-  rm "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb"
+RUN wget "https://github.com/dandavison/delta/releases/download/${GIT_DELTA_VERSION}/git-delta_${GIT_DELTA_VERSION}_${TARGETARCH}.deb" \
+  && sudo dpkg -i "git-delta_${GIT_DELTA_VERSION}_${TARGETARCH}.deb" \
+  && rm "git-delta_${GIT_DELTA_VERSION}_${TARGETARCH}.deb"
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
@@ -78,9 +90,21 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
 
 RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
 
-COPY init-firewall.sh /usr/local/bin/
+# Firewall init script. Filename was renamed .sh→.bash in #65 (script-extension
+# convention); both the COPY source and the sudoers entry must match the
+# actual filename, otherwise `docker build` fails at COPY.
+COPY init-firewall.bash /usr/local/bin/
 USER root
-RUN chmod +x /usr/local/bin/init-firewall.sh && \
-  echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/node-firewall && \
+RUN chmod +x /usr/local/bin/init-firewall.bash && \
+  echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.bash" > /etc/sudoers.d/node-firewall && \
   chmod 0440 /etc/sudoers.d/node-firewall
 USER node
+
+# Single source of truth for the CLI binaries this image is expected to
+# provide. .devcontainer/smoke-check.bash (invoked from the smoke
+# workflow on every .devcontainer/** change) reads $DOTFILES_TOOLS and
+# asserts every entry is on PATH — so adding an install step above
+# without listing the binary here means the smoke test passes by
+# accident; listing one here without an install step means it fails
+# loudly. Whitespace-separated; alphabetised for diff sanity.
+ENV DOTFILES_TOOLS="bash claude fish fzf gh git iptables ipset jq node npm pnpm python3 rg zsh"

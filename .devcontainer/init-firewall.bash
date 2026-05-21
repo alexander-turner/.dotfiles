@@ -64,7 +64,22 @@ for domain in \
     "statsig.com" \
     "marketplace.visualstudio.com" \
     "vscode.blob.core.windows.net" \
-    "update.code.visualstudio.com"; do
+    "update.code.visualstudio.com" \
+    "en.wikipedia.org" \
+    "en.m.wikipedia.org" \
+    "upload.wikimedia.org" \
+    "developer.mozilla.org" \
+    "docs.python.org" \
+    "nodejs.org" \
+    "pkg.go.dev" \
+    "proxy.golang.org" \
+    "docs.rs" \
+    "crates.io" \
+    "man7.org" \
+    "stackoverflow.com" \
+    "api.stackexchange.com" \
+    "turntrout.com" \
+    "www.turntrout.com"; do
     echo "Resolving $domain..."
     ips=$(dig +noall +answer A "$domain" | awk '$4 == "A" {print $5}')
     if [ -z "$ips" ]; then

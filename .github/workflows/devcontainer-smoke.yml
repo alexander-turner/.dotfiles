@@ -1,0 +1,59 @@
+name: Devcontainer smoke
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - ".devcontainer/**"
+      - "bin/check-devcontainer.bash"
+      - ".github/workflows/devcontainer-smoke.yml"
+  pull_request:
+    branches: [main, master]
+    paths:
+      - ".devcontainer/**"
+      - "bin/check-devcontainer.bash"
+      - ".github/workflows/devcontainer-smoke.yml"
+
+# packages:write lets the action push to GHCR on main; read-only otherwise.
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  smoke:
+    name: Build .devcontainer image and verify installed tools
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Auth to GHCR only on actual pushes to main — PRs from forks can't
+      # mint a token with packages:write anyway, and `push: filter` below
+      # already skips the push step on pull_request events.
+      - name: Log in to GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # devcontainers/ci builds per devcontainer.json. We point at a minimal
+      # smoke config (.devcontainer/smoke/devcontainer.json) that uses the
+      # same Dockerfile but drops postStartCommand — the smoke test validates
+      # the IMAGE, not the dev-experience hooks (firewall + setup.bash) that
+      # layer on top. The real devcontainer.json runs init-firewall.bash; it's
+      # tested by usage, not here, because (a) iptables/ipset in the action's
+      # sandboxed runtime is unreliable, and (b) we don't want a firewall
+      # failure during postStartCommand to mask an image regression.
+      #
+      # `push: filter` pushes only on push events (never PRs). Multi-arch is
+      # deliberately not set — setting any `platform` forces buildx into
+      # OCI-tarball export, which leaves `runCmd` with no loaded image to exec.
+      - name: Build devcontainer, run smoke check, publish to GHCR
+        uses: devcontainers/ci@v0.3
+        with:
+          imageName: ghcr.io/${{ github.repository_owner }}/dotfiles-devcontainer
+          imageTag: latest,${{ github.sha }}
+          configFile: .devcontainer/smoke/devcontainer.json
+          push: filter
+          runCmd: bash .devcontainer/smoke-check.bash

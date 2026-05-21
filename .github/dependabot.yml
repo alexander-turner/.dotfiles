@@ -1,0 +1,17 @@
+version: 2
+
+updates:
+  # Devcontainer Dockerfile — tracks the node:20 base image SHA and pinned
+  # ARG versions (git-delta, zsh-in-docker, claude-code). Without this,
+  # the digest pin in .devcontainer/Dockerfile silently goes stale.
+  - package-ecosystem: docker
+    directory: /.devcontainer
+    schedule:
+      interval: weekly
+
+  # GitHub Actions — devcontainers/ci, docker/login-action,
+  # docker/setup-qemu-action, actions/checkout, etc.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
