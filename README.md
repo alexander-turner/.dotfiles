@@ -182,6 +182,36 @@ for its version and fetches on first use (allowed by the firewall).
 `postCreateCommand` locks egress with `init-firewall.sh` (NET_ADMIN
 allowlist of npm, PyPI, Anthropic, GitHub) and then runs
 `setup.sh --link-only` against the container's `$HOME`.
+`waitFor: postCreateCommand` gates the VS Code terminal on the firewall
+being up — no exposed pre-firewall window.
+
+### Sandbox posture (what's enforced)
+
+- **Non-root runtime** — `remoteUser: vscode`, set by both the
+  `mcr.microsoft.com/devcontainers/base` image and the Dockerfile's
+  `USER vscode`. Sudo is constrained to a single allow-listed script
+  (`init-firewall.sh`) via `/etc/sudoers.d/init-firewall`.
+- **Workspace-only filesystem access** — only the project directory is
+  bind-mounted at `/workspaces/.dotfiles`; nothing outside it is visible
+  from the container.
+- **Auth persistence without host bleed** — `~/.claude` and shell history
+  live in *named volumes* (`dotfiles-claude-{config,history}-${devcontainerId}`),
+  not host bind mounts. Container rebuilds keep your auth; a compromised
+  container can't grep your host `~/.claude`. The `${devcontainerId}` macro
+  hashes the workspace path, so worktrees get independent volumes.
+- **Egress allowlist** — default-DROP OUTPUT chain (`init-firewall.sh`);
+  only loopback, ESTABLISHED, DNS, SSH, the host subnet, the curated
+  domain allowlist (npm/PyPI/Anthropic/GitHub), and GitHub's published
+  CIDR ranges can leave the container.
+- **Capabilities scoped to the firewall** — `NET_ADMIN` and `NET_RAW`
+  added explicitly; nothing else.
+- **Process limit** — `--pids-limit=512` caps runaway fork loops.
+- **No Docker-socket mount** — the container has no way to control the
+  host daemon; nothing in `mounts:` references `/var/run/docker.sock`.
+- **Destructive Bash refused by the harness** — `permissions.deny` in
+  `.claude/settings.json` blocks `rm -rf*`, `sudo rm*`, `git push --force*`,
+  `git reset --hard*`, `git clean -f[dx]*`, `git branch -D*`, `bw delete*`,
+  `envchain --unset*` before any tool call runs.
 
 ### Pulling the prebuilt image
 
