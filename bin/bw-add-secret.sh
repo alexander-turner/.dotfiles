@@ -44,6 +44,7 @@ item_name="envchain/$ns/$var"
 bw_require_cmds "$BW_CMD" jq envchain "$(secret_store_required_cmd)" || exit 1
 bw_require_logged_in || exit 1
 bw_ensure_session || exit 1
+keychain_ensure_unlocked || exit 1
 
 "$BW_CMD" sync --session "$BW_SESSION" >/dev/null 2>&1 || true
 

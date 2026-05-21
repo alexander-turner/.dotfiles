@@ -10,6 +10,8 @@
 
 # shellcheck source=bin/lib/secret-store.sh disable=SC1091
 source "${BASH_SOURCE[0]%/*}/secret-store.sh"
+# shellcheck source=bin/lib/keychain.sh disable=SC1091
+source "${BASH_SOURCE[0]%/*}/keychain.sh"
 
 # Scripts require Node bw (`bw-node`, set up by setup.sh). Rust bw isn't
 # a fallback — it has session/output quirks these scripts can't dodge.
