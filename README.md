@@ -28,7 +28,7 @@ Features (configurable by changing `setup.bash`):
    ![Compares tide theme configurations for the fish shell.](https://github.com/IlanCosman/tide/raw/assets/images/header.png)
 
 3. Installs [`zoxide`](https://github.com/ajeetdsouza/zoxide) for quick directory navigation. Once you've been to directory `dir`, just hit `j dir` to go back there.
-4. Installs `neovim` and sets it as default editor. Furthermore, sets up `LazyVim`, which is basically a full-fledged IDE.
+4. Installs `neovim` and sets it as default editor. Furthermore, sets up `LazyVim`, which is basically a full-fledged IDE.[^mini-pairs]
    ![Showing off the LazyVim CLI IDE.](https://user-images.githubusercontent.com/292349/213447056-92290767-ea16-430c-8727-ce994c93e9cc.png)
 
 5. Installs a bunch of nice shortcuts, including `git` aliases (e.g. `git add` -> `ga`).
@@ -36,7 +36,7 @@ Features (configurable by changing `setup.bash`):
 7. Installs `tmux` with the `tmux-restore` and `tmux-continuum` plugins. Basically, this means that your `tmux` sessions will be saved and restored automatically. No more losing your work when your computer crashes!
 8. Installs `mosh` alongside `ssh`. `mosh` is a more robust version of `ssh` that handles network changes and disconnections more gracefully. Set `USE_MOSH=true` in `config.fish` to use it by default.
 9. Installs `envchain` (OS Keychain at runtime) plus the [Bitwarden CLI](https://bitwarden.com/help/cli/) for cross-machine secret sync. API keys live encrypted in your Bitwarden vault; a background sync at shell startup pulls updates into envchain so wrappers like `npm`, `rclone`, `twine`, and `aider_redpill` stay zero-prompt at runtime.
-10. Configures open source AI-powered development tools:
+10. Configures open source AI-powered development tools, with inference routed through [Venice](https://venice.ai) for end-to-end encryption between client and inference:
     - Automatic commit message generation,
     - Aider for CLI coding,
     - VSCodium with Roo Cline extension for privacy-first AI pair programming (use also with confidential cloud computing, like via [`redpill.ai`](https://redpill.ai)),
@@ -53,9 +53,7 @@ Features (configurable by changing `setup.bash`):
     - `carapace` — universal completion engine, auto-activated for fish.
     - `shfmt` — shell formatter, also enforced in CI.
 
-12. AI tooling routed through Venice (E2EE inference):
-    - `mods` (Charm) for piping shell output through an LLM (`git diff | mods 'review for issues'`); configured in `apps/mods/mods.yml`.
-    - `aider`, `claude-code-router`, VSCodium + Roo Cline.
+12. Project plumbing for AI agents in this repo:
     - `AGENTS.md` symlinks to `CLAUDE.md` so Cursor/Aider/OpenCode pick up the same project context Claude Code uses.
     - `.mcp.json` configures the filesystem MCP server scoped to `~/.dotfiles` for Claude Code sessions in this repo.
     - `.claude/hooks/notify.bash` fires cross-platform desktop notifications when Claude Code needs input.
@@ -95,7 +93,9 @@ echo "Never gonna give you up" | goosesay
                             `.'´
 ```
 
-This script creates `~/.extras.fish` and `~/.extras.bash`, which are automatically sourced by `config.fish` and `.bashrc`. These files are not tracked by version control --- include commands you only want for the current machine, but use Bitwarden + envchain for secret management.
+## Machine-local additions
+
+`setup.bash` creates `~/.extras.fish` and `~/.extras.bash`, which are automatically sourced by `config.fish` and `.bashrc`. These files are not tracked by version control --- include commands you only want for the current machine, but use Bitwarden + envchain for secret management.
 
 ## Secret management: Bitwarden vault → envchain runtime
 
@@ -168,7 +168,7 @@ Values pipe stdin→stdin from envchain into `bw create item`; nothing is logged
 
 ## Reinstalling programs using `brew`
 
-`Brewfile` contains a list of programs which I like using on my personal Mac. To install these, run `brew bundle --file=Brewfile`.
+`Brewfile` contains a list of programs which I like using on my personal Mac. From the repo root, `brew bundle` picks it up automatically.
 
 ## Claude Code security
 
@@ -180,6 +180,4 @@ Three layers, all installed by `setup.sh`:
 
 `claude` invoked anywhere on the host auto-launches the container via `bin/claude` (bash/zsh) and `apps/fish/functions/claude.fish` (fish). Both fall back to host execution on `CLAUDE_NO_SANDBOX=1` or if `@devcontainers/cli` is missing. `~/.local/bin` must be ahead of the real `claude` in `$PATH` for the shim to win on bash/zsh.
 
-## Other notes
-
-- To disable parenthesis matching in `nvim`, delete the `mini.pairs` plugin from `~/.local/share/nvim/lazy/LazyVim/lua/lazyvim/plugins/coding.lua`.
+[^mini-pairs]: To disable parenthesis matching, delete the `mini.pairs` plugin from `~/.local/share/nvim/lazy/LazyVim/lua/lazyvim/plugins/coding.lua`.
