@@ -6,20 +6,7 @@ To install:
 git clone https://github.com/alexander-turner/.dotfiles ~/.dotfiles && cd ~/.dotfiles && bash setup.bash
 ```
 
-`setup.bash` will (with warning) **overwrite** your existing `.bashrc`, `.vimrc`, `.gitconfig`, `.npmrc`, `.tmux.conf`, `.config/nvim`, `.config/fish/config.fish`, `.config/mods/mods.yml`, and any `.aider*` files. On macOS it also links `.aerospace.toml`, `~/Library/com.googlecode.iterm2.plist`, `~/.config/borders/bordersrc`, and `~/.config/vagrant-templates/Vagrantfile`. Before clobbering, the previous file is moved to `~/.dotfiles-backup/<UTC-timestamp>/<rel-path>/` — so a misclick on the y/N prompt is recoverable. The new files are symlinked to the files in the repository, so edits to the originals are reflected immediately.
-
-You can also run `bash setup.bash --link-only` to refresh symlinks without reinstalling packages. Both setup paths end by running `bin/doctor.bash`, which reports a green health summary (or tells you exactly what's still broken).
-
-To verify health at any time: `bash bin/doctor.bash` (or `--quiet` for failures-only). To reverse the install — removing only symlinks that point into this repo and restoring the most recent backup — run `bash bin/uninstall.bash` (add `--yes` for non-interactive). The dotfiles repo itself is left untouched.
-
-Once setup has run, those chores are also reachable through the `dotfiles` dispatcher symlinked at `~/.local/bin/dotfiles` (fish completions included): `dotfiles doctor | uninstall | link | lint`.
-
-Two CI workflows guard the install:
-
-- `lint.yml` — shellcheck + fish syntax + stylua + yamllint + ruff, plus a `gitleaks` scan of the full git history (auto-fixes the formatters).
-- `idempotency.yml` — runs `setup.bash --link-only` twice on `ubuntu-latest` and `macos-latest`, asserts identical symlink set, no skip/overwrite/backup output on the second pass, and a clean `doctor.bash` symlink section.
-
-Features (configurable by changing `setup.bash`):
+## Features
 
 1. Installs `fish` shell and sets it as the default shell. `fish` has autocomplete, syntax highlighting, and indicates when a command is invalid.
    ![fish suggests command completions.](https://fishshell.com/assets/img/screenshots/autosuggestion.webp)
@@ -100,9 +87,21 @@ echo "Never gonna give you up" | goosesay
                             `.'´
 ```
 
-## Machine-local additions
+
+## The setup process
+
+`setup.bash` will (with warning) **overwrite** your existing `.bashrc`, `.vimrc`, `.gitconfig`, `.npmrc`, `.tmux.conf`, `.config/nvim`, `.config/fish/config.fish`, `.config/mods/mods.yml`, and any `.aider*` files. On macOS it also links `.aerospace.toml`, `~/Library/com.googlecode.iterm2.plist`, `~/.config/borders/bordersrc`, and `~/.config/vagrant-templates/Vagrantfile`. Before clobbering, the previous file is moved to `~/.dotfiles-backup/<UTC-timestamp>/<rel-path>/` — so a misclick on the y/N prompt is recoverable. The new files are symlinked to the files in the repository, so edits to the originals are reflected immediately.
+
+You can also run `bash setup.bash --link-only` to refresh symlinks without reinstalling packages. Both setup paths end by running `bin/doctor.bash`, which reports a green health summary (or tells you exactly what's still broken).
+
+To verify health at any time: `bash bin/doctor.bash` (or `--quiet` for failures-only). To reverse the install — removing only symlinks that point into this repo and restoring the most recent backup — run `bash bin/uninstall.bash` (add `--yes` for non-interactive). The dotfiles repo itself is left untouched.
+
+Once setup has run, those chores are also reachable through the `dotfiles` dispatcher symlinked at `~/.local/bin/dotfiles` (fish completions included): `dotfiles doctor | uninstall | link | lint`.
+
+### Machine-local additions
 
 `setup.bash` creates `~/.extras.fish` and `~/.extras.bash`, which are automatically sourced by `config.fish` and `.bashrc`. These files are not tracked by version control --- include commands you only want for the current machine, but use Bitwarden + envchain for secret management.
+
 
 ## Secret management: Bitwarden vault → envchain runtime
 
@@ -110,33 +109,6 @@ Two layers, both encrypted, complementary roles:
 
 - **Bitwarden vault** (source of truth, cross-machine). End-to-end encrypted; syncs to every device logged into your Bitwarden account. We use the personal API key flow so WebAuthn-only accounts work without 2FA prompts on `bw login`.
 - **envchain** (runtime cache, per-machine). Reads from the macOS Keychain, which is silently unlocked at GUI login — so wrappers like `npm`, `rclone`, and `aider_redpill` are zero-prompt during normal use.
-
-Each secret is stored as a Bitwarden Login item named `envchain/<namespace>/<VAR>` inside a folder named `envchain`. The wrappers in `apps/fish/config.fish` call `envchain <namespace> <command> <args...>`, exactly as before.
-
-### Defense against accidental leaks
-
-Two-layer `gitleaks` gate, same `.gitleaks.toml`: pre-push scans only
-the commits the push adds (fast even on huge histories), CI scans full
-history on every PR. If a real hit lands, **rotate first**, then rewrite.
-
-### One-time setup
-
-Get a Bitwarden personal API key from web vault → Settings → Security → Keys → "View API Key", then:
-
-```bash
-bash bin/bw-login.bash
-```
-
-You'll be prompted (each prompt is skippable) for `client_id`, `client_secret`, and your master password. Both are stashed in macOS Keychain; the master password lets the autosync run unattended on every shell startup. The script then runs an initial seed.
-
-### Adding a new secret
-
-```bash
-bwadd <namespace> <VAR>              # prompts for value, pushes to vault + envchain
-bwadd --update <namespace> <VAR>     # overwrite an existing vault value (rotation)
-```
-
-On every other machine the next shell startup picks it up automatically (or run `bwseed` on demand).
 
 ### GitHub CLI auth via Bitwarden
 
@@ -146,26 +118,7 @@ On every other machine the next shell startup picks it up automatically (or run 
 bin/bw-add-secret.bash github PAT
 ```
 
-On the next `setup.bash` run (or directly via `bin/gh-auth-from-bw.bash`), `gh auth login --with-token` picks it up. No browser, no SSH-key-upload step — useful on headless boxes. If the item is missing, `setup.bash` falls back to the interactive `gh auth login` flow.
-
-### Auto-sync on shell startup
-
-`config.fish` kicks off a background `bw sync` + envchain refresh on each interactive shell, throttled to once per six hours via `~/.cache/bw-envchain-sync.stamp`. To force a refresh now:
-
-```bash
-bwseed
-```
-
-### Migrating an existing envchain into Bitwarden
-
-If a machine has values in envchain that aren't in the vault yet:
-
-```bash
-export BW_SESSION=$(bw unlock --raw)
-bash bin/migrate-envchain-to-bitwarden.bash
-```
-
-Values pipe stdin→stdin from envchain into `bw create item`; nothing is logged.
+On the next `setup.bash` run (or directly via `bin/gh-auth-from-bw.bash`), `gh auth login --with-token` picks it up. No browser, no SSH-key-upload step — useful on headless boxes. 
 
 ### Threat model
 
@@ -173,18 +126,19 @@ Values pipe stdin→stdin from envchain into `bw create item`; nothing is logged
 - The cached master password in macOS Keychain has the same protection envchain values themselves do — Keychain ACL + GUI-login-time unlock.
 - Secret values never appear on any process's argv: every helper pipes values stdin→stdin between bw, envchain, and child commands.
 
+
+## Defense against accidental leaks
+
+Two-layer `gitleaks` gate, same `.gitleaks.toml`: pre-push scans only the commits the push adds (fast even on huge histories), CI scans full history on every PR. 
+
 ## Reinstalling programs using `brew`
 
 `Brewfile` contains a list of programs which I like using on my personal Mac. From the repo root, `brew bundle` picks it up automatically.
 
 ## Claude Code security
 
-Three layers, all installed by `setup.sh`:
-
 - **Container.** `.devcontainer/` is the [Anthropic reference container](https://github.com/anthropics/claude-code/tree/main/.devcontainer) plus `fish`/`pnpm`/`python3` and a few extra approved domains in the egress allowlist. `~/.claude` is a single shared volume so auth persists across repos.
 - **Sandbox.** `ai/prompting/settings.json` (symlinked to `~/.claude/settings.json`) enables `sandbox`, denies reads of secret stores, denies writes to shell rc files (including fish), and restricts outbound network to an explicit allowlist.
-- **Permissions.** Deny rules block shell-out vectors and exfil destinations. Allow rules pre-approve routine package, test, and git commands. Deny wins on first match, so any allow that overlaps a deny is dead config.
-
-`claude` invoked anywhere on the host auto-launches the container via `bin/claude` (bash/zsh) and `apps/fish/functions/claude.fish` (fish). Both fall back to host execution on `CLAUDE_NO_SANDBOX=1` or if `@devcontainers/cli` is missing. `~/.local/bin` must be ahead of the real `claude` in `$PATH` for the shim to win on bash/zsh.
+- **Permissions.** Deny rules block shell-out vectors and exfil destinations. Allow rules pre-approve routine package, test, and git commands.
 
 [^mini-pairs]: To disable parenthesis matching, delete the `mini.pairs` plugin from `~/.local/share/nvim/lazy/LazyVim/lua/lazyvim/plugins/coding.lua`.
