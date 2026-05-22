@@ -12,7 +12,11 @@ import os
 import subprocess
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parent.parent
+REPO = Path(
+    subprocess.check_output(
+        ["git", "rev-parse", "--show-toplevel"], text=True
+    ).strip()
+)
 
 
 def _make_security_stub(tmp_path: Path, exit_code: int = 0) -> tuple[Path, Path]:
