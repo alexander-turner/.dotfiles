@@ -19,6 +19,8 @@ $HOME/.npmrc|$DOTFILES_DIR/.npmrc|.npmrc
 $HOME/.pnpmrc|$DOTFILES_DIR/.pnpmrc|.pnpmrc
 $HOME/.config/fish/config.fish|$DOTFILES_DIR/apps/fish/config.fish|fish config
 $HOME/.config/fish/completions/dotfiles.fish|$DOTFILES_DIR/apps/fish/completions/dotfiles.fish|dotfiles fish completion
+$HOME/.config/fish/conf.d/carapace.fish|$DOTFILES_DIR/apps/fish/conf.d/carapace.fish|carapace conf.d snippet
+$HOME/.config/fish/conf.d/mise.fish|$DOTFILES_DIR/apps/fish/conf.d/mise.fish|mise conf.d snippet
 $HOME/.local/bin/dotfiles|$DOTFILES_DIR/bin/dotfiles|dotfiles dispatcher
 $HOME/.config/mods/mods.yml|$DOTFILES_DIR/apps/mods/mods.yml|mods config
 $HOME/.config/mise/config.toml|$DOTFILES_DIR/apps/mise/config.toml|mise config
