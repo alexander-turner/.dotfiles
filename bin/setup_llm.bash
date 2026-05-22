@@ -102,18 +102,15 @@ if command_exists uv; then
         uv tool install --quiet llm
     fi
 
-    # llm reads model defs from <logs path>/extra-openai-models.yaml. Write
-    # only if missing or different so re-runs don't churn the file mtime.
+    # llm reads model defs from <logs path>/extra-openai-models.yaml.
     if command_exists llm; then
         LLM_DIR="$(dirname "$(llm logs path)")"
         mkdir -p "$LLM_DIR"
-        LLM_MODELS_YAML="$LLM_DIR/extra-openai-models.yaml"
-        EXPECTED_MODELS_YAML='- model_id: redpill-sonnet
+        cat >"$LLM_DIR/extra-openai-models.yaml" <<'YAML'
+- model_id: redpill-sonnet
   model_name: anthropic/claude-sonnet-4.5
-  api_base: "https://api.redpill.ai/v1"'
-        if [[ ! -f "$LLM_MODELS_YAML" ]] || ! diff -q <(printf '%s\n' "$EXPECTED_MODELS_YAML") "$LLM_MODELS_YAML" >/dev/null 2>&1; then
-            printf '%s\n' "$EXPECTED_MODELS_YAML" >"$LLM_MODELS_YAML"
-        fi
+  api_base: "https://api.redpill.ai/v1"
+YAML
         llm models default redpill-sonnet >/dev/null 2>&1 || true
     fi
 

@@ -137,18 +137,19 @@ done
 # AI tooling installed by bin/setup_llm.bash. ccr is required at runtime for
 # the com.turntrout.ccr LaunchAgent below; the others are optional helpers
 # referenced from README. All skip-on-missing — doctor.bash must stay safe
-# to run on a partially-bootstrapped machine.
-declare -A AI_HINTS=(
-    [ccr]="run: pnpm add -g @musistudio/claude-code-router (or bash bin/setup_llm.bash)"
-    [aider]="run: uv tool install aider-chat (or bash bin/setup_llm.bash)"
-    [llm]="run: uv tool install llm (or bash bin/setup_llm.bash)"
-    [wut]="run: uv tool install wut-cli (or bash bin/setup_llm.bash)"
-)
+# to run on a partially-bootstrapped machine. Plain case (not declare -A)
+# because macOS /bin/bash is 3.2 and predates associative arrays.
 for cmd in ccr aider llm wut; do
     if command -v "$cmd" >/dev/null 2>&1; then
         pass "$cmd"
     else
-        skip "$cmd" "${AI_HINTS[$cmd]}"
+        case "$cmd" in
+        ccr) hint="run: pnpm add -g @musistudio/claude-code-router (or bash bin/setup_llm.bash)" ;;
+        aider) hint="run: uv tool install aider-chat (or bash bin/setup_llm.bash)" ;;
+        llm) hint="run: uv tool install llm (or bash bin/setup_llm.bash)" ;;
+        wut) hint="run: uv tool install wut-cli (or bash bin/setup_llm.bash)" ;;
+        esac
+        skip "$cmd" "$hint"
     fi
 done
 

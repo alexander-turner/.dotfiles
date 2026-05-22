@@ -1,63 +1,36 @@
 #!/bin/bash
-# claude-private — claude-code routed through ccr (claude-code-router) to
-# Venice's most capable E2EE model. The claude-{fast,private,think} family
-# referenced in setup.bash:200 / README all share this skeleton; this is the
-# "private" variant that picks Venice's biggest general model.
-#
-# Why Venice + llama-3.3-70b:
-#   * Venice provides end-to-end encryption between client and inference —
-#     prompts/outputs are not visible to the provider (CLAUDE.md "AI provider
-#     routing"). It's the privacy ceiling among the providers ccr can route to.
-#   * llama-3.3-70b is the most capable Venice model for general code/text
-#     tasks (128k input, no domain bias) — see apps/mods/mods.yml where it's
-#     tagged `default`. For dedicated coding use claude-code's small-fast
-#     channel via claude-fast → qwen-2.5-coder once that wrapper lands.
-#
-# Trade-off vs the plain `claude` wrapper: this one sets CLAUDE_NO_SANDBOX=1
-# because the devcontainer sandbox can't talk to host-local 127.0.0.1:3456
-# where ccr listens. We're trading container isolation for E2EE routing.
-#
-# Requires: ccr running (the com.turntrout.ccr LaunchAgent keeps it alive on
-# macOS; on Linux, run `ccr start` in a tmux pane). ccr's own config at
-# ~/.claude-code-router/config.json must declare the `venice` provider with
-# VENICE_INFERENCE_KEY — that's per-user, not in this repo.
-#
-# Bypass: CLAUDE_PRIVATE_DRY_RUN=1 prints the resolved command without
-# executing — used by tests/test_claude_private.py.
+# claude-private — claude-code routed through ccr → Venice / llama-3.3-70b
+# (Venice = E2EE between client and inference per CLAUDE.md "AI provider
+# routing"; llama-3.3-70b = biggest general-purpose Venice model per
+# apps/mods/mods.yml). Sets CLAUDE_NO_SANDBOX=1 because devcontainer can't
+# reach host loopback :3456 where ccr listens — trading container isolation
+# for E2EE routing. CLAUDE_PRIVATE_DRY_RUN=1 prints the resolved command
+# without execing (used by tests/test_claude_private.py).
 
 set -euo pipefail
 
-CCR_URL="${CCR_URL:-http://127.0.0.1:3456}"
-CLAUDE_PRIVATE_MODEL="${CLAUDE_PRIVATE_MODEL:-venice,llama-3.3-70b}"
-
-export ANTHROPIC_BASE_URL="$CCR_URL"
-# ccr ignores the bearer token (auth happens on the upstream provider via
-# ccr's config). claude-code still requires a non-empty value to start.
+export ANTHROPIC_BASE_URL="${CCR_URL:-http://127.0.0.1:3456}"
 export ANTHROPIC_AUTH_TOKEN="${ANTHROPIC_AUTH_TOKEN:-ccr-routed}"
-# Devcontainer can't reach host loopback — bypass the bin/claude sandbox shim.
 export CLAUDE_NO_SANDBOX=1
+model="${CLAUDE_PRIVATE_MODEL:-venice,llama-3.3-70b}"
 
-# Resolve the real claude binary, skipping the bin/claude shim that lives at
-# ~/.local/bin/claude. Mirrors find_real_claude() in bin/claude.
+# Resolve the real claude binary, skipping (a) ourselves and (b) the
+# dotfiles bin/claude sandbox shim — calling the shim would re-enter the
+# wrapper chain instead of hitting claude-code. We detect the shim by its
+# second-line marker using bash builtins so we don't depend on grep being
+# on a restricted PATH.
 find_real_claude() {
-    local self_canonical IFS=:
-    self_canonical="$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")"
+    local self IFS=:
+    self="$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")"
     local p candidate cand line2
     for p in $PATH; do
         candidate="$p/claude"
         [[ -x "$candidate" && ! -d "$candidate" ]] || continue
         cand="$(readlink -f "$candidate" 2>/dev/null || echo "$candidate")"
-        [[ "$cand" == "$self_canonical" ]] && continue
-        # Skip the dotfiles bin/claude sandbox shim — calling it would re-enter
-        # the wrapper chain (devcontainer up, etc.) instead of hitting the real
-        # claude-code binary. The shim's second line is its distinguishing
-        # marker; read with bash builtins so we don't depend on grep being on
-        # the (possibly trimmed) PATH that the wrapper is running under.
+        [[ "$cand" == "$self" ]] && continue
         line2=""
         { IFS= read -r _ && IFS= read -r line2; } <"$cand" 2>/dev/null || true
-        if [[ "$line2" == "# claude wrapper"* ]]; then
-            continue
-        fi
+        [[ "$line2" == "# claude wrapper"* ]] && continue
         echo "$candidate"
         return 0
     done
@@ -75,10 +48,10 @@ if [[ -n "${CLAUDE_PRIVATE_DRY_RUN:-}" ]]; then
     printf 'ANTHROPIC_AUTH_TOKEN=%s\n' "$ANTHROPIC_AUTH_TOKEN"
     printf 'CLAUDE_NO_SANDBOX=%s\n' "$CLAUDE_NO_SANDBOX"
     printf 'real_claude=%s\n' "$real_claude"
-    printf 'argv=%s --model %s' "$real_claude" "$CLAUDE_PRIVATE_MODEL"
+    printf 'argv=%s --model %s' "$real_claude" "$model"
     for a in "$@"; do printf ' %q' "$a"; done
     printf '\n'
     exit 0
 fi
 
-exec "$real_claude" --model "$CLAUDE_PRIVATE_MODEL" "$@"
+exec "$real_claude" --model "$model" "$@"
