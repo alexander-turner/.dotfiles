@@ -289,11 +289,11 @@ fi
 
 # devcontainer CLI — used by the host-side `claude` wrappers (bin/claude and
 # apps/fish/functions/claude.fish) to bring up .devcontainer/ on demand.
-# Installed via npm (not pnpm) because npm is bundled with Node and doesn't
-# need the pnpm-setup PATH dance — keeps the bootstrap reliable on fresh boxes.
-if command_exists npm; then
-    npm install -g @devcontainers/cli >/dev/null 2>&1 ||
-        status_msg "WARN: 'npm i -g @devcontainers/cli' failed. The claude wrapper will fall back to running on the host."
+# pnpm is configured above (PNPM_HOME + PATH), so this lands alongside the
+# other globals (claude-code, ccr, prettier, @bitwarden/cli).
+if command_exists pnpm; then
+    pnpm add --global @devcontainers/cli >/dev/null 2>&1 ||
+        status_msg "WARN: 'pnpm add -g @devcontainers/cli' failed. The claude wrapper will fall back to running on the host."
 fi
 
 # AI tooling: claude-code + ccr, aider, VSCodium + Roo, wut, llm

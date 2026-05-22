@@ -154,7 +154,7 @@ done
 # referenced from README. All skip-on-missing — doctor.bash must stay safe
 # to run on a partially-bootstrapped machine. Plain case (not declare -A)
 # because macOS /bin/bash is 3.2 and predates associative arrays.
-for cmd in ccr aider llm wut; do
+for cmd in ccr aider llm wut devcontainer; do
     if command -v "$cmd" >/dev/null 2>&1; then
         pass "$cmd"
     else
@@ -163,6 +163,7 @@ for cmd in ccr aider llm wut; do
         aider) hint="run: uv tool install aider-chat (or bash bin/setup_llm.bash)" ;;
         llm) hint="run: uv tool install llm (or bash bin/setup_llm.bash)" ;;
         wut) hint="run: uv tool install wut-cli (or bash bin/setup_llm.bash)" ;;
+        devcontainer) hint="run: pnpm add -g @devcontainers/cli (or bash setup.bash) — required by bin/claude sandbox wrapper" ;;
         esac
         skip "$cmd" "$hint"
     fi
