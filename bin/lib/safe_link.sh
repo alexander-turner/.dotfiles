@@ -37,22 +37,20 @@ safe_link() {
     fi
     # Target exists and is a real file (not a symlink) — prompt before clobbering
     if [ -e "$target_file" ] && [ ! -L "$target_file" ]; then
-        # ~-collapsed display path so prompts disambiguate same-basename
-        # targets (e.g. apps/ssh/config vs apps/mods/config both land as
-        # "config" under basename).
+        # ~-collapsed so same-basename targets stay distinguishable
+        # (apps/ssh/config vs apps/mods/config).
         local display="${target_file/#$HOME/\~}"
-        # Prompt via /dev/tty rather than stdin: setup.bash drives this loop
-        # body with stdin tied to a pipe (`done < <(managed_symlinks)`), so a
-        # `-t 0` check would always claim non-interactive. Open /dev/tty for
-        # real (not `-r`/`-w`, which only stat the device node and pass even
-        # without a controlling terminal) — open fails ENXIO under CI /
-        # setsid / sandboxed children, and we skip silently then.
+        local src_display="${source_file/#$HOME/\~}"
+        # Open /dev/tty for the prompt: callers run safe_link inside a
+        # `while ... done < <(...)` loop, so fd 0 is a pipe in interactive
+        # shells too. The open fails ENXIO when there's no controlling
+        # terminal (CI, setsid, sandboxed children) — that's our skip signal.
         if ! exec 3<>/dev/tty 2>/dev/null; then
             echo "Skipping $display (real file present, non-interactive)"
             return 0
         fi
         local choice=""
-        printf '%s already exists (not a symlink). Overwrite with %s? (y/N) ' "$display" "$source_file" >&3
+        printf '%s already exists (not a symlink). Overwrite with %s? (y/N) ' "$display" "$src_display" >&3
         read -r choice <&3 || true
         exec 3<&-
         case "$choice" in

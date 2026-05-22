@@ -43,10 +43,8 @@ def home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 def run_script(src: Path, tgt: Path, *, stdin: str | None = None) -> int:
     """Invoke safe_link.sh as a script — the entry point setup.bash uses.
 
-    start_new_session=True forces the child into a fresh session with no
-    controlling terminal. Without it, a pytest run from an interactive shell
-    would let safe_link's /dev/tty open succeed against the user's actual
-    terminal and block forever on the read."""
+    start_new_session=True detaches the child from pytest's controlling
+    terminal so safe_link's /dev/tty open fails (the non-interactive path)."""
     return subprocess.run(
         ["bash", str(SAFE_LINK_SH), str(src), str(tgt)],
         input=stdin, capture_output=True, text=True,
@@ -66,14 +64,13 @@ def source_and_run(snippet: str) -> subprocess.CompletedProcess[str]:
 def run_with_pty(
     src: Path, tgt: Path, *, answer: bytes, timeout: float = 2.0
 ) -> tuple[int, bytes]:
-    """Invoke safe_link with stdin=pipe and a controlling PTY — mirrors what
-    setup.bash sees inside `while ... done < <(managed_symlinks)`: an
-    interactive shell where the loop body's own stdin is a pipe.
+    """Invoke safe_link with stdin=pipe and a controlling PTY — what
+    setup.bash sees inside `while ... done < <(managed_symlinks)`.
 
-    Pre-queues the answer to master so we don't wait for a prompt that never
-    arrives (e.g., if safe_link bails before reaching the read). Drains
-    master concurrently so the slave's tty buffer can't fill and block the
-    child mid-write. Returns (returncode, captured_pty_output)."""
+    Pre-queues `answer` on the master so a child that bails before reading
+    doesn't deadlock our timeout. Drains the master concurrently so the
+    slave's small tty buffer can't block a child mid-write.
+    Returns (returncode, captured_pty_output)."""
     master, slave = pty.openpty()
     pipe_r, pipe_w = os.pipe()
     pid = os.fork()
@@ -197,11 +194,10 @@ def test_two_runs_are_idempotent(home: Path, tmp_path: Path) -> None:
 def test_piped_stdin_with_tty_prompts_via_tty_and_overwrites(
     home: Path, tmp_path: Path
 ) -> None:
-    """Regression for the `[ ! -t 0 ]` bug: setup.bash drives safe_link from
-    `while ... done < <(managed_symlinks)`, so stdin is a pipe inside the
-    loop even in an interactive shell. The old guard mistook that for
-    non-interactive and skipped silently. safe_link must read the y/N from
-    /dev/tty instead."""
+    """When stdin is a pipe but a controlling terminal is available
+    (setup.bash's `while ... done < <(managed_symlinks)` from an
+    interactive shell), safe_link must prompt via /dev/tty and proceed
+    on 'y'."""
     src = tmp_path / "source"
     src.write_text("new")
     tgt = home / ".foo"
@@ -214,7 +210,9 @@ def test_piped_stdin_with_tty_prompts_via_tty_and_overwrites(
     assert (stamp / ".foo").read_text() == "user-data"
     # Prompt must disambiguate by path, not just basename — two managed
     # symlinks (apps/ssh/config, apps/mods/config) both bottom out as "config".
+    # Both target and source get ~-collapsed when they live under $HOME.
     assert b"~/.foo already exists" in output, output
+    # `src` from tmp_path is not under $HOME, so it stays absolute here.
     assert str(src).encode() in output, output
 
 
@@ -225,8 +223,6 @@ def test_non_interactive_skips_real_file_silently(home: Path, tmp_path: Path) ->
     src.write_text("x")
     tgt = home / ".foo"
     tgt.write_text("user-data")
-    # subprocess.run gives the child no controlling terminal, so /dev/tty is
-    # unreadable/unwritable → safe_link skips silently.
     assert run_script(src, tgt, stdin="") == 0
     assert not tgt.is_symlink()
     assert tgt.read_text() == "user-data"
