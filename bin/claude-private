@@ -1,18 +1,23 @@
 #!/bin/bash
-# claude-private — claude-code routed through ccr → Venice / llama-3.3-70b
-# (Venice = E2EE between client and inference per CLAUDE.md "AI provider
-# routing"; llama-3.3-70b = biggest general-purpose Venice model per
-# apps/mods/mods.yml). Sets CLAUDE_NO_SANDBOX=1 because devcontainer can't
-# reach host loopback :3456 where ccr listens — trading container isolation
-# for E2EE routing. CLAUDE_PRIVATE_DRY_RUN=1 prints the resolved command
-# without execing (used by tests/test_claude_private.py).
+# claude-private — claude-code routed through ccr → Venice /
+# qwen3-coder-480b-a35b-instruct-turbo. Venice = E2EE between client and
+# inference per CLAUDE.md "AI provider routing"; qwen3-coder-480b is the
+# model Venice itself tags `default_code` in its model catalog (256K
+# context, open weights — chosen over claude-opus-4-7 to avoid
+# meta-routing claude-code through Venice back to Anthropic's Claude, and
+# over llama-3.3-70b which Venice has since retired). Override with
+# CLAUDE_PRIVATE_MODEL=venice,<model_id> — see Venice's /v1/models for
+# the live list. CLAUDE_NO_SANDBOX=1 because devcontainer can't reach host
+# loopback :3456 where ccr listens — trading container isolation for E2EE
+# routing. CLAUDE_PRIVATE_DRY_RUN=1 prints the resolved command without
+# execing (used by tests/test_claude_private.py).
 
 set -euo pipefail
 
 export ANTHROPIC_BASE_URL="${CCR_URL:-http://127.0.0.1:3456}"
 export ANTHROPIC_AUTH_TOKEN="${ANTHROPIC_AUTH_TOKEN:-ccr-routed}"
 export CLAUDE_NO_SANDBOX=1
-model="${CLAUDE_PRIVATE_MODEL:-venice,llama-3.3-70b}"
+model="${CLAUDE_PRIVATE_MODEL:-venice,qwen3-coder-480b-a35b-instruct-turbo}"
 
 # Resolve the real claude binary, skipping (a) ourselves and (b) the
 # dotfiles bin/claude sandbox shim — calling the shim would re-enter the

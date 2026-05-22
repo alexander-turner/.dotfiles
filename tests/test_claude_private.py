@@ -51,7 +51,7 @@ def test_dry_run_sets_routing_envs(tmp_path: Path) -> None:
     assert "ANTHROPIC_BASE_URL=http://127.0.0.1:3456" in r.stdout
     assert "ANTHROPIC_AUTH_TOKEN=ccr-routed" in r.stdout
     assert "CLAUDE_NO_SANDBOX=1" in r.stdout
-    assert "--model venice,llama-3.3-70b" in r.stdout
+    assert "--model venice,qwen3-coder-480b-a35b-instruct-turbo" in r.stdout
     assert "--help" in r.stdout
 
 
