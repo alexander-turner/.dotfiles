@@ -73,7 +73,7 @@ fi
 # .pre-commit-config.yaml and bin/pre-push.
 uv_install_if_missing pre-commit
 if ! command -v fish &>/dev/null && is_root; then
-    apt-get install -y -qq fish || warn "Failed to install fish"
+    { apt-get update -qq && apt-get install -y -qq fish; } || warn "Failed to install fish"
 fi
 if ! command -v gitleaks &>/dev/null; then
     # webi doesn't ship gitleaks; stream the release tarball straight to disk.
