@@ -122,6 +122,21 @@ for cmd in git fish nvim tmux brew zoxide gh fzf rg fd bat eza delta tokei dust 
     check_command "$cmd"
 done
 
+# Verify the Python version pinned in .pre-commit-config.yaml is functional.
+# A broken pyexpat (e.g. Homebrew Python 3.14 / libexpat ABI mismatch) causes
+# pre-commit to fail when initialising hook virtualenvs with a cryptic error.
+precommit_py=$(grep -A1 'default_language_version' "$DOTFILES_DIR/.pre-commit-config.yaml" |
+    awk '/python:/{print $2}' | head -1)
+if [[ -z "$precommit_py" ]]; then
+    skip "pre-commit Python" "no default_language_version set in .pre-commit-config.yaml"
+elif ! command -v "$precommit_py" >/dev/null 2>&1; then
+    fail "pre-commit Python" "$precommit_py not on PATH (brew install ${precommit_py/@*/}@${precommit_py/*@/})"
+elif ! "$precommit_py" -c "import pyexpat, ssl, sqlite3" 2>/dev/null; then
+    fail "pre-commit Python" "$precommit_py has broken stdlib (pyexpat/ssl/sqlite3) — try: brew reinstall $precommit_py"
+else
+    pass "pre-commit Python ($precommit_py stdlib ok)"
+fi
+
 # trash-put / trash-empty are installed via `uv tool install trash-cli`, which
 # puts binaries in ~/.local/bin (not a brew prefix). Skip rather than fail so a
 # partially-bootstrapped machine (PATH not yet fully configured) doesn't flood

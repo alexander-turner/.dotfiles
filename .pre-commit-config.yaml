@@ -12,6 +12,12 @@
 
 minimum_pre_commit_version: "3.5.0"
 
+# Python 3.14 has a pyexpat/libexpat ABI mismatch on macOS (Homebrew bottle
+# links against a libexpat symbol absent from the system dylib). Pin to 3.13
+# until the upstream bottle is fixed.
+default_language_version:
+  python: python3.13
+
 repos:
   - repo: https://github.com/scop/pre-commit-shfmt
     rev: v3.10.0-2
