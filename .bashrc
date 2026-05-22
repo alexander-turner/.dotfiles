@@ -19,7 +19,10 @@ elif [ -d /home/linuxbrew/.linuxbrew ]; then
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 fi
 
-export PATH="$PATH:$HOME/bin:$HOME/.local/bin"
+# Prepend ~/.local/bin so the dotfiles `claude` shim wins over any brew/
+# pnpm-installed claude (the shim's whole job is to relaunch in the
+# devcontainer, which a brew-installed claude can't do).
+export PATH="$HOME/.local/bin:$HOME/bin:$PATH"
 export EDITOR='nvim'
 
 # Hand off to fish for interactive sessions.

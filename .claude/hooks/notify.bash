@@ -18,9 +18,18 @@ fi
 
 case "$(uname)" in
 Darwin)
+    # Pass `msg` as argv to avoid AppleScript injection (the prior
+    # `${msg//\"/\\\"}` left `\`, backticks, and newlines unescaped).
     # `display notification` truncates long bodies; trim aggressively.
-    safe=${msg//\"/\\\"}
-    osascript -e "display notification \"${safe:0:200}\" with title \"Claude Code\"" >/dev/null 2>&1 || true
+    # `${msg:0:200}` is byte-indexed and can bisect a multi-byte UTF-8
+    # codepoint, leaving osascript with a partial sequence. Pipe the
+    # byte slice through `iconv -c` to drop any trailing incomplete
+    # sequence so the notification renders cleanly even on emoji-heavy
+    # messages.
+    trimmed=$(printf '%s' "${msg:0:200}" | iconv -c -f UTF-8 -t UTF-8 2>/dev/null)
+    osascript -e 'on run argv
+      display notification (item 1 of argv) with title "Claude Code"
+    end run' -- "$trimmed" >/dev/null 2>&1 || true
     ;;
 Linux)
     if command -v notify-send >/dev/null 2>&1; then

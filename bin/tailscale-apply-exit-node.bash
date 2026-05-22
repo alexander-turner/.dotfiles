@@ -4,7 +4,10 @@
 set -euo pipefail
 
 EXIT_NODE="ca-mtr-wg-001.mullvad.ts.net"
-TAILSCALE=/opt/homebrew/bin/tailscale
+# Resolve via PATH so Intel macs (/usr/local/bin) work too. Fall back to
+# the canonical Apple Silicon path because LaunchAgents start with a
+# minimal PATH and may not see `command -v` finding brew's bin dir.
+TAILSCALE="$(command -v tailscale 2>/dev/null || echo /opt/homebrew/bin/tailscale)"
 MAX_ATTEMPTS=20
 SLEEP_BETWEEN=3
 
