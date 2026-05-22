@@ -1,5 +1,10 @@
 name: "Setup Base Environment"
-description: "Sets up Node.js with pnpm and caching. Optionally sets up Python with uv."
+description: "Sets up Node.js with pnpm and caching when the repo has a package.json. Optionally sets up Python with uv."
+# Vendored from alexander-turner/claude-automation-template at dc94850 because
+# template-sync.yaml's SYNC_PATHS doesn't cover .github/actions/. Local change
+# vs upstream: every node/pnpm step is gated on hashFiles('package.json') so
+# this composite is a no-op in non-Node repos (this dotfiles repo). When
+# upstream lands an equivalent guard, re-vendor and drop the divergence.
 inputs:
   node-version:
     description: "Node.js version to use"
@@ -18,19 +23,23 @@ runs:
   using: "composite"
   steps:
     - name: Set up Node.js
+      if: hashFiles('package.json') != ''
       uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
 
     - name: Install pnpm
+      if: hashFiles('package.json') != ''
       uses: pnpm/action-setup@v4
 
     - name: Get pnpm store directory
+      if: hashFiles('package.json') != ''
       shell: bash
       run: |
         echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
     - name: Restore pnpm cache
+      if: hashFiles('package.json') != ''
       uses: actions/cache/restore@v4
       with:
         path: ${{ env.STORE_PATH }}
@@ -39,6 +48,7 @@ runs:
           ${{ runner.os }}-pnpm-store-
 
     - name: Install Node Dependencies
+      if: hashFiles('package.json') != ''
       run: pnpm install
       shell: bash
 
