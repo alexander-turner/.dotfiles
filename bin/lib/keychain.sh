@@ -8,6 +8,18 @@
 # Caches the keychain password at $HOME/.config/dotfiles/keychain-password
 # (mode 0600 in a 0700 dir) so subsequent runs unlock without prompting.
 
+# Unlock the keychain without putting the password on argv. `security -i`
+# reads commands from stdin, so $pw stays out of `ps` listings.
+_keychain_unlock() {
+    local pw="$1" kc="$2"
+    local q_pw=${pw//\\/\\\\}
+    q_pw=${q_pw//\"/\\\"}
+    local q_kc=${kc//\\/\\\\}
+    q_kc=${q_kc//\"/\\\"}
+    printf 'unlock-keychain -p "%s" "%s"\n' "$q_pw" "$q_kc" |
+        security -i >/dev/null 2>&1
+}
+
 keychain_ensure_unlocked() {
     [ "$(uname)" = "Darwin" ] || return 0
     local kc="$HOME/Library/Keychains/login.keychain-db"
@@ -23,7 +35,7 @@ keychain_ensure_unlocked() {
     local pw
     if [ -f "$cache" ]; then
         pw=$(cat "$cache")
-        if security unlock-keychain -p "$pw" "$kc" 2>/dev/null; then
+        if _keychain_unlock "$pw" "$kc"; then
             unset pw
             security set-keychain-settings "$kc" 2>/dev/null || true
             return 0
@@ -41,7 +53,7 @@ keychain_ensure_unlocked() {
     IFS= read -rs pw || pw=""
     printf '\n' >&2
 
-    if security unlock-keychain -p "$pw" "$kc" 2>/dev/null; then
+    if _keychain_unlock "$pw" "$kc"; then
         mkdir -p "$(dirname "$cache")"
         chmod 0700 "$(dirname "$cache")"
         (umask 077 && printf '%s' "$pw" >"$cache")
