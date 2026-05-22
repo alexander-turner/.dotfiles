@@ -34,20 +34,23 @@ jobs:
 
       - uses: astral-sh/setup-uv@v6
         with:
-          # Cache uv's downloads (interpreter + wheel cache) across runs.
           enable-cache: true
-          # Install Python 3.13 AND put it on PATH (so virtualenv can find
-          # it when pre-commit shells out `virtualenv -p python3.13` for
-          # python-language hooks). `uv python install` alone caches the
-          # interpreter under ~/.local/share/uv/python but doesn't expose
-          # it on PATH; the setup-uv input does both.
+          # Pin uv's default Python to 3.13 (matches the
+          # `default_language_version` in .pre-commit-config.yaml).
+          # `uv tool install` below builds each tool's venv with it; if
+          # pre-commit later needs a different Python for a hook venv,
+          # uv auto-installs that version on demand.
           python-version: "3.13"
 
       - name: Install pytest + pre-commit
-        # `uv pip install --system` is drop-in for `pip install` but ~10×
-        # faster, and pre-commit ≥4 detects uv on PATH and uses it for
-        # hook venvs too.
-        run: uv pip install --system pytest pre-commit
+        # `uv tool install` builds an isolated venv per tool and drops a
+        # shim into ~/.local/bin (already on GITHUB_PATH via setup-uv).
+        # Avoids `uv pip install --system`, which needs a system Python
+        # on PATH that setup-uv's `python-version` doesn't actually
+        # provide.
+        run: |
+          uv tool install pytest
+          uv tool install pre-commit
 
       - uses: actions/cache@v4
         with:

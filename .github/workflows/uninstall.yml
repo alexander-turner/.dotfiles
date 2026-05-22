@@ -29,8 +29,11 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
-          # `--system` installs into whatever python3 resolves to on PATH;
-          # without this input, setup-uv doesn't put one there.
+          # Pin uv's default Python so `uv tool install` builds the
+          # pytest venv on 3.13 deterministically.
           python-version: "3.13"
-      - run: uv pip install --system --quiet pytest
+      # `uv tool install` puts a `pytest` shim at ~/.local/bin/pytest
+      # (which setup-uv adds to GITHUB_PATH), so we don't need a
+      # system-level Python on PATH.
+      - run: uv tool install pytest
       - run: pytest -v tests/test_uninstall_roundtrip.py
