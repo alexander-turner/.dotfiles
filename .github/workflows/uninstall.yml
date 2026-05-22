@@ -26,5 +26,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - run: pip install --quiet pytest
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          # Pin uv's default Python so `uv tool install` builds the
+          # pytest venv on 3.13 deterministically.
+          python-version: "3.13"
+      # `uv tool install` puts a `pytest` shim at ~/.local/bin/pytest
+      # (which setup-uv adds to GITHUB_PATH), so we don't need a
+      # system-level Python on PATH.
+      - run: uv tool install pytest
       - run: pytest -v tests/test_uninstall_roundtrip.py
