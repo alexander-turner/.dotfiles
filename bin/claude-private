@@ -7,7 +7,7 @@
 #
 # CLAUDE_NO_SANDBOX=1 — devcontainer can't reach host loopback :3456
 # where ccr listens. CLAUDE_PRIVATE_DRY_RUN=1 prints the resolved
-# command without execing (used by tests/test_claude_private.py).
+# command without execing (used by tests/test_claude_variants.py).
 #
 # Overrides:
 #   CLAUDE_PRIVATE_MODEL          — main-tier model (default: cached default_code)
