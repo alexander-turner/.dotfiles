@@ -33,7 +33,7 @@ subcommands:
   doctor     run health check (bin/doctor.bash)
   uninstall  remove \$HOME symlinks, restore backups (bin/uninstall.bash)
   link       refresh symlinks only (setup.bash --link-only)
-  lint       run shellcheck/shfmt/stylua/yamllint/ruff/gitleaks (bin/lint.bash)
+  lint       run pre-commit hooks (bin/lint.bash → pre-commit run --all-files)
   help       show this message (alias: -h, --help)
 
 Extra args are forwarded to the underlying script.

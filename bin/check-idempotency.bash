@@ -7,8 +7,8 @@
 #   * the repo working tree is clean (no rendered templates left behind)
 #
 # Used by .github/workflows/idempotency.yml; runnable locally too. Lives in
-# bin/ (rather than inline in the workflow) so shellcheck covers it via
-# bin/lint.bash.
+# bin/ (rather than inline in the workflow) so it gets shellcheck coverage
+# via the pre-commit hook declared in .pre-commit-config.yaml.
 #
 # Usage:
 #   bash bin/check-idempotency.bash
