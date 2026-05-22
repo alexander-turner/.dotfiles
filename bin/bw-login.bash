@@ -40,13 +40,12 @@ prompt_skippable() {
     local prompt="$1" varname="$2" hidden="${3:-}" value
     printf '%s (empty to skip): ' "$prompt" >&2
     if [ "$hidden" = "hidden" ]; then
-        # Restore echo on Ctrl-C, SIGTERM, or unexpected exit (e.g. EOF with set -e).
+        # read -rs handles the echo toggle; traps cover signal interruption
+        # mid-read (bash's restore-on-signal isn't guaranteed across versions).
         trap 'stty echo 2>/dev/null; exit 130' INT
         trap 'stty echo 2>/dev/null; exit 143' TERM
         trap 'stty echo 2>/dev/null' EXIT
-        stty -echo
-        IFS= read -r value || true # allow EOF without triggering set -e
-        stty echo
+        IFS= read -rs value || true # allow EOF without triggering set -e
         trap - INT TERM EXIT
         printf '\n' >&2
     else

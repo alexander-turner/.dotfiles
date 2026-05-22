@@ -24,26 +24,32 @@ jobs:
           GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false
           GITLEAKS_ENABLE_SUMMARY: true
 
-      - name: Install Fish
+      - name: Install fish
+        # No pre-commit hook ships a fish syntax checker; install for the local
+        # fish-syntax hook in .pre-commit-config.yaml.
         run: |
           sudo apt-add-repository -y ppa:fish-shell/release-3
           sudo apt-get update
           sudo apt-get install -y fish
 
-      - name: Install StyLua
-        run: |
-          curl -fsSL https://github.com/JohnnyMorganz/StyLua/releases/latest/download/stylua-linux-x86_64.zip -o stylua.zip
-          unzip stylua.zip
-          sudo mv stylua /usr/local/bin/
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-      - name: Install shfmt
-        run: sudo apt-get install -y shfmt
+      - name: Install pytest (for safe_link local hook)
+        run: pip install pytest
 
-      - name: Install Python tools
-        run: pip install yamllint ruff pytest
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: pre-commit-${{ runner.os }}-
 
-      - name: Auto-fix lint issues
-        run: ./bin/lint.bash --ci --fix
+      - name: Run pre-commit (auto-fix mode)
+        # Pre-commit exits non-zero when hooks modify files. We want CI to
+        # commit the fix and surface unfixed failures separately, so swallow
+        # this exit and re-check below.
+        run: pip install pre-commit && pre-commit run --all-files --show-diff-on-failure || true
 
       - name: Test Claude Code hooks
         run: bash bin/test-claude-hooks.bash
@@ -56,3 +62,8 @@ jobs:
           git add -A
           git commit -m "style: auto-fix lint issues [skip ci]"
           git push
+
+      - name: Verify lint passes after fixes
+        # Catches non-auto-fixable issues (shellcheck errors, gitleaks hits,
+        # fish syntax errors) that the previous step skipped via `|| true`.
+        run: pre-commit run --all-files

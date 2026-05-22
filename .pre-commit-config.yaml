@@ -1,0 +1,111 @@
+# Pre-commit framework config. Replaces the hand-rolled bin/lint.bash plumbing
+# (require_or_skip + find -print0 + per-tool subprocess gluing) with declarative
+# hooks. bin/lint.bash is now a thin wrapper around `pre-commit run --all-files`.
+#
+# Hooks are intentionally NOT registered for the `pre-commit` git stage —
+# `git push` (via bin/pre-push) is the gate. Run locally:
+#   pre-commit run --all-files              # all hooks
+#   pre-commit run shellcheck --all-files   # single hook
+#   bash bin/lint.bash                      # equivalent shortcut
+#
+# Versions are pinned. To bump, run `pre-commit autoupdate`.
+
+minimum_pre_commit_version: "3.5.0"
+
+repos:
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: v3.10.0-2
+    hooks:
+      - id: shfmt
+        args: [-w, -i, "4"]
+        # Mirror the explicit file list from the old bin/lint.bash check_shfmt
+        # so a stray .bash under apps/ (e.g. apps/swiftbar/vpn.10s.bash) doesn't
+        # get reformatted without intent.
+        files: ^(\.bashrc|setup\.bash|bin/[^/]*\.(bash|sh)|bin/lib/.*\.sh|bin/dotfiles|\.hooks/(pre-push|pre-commit|commit-msg|.*\.bash)|\.claude/hooks/.*\.bash|\.devcontainer/.*\.bash)$
+
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        name: shellcheck (scripts)
+        args: [-e, SC2016]
+        files: ^(setup\.bash|bin/[^/]*\.(bash|sh)|bin/lib/.*\.sh|bin/dotfiles|\.hooks/(pre-push|pre-commit|commit-msg|.*\.bash)|\.claude/hooks/.*\.bash|\.devcontainer/.*\.bash)$
+      - id: shellcheck
+        name: shellcheck (.bashrc)
+        # .bashrc has no shebang and is sourced, not executed. Tell shellcheck
+        # to treat it as bash and silence the sourced-file warnings.
+        args: [-s, bash, -e, SC2148, -e, SC1090, -e, SC1091, -e, SC2015]
+        files: ^\.bashrc$
+
+  - repo: https://github.com/JohnnyMorganz/StyLua
+    rev: v2.0.2
+    hooks:
+      - id: stylua
+
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args: [-d, "{extends: relaxed, rules: {line-length: disable}}"]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-toml
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        args: [--fix]
+
+  - repo: local
+    hooks:
+      - id: check-json
+        # The upstream pre-commit-hooks/check-json rejects duplicate keys;
+        # stdlib json.load silently keeps the last value (the old lint.bash
+        # check behavior). Mirror that so this migration is behavior-neutral.
+        # Switch to the strict upstream hook once duplicates in
+        # ai/prompting/settings.json are resolved.
+        name: JSON validity
+        entry: python3 -c "import json, sys; [json.load(open(p)) for p in sys.argv[1:]]"
+        language: system
+        files: \.json$
+        # VSCodium settings are JSONC (trailing commas allowed); the strict
+        # parser would false-fail them.
+        exclude: ^apps/vscodium/
+
+      - id: fish-syntax
+        name: fish --no-execute
+        # fish --no-execute checks one file at a time; loop so a syntax error
+        # in any file fails the hook.
+        entry: bash -c 'for f in "$@"; do fish --no-execute "$f" || exit 1; done' --
+        language: system
+        files: \.fish$
+        # Tide's bundled functions have intentional syntax we don't audit.
+        exclude: ^apps/fish/functions/_tide
+
+      - id: sh-extension
+        name: .sh files must not use bash shebangs
+        entry: bin/check-sh-extension.bash
+        language: script
+        files: \.sh$
+        exclude: ^bin/lib/
+
+      - id: safe-link-tests
+        name: pytest tests/test_safe_link.py
+        entry: pytest -q tests/test_safe_link.py
+        language: system
+        pass_filenames: false
+        # Only re-run when the linker or its tests change.
+        files: ^(bin/lib/safe_link\.sh|tests/test_safe_link\.py)$
+
+      - id: gitleaks
+        name: gitleaks detect
+        # bin/pre-push sets GITLEAKS_LOG_OPTS to narrow to the push range;
+        # CI leaves it unset for a full-history scan. GITLEAKS_REQUIRED=1
+        # (also set by pre-push) flips missing-binary from SKIP to FAIL.
+        entry: bin/run-gitleaks.bash
+        language: script
+        pass_filenames: false
+        always_run: true
