@@ -284,8 +284,11 @@ check_sh_extension() {
     echo -n "Script extensions: "
     local offenders=()
     while IFS= read -r -d '' f; do
+        # head returns 0 for any readable file (including empty files and
+        # files with no trailing newline), so no `|| true` needed and no
+        # `read`-EOF edge cases to paper over.
         local first
-        IFS= read -r first <"$f" || true
+        first=$(head -n 1 "$f")
         if [[ "$first" == "#!/bin/bash"* || "$first" == "#!/usr/bin/env bash"* ]]; then
             offenders+=("$f")
         fi
