@@ -29,5 +29,8 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
+          # `--system` installs into whatever python3 resolves to on PATH;
+          # without this input, setup-uv doesn't put one there.
+          python-version: "3.13"
       - run: uv pip install --system --quiet pytest
       - run: pytest -v tests/test_uninstall_roundtrip.py

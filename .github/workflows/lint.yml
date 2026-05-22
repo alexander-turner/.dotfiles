@@ -34,15 +34,14 @@ jobs:
 
       - uses: astral-sh/setup-uv@v6
         with:
-          # Cache uv's own downloads (interpreter + wheel cache) across runs.
+          # Cache uv's downloads (interpreter + wheel cache) across runs.
           enable-cache: true
-
-      - name: Install Python 3.13
-        # Matches the `default_language_version` pin in .pre-commit-config.yaml
-        # (pre-commit shells out to `virtualenv -p python3.13` for python-
-        # language hooks). uv installs interpreters on demand, so we don't
-        # depend on ubuntu-latest's tool cache shipping 3.13.
-        run: uv python install 3.13
+          # Install Python 3.13 AND put it on PATH (so virtualenv can find
+          # it when pre-commit shells out `virtualenv -p python3.13` for
+          # python-language hooks). `uv python install` alone caches the
+          # interpreter under ~/.local/share/uv/python but doesn't expose
+          # it on PATH; the setup-uv input does both.
+          python-version: "3.13"
 
       - name: Install pytest + pre-commit
         # `uv pip install --system` is drop-in for `pip install` but ~10×
