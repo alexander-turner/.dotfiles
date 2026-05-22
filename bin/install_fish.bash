@@ -100,29 +100,35 @@ else
     read -rp "Accept preset tide settings? (Y/n) " answer || true
 
     if [ -z "$answer" ] || echo "$answer" | grep -iq "^y"; then
-        # Copy preset config files into existing fish config directory
-        # Use -f to remove destination files that can't be opened (e.g. root-owned from prior sudo runs)
-        cp -rf "$DOTFILES_DIR"/apps/fish/* "$FISH_CONFIG_DIR/"
+        # Populate the fish config dir from the repo, but DON'T clobber
+        # files that already exist. Two classes of "already exist":
+        #   (a) symlinks placed by setup.bash → managed_symlinks
+        #       (config.fish, completions/dotfiles.fish, conf.d/*.fish):
+        #       leaving these as-is means the repo stays the source of
+        #       truth and the resymlink dance below is unnecessary.
+        #   (b) fisher/tide-managed files (functions/{fisher,tide}.fish,
+        #       completions/{fisher,tide}.fish, fish_plugins) that the
+        #       user may have updated via `fisher install`: keep their
+        #       version rather than reverting to the bundled snapshot.
+        # Earlier this was `cp -rf` (clobbering both), then `cp -Rn`
+        # (no-clobber, correct semantics) — but GNU coreutils 9.x emits
+        # a deprecation warning for `-n`, and the suggested replacement
+        # `--update=none` is GNU-only. find + per-file cp is portable.
+        while IFS= read -r -d '' src; do
+            rel=${src#"$DOTFILES_DIR/apps/fish/"}
+            dst="$FISH_CONFIG_DIR/$rel"
+            [ -e "$dst" ] || { mkdir -p "$(dirname "$dst")" && cp -P "$src" "$dst"; }
+        done < <(find "$DOTFILES_DIR/apps/fish" \( -type f -o -type l \) -print0 2>/dev/null)
+        # fish_prompt.fish isn't in managed_symlinks (the decline-presets
+        # branch below runs `tide configure`, which writes the user's
+        # generated prompt here — we don't want to symlink-trap that).
+        # In the accept-presets branch we DO want the symlink so repo
+        # updates propagate, so place it explicitly here.
+        ln -sf "$DOTFILES_DIR"/apps/fish/functions/fish_prompt.fish "$FISH_CONFIG_DIR/functions/fish_prompt.fish"
     else
         fish -c "tide configure"
     fi
 fi
-
-# Always symlink key config files so changes in dotfiles repo are reflected.
-# Done after the copy so cp doesn't try to write through symlinks back to the source.
-# ln -sf is used directly (not safe_link) because cp -rf above just populated these
-# as plain files copied verbatim from the repo — prompting to overwrite would be wrong
-# here, and there is no user data at risk.
-ln -sf "$DOTFILES_DIR"/apps/fish/config.fish "$FISH_CONFIG_DIR/config.fish"
-ln -sf "$DOTFILES_DIR"/apps/fish/functions/fish_prompt.fish "$FISH_CONFIG_DIR/functions/fish_prompt.fish"
-mkdir -p "$FISH_CONFIG_DIR/completions"
-ln -sf "$DOTFILES_DIR"/apps/fish/completions/dotfiles.fish "$FISH_CONFIG_DIR/completions/dotfiles.fish"
-# Repo-managed conf.d activation snippets — same rationale as the above
-# symlinks. cp -rf at line 105 turns these into stale copies otherwise.
-mkdir -p "$FISH_CONFIG_DIR/conf.d"
-for snippet in "$DOTFILES_DIR"/apps/fish/conf.d/*.fish; do
-    ln -sf "$snippet" "$FISH_CONFIG_DIR/conf.d/$(basename "$snippet")"
-done
 # Clear any stale dangling symlink left by older versions of this script.
 if [ -L "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish" ] &&
     [ ! -e "$FISH_CONFIG_DIR/functions/_tide_item_jobs.fish" ]; then
