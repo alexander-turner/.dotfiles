@@ -107,39 +107,22 @@ real dir → prompt, missing → create.
 
 ### Session-setup upkeep (Claude Code on the web)
 
-`.claude/hooks/session-setup.bash` bootstraps remote/web sessions where
-the container starts empty. Whenever a hook in `.pre-commit-config.yaml`
-or `bin/pre-push` (or any other script that runs on `git push`) gains a
-new external tool dependency, **add an installer for that tool to the
-session-setup script** — otherwise the next fresh session will fail
-its first push on a missing-tool error that has nothing to do with
-the user's actual change.
+`.claude/hooks/session-setup.bash` bootstraps fresh web/cloud sessions.
+When a hook in `.pre-commit-config.yaml` or `bin/pre-push` gains a new
+tool dependency, install it from `session-setup.bash` — otherwise the
+next fresh session fails its first push on a missing-tool error
+unrelated to the actual change.
 
-Place the installer inside the marked `=== PROJECT CUSTOMIZATIONS ===`
-block so `template-sync.yaml`'s 3-way merge preserves it across upstream
-updates. Use the existing helpers when they fit:
-
-- `webi_install_if_missing <cmd>` — when webi.sh ships it (shfmt, gh, jq).
-- `uv_install_if_missing <cmd> [<pypi-pkg>]` — Python tooling (pre-commit).
-- `apt-get install -y -qq <pkg>` guarded by `is_root` — when only the
-  distro package manager has it (shellcheck, fish).
-- Direct GitHub-release tarball download — when none of the above apply
-  (gitleaks). Detect OS+arch from `uname`; install to `/usr/local/bin`
-  as root, `~/.local/bin` otherwise.
-
-Lessons learned:
-
-- **`fish` is a runtime dependency, not just a shell.** The
-  `fish --no-execute` pre-commit hook shells out to `fish` to syntax-check
-  `*.fish` files; without it, every push touching fish config blocks.
-- **`gitleaks` is required, not optional, in pre-push.** `bin/pre-push`
-  exports `GITLEAKS_REQUIRED=1`, which flips `bin/lint.bash` from
-  skip-on-missing to fail-on-missing. The session must have gitleaks
-  before the first push attempt.
-- **`pre-commit` itself is also a dependency.** `bin/lint.bash` invokes
-  `pre-commit run --all-files`; if the binary isn't on `PATH`, the
-  pre-push hook short-circuits with an install hint instead of running
-  the actual checks.
+Put new installers inside the `=== PROJECT CUSTOMIZATIONS ===` block so
+`template-sync.yaml`'s 3-way merge preserves them. Helpers, in order
+of preference: `webi_install_if_missing` (shfmt, gh, jq),
+`uv_install_if_missing` (pre-commit), `apt-get` guarded by `is_root`
+(shellcheck, fish), direct release tarball (gitleaks — webi doesn't
+ship it). The block currently installs `pre-commit`, `fish` (the
+`fish --no-execute` hook needs it even on machines that don't use fish
+interactively), and `gitleaks` (required, not optional — `bin/pre-push`
+sets `GITLEAKS_REQUIRED=1`, which flips `bin/lint.bash` from
+skip-on-missing to fail-on-missing).
 
 ### Secrets
 
@@ -200,6 +183,12 @@ Lessons learned:
   job is text expansion — abbrs preserve history readability.
 - Use `command <name>` to bypass fish/bash function shadowing
   (e.g. `command rm`, `command npm`) rather than removing the wrapper.
+- Recording a "lesson learned" **always** means landing a change via
+  PR — either a new commit on an open PR (use the `update-pr` skill)
+  or a fresh PR if none exists. The durable record is the PR
+  description plus any CLAUDE.md or code edits the lesson motivates.
+  Lessons that live only in chat history are vapor; they don't survive
+  the session.
 - Tests of repo behavior go in `tests/test_*.py` and run via `pytest` —
   cleaner assertions than shell, ruff already lints `.py`, and
   `tmp_path` handles isolation. Pattern:

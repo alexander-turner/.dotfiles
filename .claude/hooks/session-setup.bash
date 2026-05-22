@@ -76,25 +76,19 @@ if ! command -v fish &>/dev/null && is_root; then
     apt-get install -y -qq fish || warn "Failed to install fish"
 fi
 if ! command -v gitleaks &>/dev/null; then
-    # webi doesn't ship gitleaks; pull the release tarball directly.
-    gl_version=8.21.2
+    # webi doesn't ship gitleaks; stream the release tarball straight to disk.
+    # uname -m gives x86_64/aarch64 on Linux, x86_64/arm64 on macOS; gitleaks
+    # release naming is x64/arm64 for both.
+    gl_v=8.21.2
     gl_arch=$(uname -m)
-    case "$gl_arch" in
-    x86_64) gl_arch=x64 ;;
-    aarch64 | arm64) gl_arch=arm64 ;;
-    esac
+    [ "$gl_arch" = x86_64 ] && gl_arch=x64
+    [ "$gl_arch" = aarch64 ] && gl_arch=arm64
     gl_os=$(uname | tr '[:upper:]' '[:lower:]')
-    gl_url="https://github.com/gitleaks/gitleaks/releases/download/v${gl_version}/gitleaks_${gl_version}_${gl_os}_${gl_arch}.tar.gz"
-    gl_tmp=$(mktemp -d)
-    if curl -fsSL "$gl_url" -o "$gl_tmp/gl.tgz" 2>/dev/null &&
-        tar -xzf "$gl_tmp/gl.tgz" -C "$gl_tmp" gitleaks 2>/dev/null; then
-        gl_dest="$HOME/.local/bin"
-        is_root && gl_dest=/usr/local/bin
-        mkdir -p "$gl_dest" && mv "$gl_tmp/gitleaks" "$gl_dest/gitleaks" && chmod +x "$gl_dest/gitleaks"
-    else
-        warn "Failed to install gitleaks"
-    fi
-    rm -rf "$gl_tmp"
+    gl_dest="$HOME/.local/bin"
+    is_root && gl_dest=/usr/local/bin
+    mkdir -p "$gl_dest"
+    curl -fsSL "https://github.com/gitleaks/gitleaks/releases/download/v${gl_v}/gitleaks_${gl_v}_${gl_os}_${gl_arch}.tar.gz" |
+        tar -xzf - -C "$gl_dest" gitleaks || warn "Failed to install gitleaks"
 fi
 # === END PROJECT CUSTOMIZATIONS ===
 
