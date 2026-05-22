@@ -106,6 +106,36 @@ else
     fail ".hooks/pre-push" "not a symlink"
 fi
 
+# Stale symlinks: anything in a managed parent dir pointing into the dotfiles
+# repo with a broken target. Catches rename-leftovers (e.g. vpn.10s.sh → .bash)
+# that the managed list no longer references.
+managed_targets=""
+managed_parents=""
+while IFS='|' read -r target _src _label; do
+    managed_targets+="$target"$'\n'
+    managed_parents+="$(dirname "$target")"$'\n'
+done < <(managed_symlinks)
+unique_parents="$(printf '%s' "$managed_parents" | sort -u)"
+
+stale_count=0
+while IFS= read -r parent; do
+    [[ -z "$parent" || ! -d "$parent" ]] && continue
+    while IFS= read -r -d '' entry; do
+        if printf '%s' "$managed_targets" | grep -Fxq "$entry"; then
+            continue
+        fi
+        link_target="$(readlink "$entry")"
+        [[ "$link_target" == "$DOTFILES_DIR"/* ]] || continue
+        [[ -e "$link_target" ]] && continue
+        fail "stale symlink" "$entry -> $link_target (rm to clear)"
+        stale_count=$((stale_count + 1))
+    done < <(find "$parent" -maxdepth 1 -type l -print0 2>/dev/null)
+done < <(printf '%s' "$unique_parents")
+
+if [[ $stale_count -eq 0 ]]; then
+    pass "no stale dotfiles symlinks"
+fi
+
 # ── Required commands ───────────────────────────────────────────────────────
 section "Required commands"
 
