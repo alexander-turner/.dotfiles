@@ -21,14 +21,36 @@ if [[ -z "${DOTFILES_TOOLS:-}" ]]; then
 fi
 
 missing=()
+unexecutable=()
 for cmd in $DOTFILES_TOOLS; do
     if ! command -v "$cmd" >/dev/null 2>&1; then
         missing+=("$cmd")
+        continue
+    fi
+    # Catch arch/format mismatch (e.g. a Windows PE binary on Linux) by
+    # observing bash's exit code 126 from exec()'s ENOEXEC/EACCES paths.
+    # Application-level non-zero exits from --version (ipset wants
+    # CAP_NET_ADMIN, corepack's pnpm shim wants network) land at 1/2,
+    # which we ignore — this check is only about exec'ability.
+    "$cmd" --version </dev/null >/dev/null 2>&1
+    rc=$?
+    if [[ $rc -eq 126 || $rc -eq 127 ]]; then
+        unexecutable+=("$cmd")
     fi
 done
 
 if [[ ${#missing[@]} -gt 0 ]]; then
     echo "FAIL: missing on PATH: ${missing[*]}"
+    exit 1
+fi
+
+if [[ ${#unexecutable[@]} -gt 0 ]]; then
+    echo "FAIL: on PATH but exec failed (126/127): ${unexecutable[*]}"
+    for cmd in "${unexecutable[@]}"; do
+        path=$(command -v "$cmd")
+        echo "  $cmd -> $path"
+        file "$path" 2>&1 | sed 's/^/    /'
+    done
     exit 1
 fi
 
