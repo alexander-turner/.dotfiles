@@ -28,7 +28,10 @@ $HOME/.config/nvim|$DOTFILES_DIR/apps/nvim|nvim config
 $HOME/.config/vagrant-templates/Vagrantfile|$DOTFILES_DIR/ai/Vagrantfile|vagrant-templates/Vagrantfile
 $HOME/.local/bin/bw-node|$DOTFILES_DIR/bin/bw-node|bw-node wrapper
 $HOME/.claude/settings.json|$DOTFILES_DIR/ai/prompting/settings.json|Claude Code settings
+$HOME/.claude/CLAUDE.md|$DOTFILES_DIR/ai/prompting/CLAUDE.md|Claude Code global CLAUDE.md
+$HOME/.claude/commands|$DOTFILES_DIR/ai/prompting/skills|Claude Code slash-command dir
 $HOME/.local/bin/claude|$DOTFILES_DIR/bin/claude|claude shim
+$HOME/.local/bin/claude-private|$DOTFILES_DIR/bin/claude-private|claude-private (ccr→Venice E2EE)
 EOF
     if [[ "$(uname)" == "Darwin" ]]; then
         cat <<EOF
@@ -36,6 +39,13 @@ $HOME/.aerospace.toml|$DOTFILES_DIR/.aerospace.toml|.aerospace.toml
 $HOME/Library/com.googlecode.iterm2.plist|$DOTFILES_DIR/apps/com.googlecode.iterm2.plist|iTerm2 plist
 $HOME/.config/borders/bordersrc|$DOTFILES_DIR/apps/borders/bordersrc|borders config
 $HOME/.config/swiftbar/vpn.10s.bash|$DOTFILES_DIR/apps/swiftbar/vpn.10s.bash|swiftbar vpn plugin
+$HOME/Library/Application Support/VSCodium/User/settings.json|$DOTFILES_DIR/apps/vscodium/settings.json|VSCodium settings (macOS)
+$HOME/Library/Application Support/VSCodium/User/keybindings.json|$DOTFILES_DIR/apps/vscodium/keybindings.json|VSCodium keybindings (macOS)
+EOF
+    else
+        cat <<EOF
+$HOME/.config/VSCodium/User/settings.json|$DOTFILES_DIR/apps/vscodium/settings.json|VSCodium settings (Linux)
+$HOME/.config/VSCodium/User/keybindings.json|$DOTFILES_DIR/apps/vscodium/keybindings.json|VSCodium keybindings (Linux)
 EOF
     fi
     for aider_file in "$DOTFILES_DIR"/.aider*; do

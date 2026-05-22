@@ -296,6 +296,11 @@ if command_exists npm; then
         status_msg "WARN: 'npm i -g @devcontainers/cli' failed. The claude wrapper will fall back to running on the host."
 fi
 
+# AI tooling: claude-code + ccr (binary that the LaunchAgent above expects),
+# aider, VSCodium + Roo, wut, llm + commit-msg hook. Extracted to keep
+# setup.bash's main flow readable; see bin/setup_llm.bash for scope.
+bash "$DOTFILES_DIR/bin/setup_llm.bash"
+
 if [ "$(uname)" != "Darwin" ] && ! command_exists xmllint; then
     sudo apt-get install -y libxml2-utils
 fi

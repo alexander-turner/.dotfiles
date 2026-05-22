@@ -8,6 +8,11 @@ keeping `setup.bash`, `doctor.bash`, and CI honest with each other.
 - `setup.bash` — top-level installer; idempotent, supports `--link-only`.
   Always finishes by running `bin/doctor.bash` so the user sees a green
   health summary (or knows exactly what's still broken).
+- `bin/setup_llm.bash` — AI tooling installer invoked from `setup.bash`:
+  claude-code + ccr (pnpm), aider/llm/wut (uv), VSCodium + extensions,
+  llm-based commit-msg template hook. The ccr binary it installs is what
+  the `com.turntrout.ccr` LaunchAgent (`setup.bash:200`) starts; without
+  this script, that LaunchAgent KeepAlive-respawns a missing binary.
 - `bin/lib/safe_link.sh` — the only place that creates user-facing symlinks.
   Backs up real files to `~/.dotfiles-backup/<UTC-timestamp>/` before
   overwriting.
