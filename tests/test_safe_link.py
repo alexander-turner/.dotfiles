@@ -63,7 +63,9 @@ def source_and_run(snippet: str) -> subprocess.CompletedProcess[str]:
     )
 
 
-def run_with_pty(src: Path, tgt: Path, *, answer: bytes, timeout: float = 2.0) -> int:
+def run_with_pty(
+    src: Path, tgt: Path, *, answer: bytes, timeout: float = 2.0
+) -> tuple[int, bytes]:
     """Invoke safe_link with stdin=pipe and a controlling PTY — mirrors what
     setup.bash sees inside `while ... done < <(managed_symlinks)`: an
     interactive shell where the loop body's own stdin is a pipe.
@@ -71,7 +73,7 @@ def run_with_pty(src: Path, tgt: Path, *, answer: bytes, timeout: float = 2.0) -
     Pre-queues the answer to master so we don't wait for a prompt that never
     arrives (e.g., if safe_link bails before reaching the read). Drains
     master concurrently so the slave's tty buffer can't fill and block the
-    child mid-write."""
+    child mid-write. Returns (returncode, captured_pty_output)."""
     master, slave = pty.openpty()
     pipe_r, pipe_w = os.pipe()
     pid = os.fork()
@@ -96,6 +98,7 @@ def run_with_pty(src: Path, tgt: Path, *, answer: bytes, timeout: float = 2.0) -
     os.write(master, answer)
     deadline = time.time() + timeout
     status = 0
+    captured = b""
     while True:
         done_pid, status = os.waitpid(pid, os.WNOHANG)
         if done_pid == pid:
@@ -109,11 +112,13 @@ def run_with_pty(src: Path, tgt: Path, *, answer: bytes, timeout: float = 2.0) -
         rd, _, _ = select.select([master], [], [], 0.05)
         if rd:
             try:
-                os.read(master, 4096)
+                chunk = os.read(master, 4096)
             except OSError:
-                pass
+                chunk = b""
+            captured += chunk
     os.close(master)
-    return os.WEXITSTATUS(status) if os.WIFEXITED(status) else -1
+    rc = os.WEXITSTATUS(status) if os.WIFEXITED(status) else -1
+    return rc, captured
 
 
 def stamp_dirs() -> list[Path]:
@@ -201,11 +206,16 @@ def test_piped_stdin_with_tty_prompts_via_tty_and_overwrites(
     src.write_text("new")
     tgt = home / ".foo"
     tgt.write_text("user-data")
-    assert run_with_pty(src, tgt, answer=b"y\n") == 0
+    rc, output = run_with_pty(src, tgt, answer=b"y\n")
+    assert rc == 0
     assert tgt.is_symlink()
     assert os.readlink(tgt) == str(src)
     [stamp] = stamp_dirs()
     assert (stamp / ".foo").read_text() == "user-data"
+    # Prompt must disambiguate by path, not just basename — two managed
+    # symlinks (apps/ssh/config, apps/mods/config) both bottom out as "config".
+    assert b"~/.foo already exists" in output, output
+    assert str(src).encode() in output, output
 
 
 def test_non_interactive_skips_real_file_silently(home: Path, tmp_path: Path) -> None:

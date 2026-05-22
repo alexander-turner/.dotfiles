@@ -37,6 +37,10 @@ safe_link() {
     fi
     # Target exists and is a real file (not a symlink) — prompt before clobbering
     if [ -e "$target_file" ] && [ ! -L "$target_file" ]; then
+        # ~-collapsed display path so prompts disambiguate same-basename
+        # targets (e.g. apps/ssh/config vs apps/mods/config both land as
+        # "config" under basename).
+        local display="${target_file/#$HOME/\~}"
         # Prompt via /dev/tty rather than stdin: setup.bash drives this loop
         # body with stdin tied to a pipe (`done < <(managed_symlinks)`), so a
         # `-t 0` check would always claim non-interactive. Open /dev/tty for
@@ -44,11 +48,11 @@ safe_link() {
         # without a controlling terminal) — open fails ENXIO under CI /
         # setsid / sandboxed children, and we skip silently then.
         if ! exec 3<>/dev/tty 2>/dev/null; then
-            echo "Skipping $(basename "$target_file") (real file present, non-interactive)"
+            echo "Skipping $display (real file present, non-interactive)"
             return 0
         fi
         local choice=""
-        printf '%s already exists (not a symlink). Overwrite? (y/N) ' "$(basename "$target_file")" >&3
+        printf '%s already exists (not a symlink). Overwrite with %s? (y/N) ' "$display" "$source_file" >&3
         read -r choice <&3 || true
         exec 3<&-
         case "$choice" in
@@ -56,7 +60,7 @@ safe_link() {
             _safe_link_backup "$target_file"
             ln -sf "$source_file" "$target_file"
             ;;
-        *) echo "Skipping $(basename "$target_file")" ;;
+        *) echo "Skipping $display" ;;
         esac
     else
         # Stale symlink (or no target) — ln -sf handles atomically
