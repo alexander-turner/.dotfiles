@@ -51,7 +51,10 @@ check_shfmt() {
     echo -n "Shfmt: "
     local shfmt_targets=(setup.bash bin/*.sh bin/*.bash bin/lib/*.sh bin/dotfiles .hooks/*.bash .hooks/pre-push .hooks/pre-commit .hooks/commit-msg .claude/hooks/*.bash .devcontainer/*.bash .bashrc)
     if [[ "$FIX_MODE" == true ]]; then
-        shfmt -w -i 4 "${shfmt_targets[@]}" 2>/dev/null || true
+        if ! shfmt -w -i 4 "${shfmt_targets[@]}"; then
+            echo -e "${RED}failed${NC}"
+            return 1
+        fi
         echo -e "${GREEN}fixed${NC}"
     else
         if shfmt -d -i 4 "${shfmt_targets[@]}" 2>/dev/null; then
@@ -68,11 +71,17 @@ check_shellcheck() {
     require_or_skip shellcheck "Shellcheck" || return 0
     echo -n "Shellcheck: "
     if [[ "$FIX_MODE" == true ]]; then
+        # `--format=diff` exits 1 when there are fixable findings (that's
+        # expected; the diff IS the fix). Discard rc but keep stderr so
+        # genuine parse errors stay visible.
         local diff_output
-        diff_output=$(shellcheck -e SC2016 --format=diff setup.bash bin/*.sh bin/*.bash bin/lib/*.sh bin/dotfiles .hooks/*.bash .hooks/pre-push .hooks/pre-commit .hooks/commit-msg .claude/hooks/*.bash .devcontainer/*.bash 2>/dev/null || true)
-        diff_output+=$(shellcheck -s bash -e SC2148 -e SC1090 -e SC1091 -e SC2015 --format=diff .bashrc 2>/dev/null || true)
+        diff_output=$(shellcheck -e SC2016 --format=diff setup.bash bin/*.sh bin/*.bash bin/lib/*.sh bin/dotfiles .hooks/*.bash .hooks/pre-push .hooks/pre-commit .hooks/commit-msg .claude/hooks/*.bash .devcontainer/*.bash || true)
+        diff_output+=$(shellcheck -s bash -e SC2148 -e SC1090 -e SC1091 -e SC2015 --format=diff .bashrc || true)
         if [ -n "$diff_output" ]; then
-            echo "$diff_output" | git apply --allow-empty 2>/dev/null || true
+            if ! echo "$diff_output" | git apply --allow-empty; then
+                echo -e "${RED}failed${NC} (git apply rejected shellcheck diff)"
+                return 1
+            fi
             echo -e "${GREEN}fixed${NC}"
         else
             echo -e "${GREEN}passed${NC}"
@@ -112,7 +121,10 @@ check_stylua() {
     require_or_skip stylua "Lua format" || return 0
     echo -n "Lua format: "
     if [[ "$FIX_MODE" == true ]]; then
-        stylua . 2>/dev/null
+        if ! stylua .; then
+            echo -e "${RED}failed${NC}"
+            return 1
+        fi
         echo -e "${GREEN}fixed${NC}"
     else
         if stylua --check . 2>/dev/null; then
@@ -207,8 +219,11 @@ check_python() {
         return 0
     fi
     if [[ "$FIX_MODE" == true ]]; then
+        # Don't gate on rc — ruff exits non-zero when unfixable findings
+        # remain, which is expected. But let its stderr through so the
+        # user sees what couldn't be auto-fixed instead of silent "fixed".
         find . -name '*.py' -not -path './.git/*' -not -path '*/node_modules/*' -print0 |
-            xargs -0 ruff check --fix 2>/dev/null || true
+            xargs -0 ruff check --fix || true
         echo -e "${GREEN}fixed${NC}"
     else
         if find . -name '*.py' -not -path './.git/*' -not -path '*/node_modules/*' -print0 |
