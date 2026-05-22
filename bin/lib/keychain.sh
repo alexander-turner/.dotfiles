@@ -8,22 +8,14 @@
 # Caches the keychain password at $HOME/.config/dotfiles/keychain-password
 # (mode 0600 in a 0700 dir) so subsequent runs unlock without prompting.
 
-# Escape a string as a double-quoted argument for `security -i`. The
-# interactive parser handles backslash escapes for " and \ inside double
-# quotes (see SecurityTool's split_line state machine).
-_keychain_security_quote() {
-    local s=${1//\\/\\\\}
-    printf '"%s"' "${s//\"/\\\"}"
-}
+# shellcheck source=bin/lib/security-stdin.sh disable=SC1091
+source "${BASH_SOURCE[0]%/*}/security-stdin.sh"
 
-# Unlock the keychain without putting the password on argv. `security -i`
-# reads commands from stdin, so $pw stays out of `ps` listings. Exit code
-# is the result of the single command we run (per SecurityTool's main loop).
 _keychain_unlock() {
     local pw="$1" kc="$2"
     printf 'unlock-keychain -p %s %s\n' \
-        "$(_keychain_security_quote "$pw")" \
-        "$(_keychain_security_quote "$kc")" |
+        "$(_security_quote "$pw")" \
+        "$(_security_quote "$kc")" |
         security -i >/dev/null 2>&1
 }
 

@@ -19,12 +19,8 @@
 SECRET_STORE_BACKEND=""
 SECRET_STORE_FILE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/secrets"
 
-# Escape a string as a double-quoted argument for `security -i`. The
-# interactive parser accepts backslash-escaped " and \ inside double quotes.
-_security_quote() {
-    local s=${1//\\/\\\\}
-    printf '"%s"' "${s//\"/\\\"}"
-}
+# shellcheck source=bin/lib/security-stdin.sh disable=SC1091
+source "${BASH_SOURCE[0]%/*}/security-stdin.sh"
 
 # Pick a backend exactly once per shell. Cached in $SECRET_STORE_BACKEND.
 secret_store_init() {
@@ -100,8 +96,6 @@ secret_set() {
     local service="$1" value="$2"
     case "$SECRET_STORE_BACKEND" in
     security)
-        # `security -i` reads commands from stdin, so $value never lands
-        # in argv (where `ps` could see it).
         printf 'add-generic-password -s %s -a %s -U -w %s\n' \
             "$(_security_quote "$service")" \
             "$(_security_quote "$USER")" \
