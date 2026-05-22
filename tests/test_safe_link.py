@@ -41,10 +41,16 @@ def home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 def run_script(src: Path, tgt: Path, *, stdin: str | None = None) -> int:
-    """Invoke safe_link.sh as a script — the entry point setup.bash uses."""
+    """Invoke safe_link.sh as a script — the entry point setup.bash uses.
+
+    start_new_session=True forces the child into a fresh session with no
+    controlling terminal. Without it, a pytest run from an interactive shell
+    would let safe_link's /dev/tty open succeed against the user's actual
+    terminal and block forever on the read."""
     return subprocess.run(
         ["bash", str(SAFE_LINK_SH), str(src), str(tgt)],
         input=stdin, capture_output=True, text=True,
+        start_new_session=True,
     ).returncode
 
 
@@ -57,10 +63,15 @@ def source_and_run(snippet: str) -> subprocess.CompletedProcess[str]:
     )
 
 
-def run_with_pty(src: Path, tgt: Path, *, answer: bytes, timeout: float = 5.0) -> int:
+def run_with_pty(src: Path, tgt: Path, *, answer: bytes, timeout: float = 2.0) -> int:
     """Invoke safe_link with stdin=pipe and a controlling PTY — mirrors what
     setup.bash sees inside `while ... done < <(managed_symlinks)`: an
-    interactive shell where the loop body's own stdin is a pipe."""
+    interactive shell where the loop body's own stdin is a pipe.
+
+    Pre-queues the answer to master so we don't wait for a prompt that never
+    arrives (e.g., if safe_link bails before reaching the read). Drains
+    master concurrently so the slave's tty buffer can't fill and block the
+    child mid-write."""
     master, slave = pty.openpty()
     pipe_r, pipe_w = os.pipe()
     pid = os.fork()
@@ -82,28 +93,25 @@ def run_with_pty(src: Path, tgt: Path, *, answer: bytes, timeout: float = 5.0) -
     os.close(slave)
     os.close(pipe_r)
     os.close(pipe_w)
-    buf = b""
-    answered = False
+    os.write(master, answer)
     deadline = time.time() + timeout
     status = 0
-    while time.time() < deadline:
-        rd, _, _ = select.select([master], [], [], 0.1)
-        if rd:
-            try:
-                chunk = os.read(master, 4096)
-            except OSError:
-                chunk = b""
-            if chunk:
-                buf += chunk
-                if not answered and b"Overwrite?" in buf:
-                    os.write(master, answer)
-                    answered = True
+    while True:
         done_pid, status = os.waitpid(pid, os.WNOHANG)
         if done_pid == pid:
             break
-    else:
-        os.kill(pid, 9)
-        _, status = os.waitpid(pid, 0)
+        if time.time() >= deadline:
+            os.kill(pid, 9)
+            _, status = os.waitpid(pid, 0)
+            break
+        # Drain in 50ms slices so the slave's small tty buffer never blocks
+        # a child mid-write while we're polling waitpid.
+        rd, _, _ = select.select([master], [], [], 0.05)
+        if rd:
+            try:
+                os.read(master, 4096)
+            except OSError:
+                pass
     os.close(master)
     return os.WEXITSTATUS(status) if os.WIFEXITED(status) else -1
 

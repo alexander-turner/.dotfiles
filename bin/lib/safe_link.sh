@@ -37,17 +37,20 @@ safe_link() {
     fi
     # Target exists and is a real file (not a symlink) — prompt before clobbering
     if [ -e "$target_file" ] && [ ! -L "$target_file" ]; then
-        # Prompt via /dev/tty rather than stdin: callers (setup.bash) feed
-        # symlink lists into the loop via `done < <(...)`, so stdin is a pipe
-        # even in an interactive shell. /dev/tty bypasses that. CI runs
-        # without a controlling terminal — /dev/tty isn't readable there, so
-        # we skip silently rather than blocking on read or tripping `set -e`.
-        if ! { [ -r /dev/tty ] && [ -w /dev/tty ]; }; then
+        # Prompt via /dev/tty rather than stdin: setup.bash drives this loop
+        # body with stdin tied to a pipe (`done < <(managed_symlinks)`), so a
+        # `-t 0` check would always claim non-interactive. Open /dev/tty for
+        # real (not `-r`/`-w`, which only stat the device node and pass even
+        # without a controlling terminal) — open fails ENXIO under CI /
+        # setsid / sandboxed children, and we skip silently then.
+        if ! exec 3<>/dev/tty 2>/dev/null; then
             echo "Skipping $(basename "$target_file") (real file present, non-interactive)"
             return 0
         fi
         local choice=""
-        read -rp "$(basename "$target_file") already exists (not a symlink). Overwrite? (y/N) " choice </dev/tty || true
+        printf '%s already exists (not a symlink). Overwrite? (y/N) ' "$(basename "$target_file")" >&3
+        read -r choice <&3 || true
+        exec 3<&-
         case "$choice" in
         y | Y)
             _safe_link_backup "$target_file"
