@@ -132,7 +132,8 @@ def test_non_interactive_skips_real_file_silently(home: Path, tmp_path: Path) ->
     src.write_text("x")
     tgt = home / ".foo"
     tgt.write_text("user-data")
-    # stdin="" with no real TTY trips `[ ! -t 0 ]` → silent skip.
+    # subprocess.run gives the child no controlling terminal, so /dev/tty is
+    # unreadable/unwritable → safe_link skips silently.
     assert run_script(src, tgt, stdin="") == 0
     assert not tgt.is_symlink()
     assert tgt.read_text() == "user-data"
