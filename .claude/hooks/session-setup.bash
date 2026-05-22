@@ -80,8 +80,8 @@ if ! command -v gitleaks &>/dev/null; then
     gl_version=8.21.2
     gl_arch=$(uname -m)
     case "$gl_arch" in
-        x86_64) gl_arch=x64 ;;
-        aarch64 | arm64) gl_arch=arm64 ;;
+    x86_64) gl_arch=x64 ;;
+    aarch64 | arm64) gl_arch=arm64 ;;
     esac
     gl_os=$(uname | tr '[:upper:]' '[:lower:]')
     gl_url="https://github.com/gitleaks/gitleaks/releases/download/v${gl_version}/gitleaks_${gl_version}_${gl_os}_${gl_arch}.tar.gz"
