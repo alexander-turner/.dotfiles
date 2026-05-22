@@ -55,13 +55,7 @@ jobs:
         run: bash bin/test-claude-hooks.bash
 
       - name: Commit fixes if any
-        run: |
-          git diff --quiet && exit 0
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "style: auto-fix lint issues [skip ci]"
-          git push
+        run: bash bin/commit-lint-fixes.bash
 
       - name: Verify lint passes after fixes
         # Catches non-auto-fixable issues (shellcheck errors, gitleaks hits,
