@@ -34,7 +34,11 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          # Matches the `default_language_version` pin in
+          # .pre-commit-config.yaml (pre-commit shells out to
+          # `virtualenv -p python3.13` for python-language hooks).
+          # Ubuntu-latest no longer ships 3.13 in the tool cache.
+          python-version: "3.13"
 
       - name: Install pytest (for safe_link local hook)
         run: pip install pytest
@@ -46,10 +50,14 @@ jobs:
           restore-keys: pre-commit-${{ runner.os }}-
 
       - name: Run pre-commit (auto-fix mode)
-        # Pre-commit exits non-zero when hooks modify files. We want CI to
-        # commit the fix and surface unfixed failures separately, so swallow
-        # this exit and re-check below.
-        run: pip install pre-commit && pre-commit run --all-files --show-diff-on-failure || true
+        # Swallow rc=1 (hook auto-fixed files; the next commit step lands
+        # the diff). Propagate rc=3+ (FATAL: e.g. missing interpreter,
+        # bad hook env) so the failure surfaces here with pre-commit's
+        # traceback, not silently in the later verify step.
+        run: |
+          pip install pre-commit
+          pre-commit run --all-files --show-diff-on-failure || rc=$?
+          [ "${rc:-0}" -le 1 ] || exit "$rc"
 
       - name: Test Claude Code hooks
         run: bash bin/test-claude-hooks.bash
@@ -59,5 +67,5 @@ jobs:
 
       - name: Verify lint passes after fixes
         # Catches non-auto-fixable issues (shellcheck errors, gitleaks hits,
-        # fish syntax errors) that the previous step skipped via `|| true`.
+        # fish syntax errors) that the previous step's auto-fix swallowed.
         run: pre-commit run --all-files

@@ -12,12 +12,20 @@
 #                 hosts.
 #
 # Override detection by setting DOTFILES_SECRET_BACKEND to one of the names
-# above. Items are keyed by ($service, $USER). Values transit only argv
-# (security), stdin (secret-tool), or a temp file → atomic mv (file) — never
-# logged.
+# above. Items are keyed by ($service, $USER). Values transit only stdin
+# (security via `-i` interactive mode; secret-tool) or a temp file → atomic
+# mv (file) — never argv, never logged.
 
 SECRET_STORE_BACKEND=""
 SECRET_STORE_FILE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/secrets"
+
+# Escape a string as a double-quoted argument for `security -i`. The parser
+# (SecurityTool's split_line) handles backslash escapes for " and \ inside
+# double quotes.
+_security_quote() {
+    local s=${1//\\/\\\\}
+    printf '"%s"' "${s//\"/\\\"}"
+}
 
 # Pick a backend exactly once per shell. Cached in $SECRET_STORE_BACKEND.
 secret_store_init() {
@@ -93,8 +101,11 @@ secret_set() {
     local service="$1" value="$2"
     case "$SECRET_STORE_BACKEND" in
     security)
-        security add-generic-password \
-            -s "$service" -a "$USER" -U -w "$value" >/dev/null
+        printf 'add-generic-password -s %s -a %s -U -w %s\n' \
+            "$(_security_quote "$service")" \
+            "$(_security_quote "$USER")" \
+            "$(_security_quote "$value")" |
+            security -i >/dev/null
         ;;
     secret-tool)
         printf '%s' "$value" | secret-tool store \
