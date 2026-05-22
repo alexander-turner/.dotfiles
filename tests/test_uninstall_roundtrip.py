@@ -12,7 +12,11 @@ import os
 import subprocess
 from pathlib import Path
 
-DOTFILES = Path(__file__).resolve().parents[1]
+DOTFILES = Path(
+    subprocess.check_output(
+        ["git", "rev-parse", "--show-toplevel"], text=True
+    ).strip()
+)
 
 
 def _repo_symlinks(home: Path) -> list[Path]:

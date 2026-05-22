@@ -14,7 +14,11 @@ from pathlib import Path
 
 import pytest
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(
+    subprocess.check_output(
+        ["git", "rev-parse", "--show-toplevel"], text=True
+    ).strip()
+)
 SAFE_LINK_SH = REPO_ROOT / "bin" / "lib" / "safe_link.sh"
 STAMP_RE = re.compile(r"^\d{8}T\d{6}Z$")
 
