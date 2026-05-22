@@ -76,11 +76,6 @@ if command -q zoxide
     zoxide init fish --cmd j | source
 end
 
-# mise: per-project tool versions (honors .nvmrc / .tool-versions / etc.).
-if command -q mise
-    mise activate fish | source
-end
-
 if $IS_MAC
     if command -q AeroSpace
         # Custom goodness for my workflow https://nikitabobko.github.io/AeroSpace/goodness
@@ -160,7 +155,7 @@ end
 function yank
     if set -q SSH_TTY
         set -l tmp (mktemp)
-        cat >$tmp
+        command cat >$tmp
         set -l data (base64 < $tmp | tr -d '\n')
         command rm $tmp &>/dev/null
         printf '\033]52;c;%s\a' $data
@@ -304,14 +299,6 @@ function editfishextras
 end
 
 abbr -a fxtra editfishextras
-
-# Only load iTerm2 integration when already inside tmux, not during tmux startup
-if test -e $HOME/.iterm2_shell_integration.fish
-    # Only load if TMUX variable is already set (we're inside a running tmux session)
-    if set -q TMUX
-        source $HOME/.iterm2_shell_integration.fish
-    end
-end
 
 set -xg NODE_NO_WARNINGS 1
 
