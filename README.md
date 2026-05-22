@@ -41,6 +41,10 @@ Features (configurable by changing `setup.bash`):
     - Aider for CLI coding,
     - VSCodium with Roo Cline extension for privacy-first AI pair programming (use also with confidential cloud computing, like via [`redpill.ai`](https://redpill.ai)),
     - `claude-code-router` (`ccr`) installed via pnpm and supervised by `launchagents/com.turntrout.ccr.plist`, so the private Claude wrappers route through [Venice](https://venice.ai) without the daemon dying across reboots. Store your Venice API key in Bitwarden as `envchain/ai/VENICE_INFERENCE_KEY` (the standard `envchain/<namespace>/<VAR>` convention) — `bwseed` then pulls it into envchain on every machine.
+    - Three Claude Code wrappers in `~/.local/bin/`:
+      - `claude` — sandboxed devcontainer mode; the default for daily use, routing untouched (Anthropic).
+      - `claude-private` — routes through `ccr` to Venice's current `default_code` model. `bin/lib/venice-resolve.bash` queries Venice at install time and caches the resolved id in `~/.cache/claude-wrappers/default_code`, so the wrapper auto-tracks Venice's catalog as models rotate. Set `CLAUDE_PRIVATE_THINK=1` to escalate to `claude-opus-4-7` for heavy reasoning.
+      - `claude-paranoid` — same `default_code` routing as `claude-private` but *never* escalates, even with `CLAUDE_PRIVATE_THINK=1`. Use when you want a hard guarantee that no request hops to a closed-lab flagship.
     - `wut` command to explain shell output.
     - `mods` (Charm) for piping shell output to an LLM, e.g. `<failing-cmd> 2>&1 | mods 'what broke?'`. Routes through Venice via `apps/mods/mods.yml`.
 11. Modern Unix toolkit installed via `Brewfile`:

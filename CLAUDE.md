@@ -10,9 +10,17 @@ keeping `setup.bash`, `doctor.bash`, and CI honest with each other.
   health summary (or knows exactly what's still broken).
 - `bin/setup_llm.bash` — AI tooling installer invoked from `setup.bash`:
   claude-code + ccr (pnpm), aider/llm/wut (uv), VSCodium + extensions,
-  llm-based commit-msg template hook. The ccr binary it installs is what
-  the `com.turntrout.ccr` LaunchAgent (`setup.bash:200`) starts; without
-  this script, that LaunchAgent KeepAlive-respawns a missing binary.
+  llm-based commit-msg template hook. Also refreshes the Venice
+  `default_code` model cache via `bin/lib/venice-resolve.bash`. The ccr
+  binary it installs is what the `com.turntrout.ccr` LaunchAgent
+  (`setup.bash:200`) starts; without this script, that LaunchAgent
+  KeepAlive-respawns a missing binary.
+- `bin/claude-private`, `bin/claude-paranoid` — claude-code wrappers
+  that route through ccr to Venice. `claude-private` defaults to
+  Venice's `default_code` model and escalates to `claude-opus-4-7` when
+  `CLAUDE_PRIVATE_THINK=1`; `claude-paranoid` always uses `default_code`
+  with no escalation. Both source `bin/lib/venice-resolve.bash` for the
+  cached model id with a hardcoded fallback.
 - `bin/lib/safe_link.sh` — the only place that creates user-facing symlinks.
   Backs up real files to `~/.dotfiles-backup/<UTC-timestamp>/` before
   overwriting.

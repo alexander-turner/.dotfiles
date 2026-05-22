@@ -31,7 +31,8 @@ $HOME/.claude/settings.json|$DOTFILES_DIR/ai/prompting/settings.json|Claude Code
 $HOME/.claude/CLAUDE.md|$DOTFILES_DIR/ai/prompting/CLAUDE.md|Claude Code global CLAUDE.md
 $HOME/.claude/commands|$DOTFILES_DIR/ai/prompting/skills|Claude Code slash-command dir
 $HOME/.local/bin/claude|$DOTFILES_DIR/bin/claude|claude shim
-$HOME/.local/bin/claude-private|$DOTFILES_DIR/bin/claude-private|claude-private (ccr→Venice E2EE)
+$HOME/.local/bin/claude-private|$DOTFILES_DIR/bin/claude-private|claude-private (ccr→Venice default_code, --think → Opus)
+$HOME/.local/bin/claude-paranoid|$DOTFILES_DIR/bin/claude-paranoid|claude-paranoid (ccr→Venice default_code, always)
 EOF
     if [[ "$(uname)" == "Darwin" ]]; then
         cat <<EOF

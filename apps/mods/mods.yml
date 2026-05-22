@@ -9,7 +9,7 @@
 # between client and inference, so prompts/outputs aren't inspectable by
 # the provider. Redpill's TEE is a weaker guarantee — not used here.
 
-default-model: qwen-2.5-coder-32b
+default-model: qwen3-coder-480b-a35b-instruct-turbo
 default-api: venice
 ask-model: false
 format: false
@@ -31,17 +31,23 @@ apis:
   venice:
     base-url: https://api.venice.ai/api/v1
     api-key-env: VENICE_INFERENCE_KEY
+    # Model ids match Venice's /v1/models. Re-check after major Venice
+    # catalog rotations — bin/lib/venice-resolve.bash can confirm the
+    # current `default_code` trait owner.
     models:
-      qwen-2.5-coder-32b:
-        aliases: ["qwen", "coder"]
-        max-input-chars: 32000
-        fallback: llama-3.3-70b
-      llama-3.3-70b:
-        aliases: ["llama", "default"]
-        max-input-chars: 128000
-      mistral-31-24b:
+      qwen3-coder-480b-a35b-instruct-turbo:
+        aliases: ["coder", "code", "qwen"]
+        max-input-chars: 256000
+        fallback: claude-sonnet-4-6
+      claude-sonnet-4-6:
+        aliases: ["sonnet", "fast", "default"]
+        max-input-chars: 200000
+      claude-opus-4-7:
+        aliases: ["opus", "think"]
+        max-input-chars: 200000
+      deepseek-v4-pro:
+        aliases: ["deepseek", "reason"]
+        max-input-chars: 200000
+      mistral-small-2603:
         aliases: ["mistral"]
-        max-input-chars: 128000
-      venice-uncensored-1.1:
-        aliases: ["uncensored"]
-        max-input-chars: 32000
+        max-input-chars: 256000
