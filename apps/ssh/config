@@ -1,7 +1,21 @@
 # Managed by dotfiles — apps/ssh/config, symlinked to ~/.ssh/config.
 
+# Colima writes per-VM Host blocks (lima0, etc.) into this file.
+Include ~/.colima/ssh_config
+
 Host *
+    # Keychain integration on macOS; IgnoreUnknown keeps Linux ssh quiet.
+    IgnoreUnknown UseKeychain
+    UseKeychain yes
+    AddKeysToAgent yes
+
     # Surface dead connections within ~3 min instead of hanging on next keystroke.
     ServerAliveInterval 60
     ServerAliveCountMax 3
     TCPKeepAlive yes
+
+# Personal mac-mini on the LAN. `ssh server` → server@mac-mini with agent forwarding.
+Host server
+    HostName mac-mini
+    User server
+    ForwardAgent yes
