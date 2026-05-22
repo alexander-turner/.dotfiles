@@ -71,12 +71,23 @@ check_shellcheck() {
     require_or_skip shellcheck "Shellcheck" || return 0
     echo -n "Shellcheck: "
     if [[ "$FIX_MODE" == true ]]; then
-        # `--format=diff` exits 1 when there are fixable findings (that's
-        # expected; the diff IS the fix). Discard rc but keep stderr so
-        # genuine parse errors stay visible.
-        local diff_output
-        diff_output=$(shellcheck -e SC2016 --format=diff setup.bash bin/*.sh bin/*.bash bin/lib/*.sh bin/dotfiles .hooks/*.bash .hooks/pre-push .hooks/pre-commit .hooks/commit-msg .claude/hooks/*.bash .devcontainer/*.bash || true)
-        diff_output+=$(shellcheck -s bash -e SC2148 -e SC1090 -e SC1091 -e SC2015 --format=diff .bashrc || true)
+        # Exit codes for `--format=diff`:
+        #   0 = no findings, 1 = findings (the diff IS the fix), 2 = parse
+        #   error or bad CLI flags. Treat 0/1 as success, anything else as
+        #   real failure rather than swallowing it under `|| true`.
+        local diff_output sc_rc=0
+        diff_output=$(shellcheck -e SC2016 --format=diff setup.bash bin/*.sh bin/*.bash bin/lib/*.sh bin/dotfiles .hooks/*.bash .hooks/pre-push .hooks/pre-commit .hooks/commit-msg .claude/hooks/*.bash .devcontainer/*.bash) || sc_rc=$?
+        if ((sc_rc > 1)); then
+            echo -e "${RED}failed${NC} (shellcheck exited $sc_rc)"
+            return 1
+        fi
+        local extra sc_rc2=0
+        extra=$(shellcheck -s bash -e SC2148 -e SC1090 -e SC1091 -e SC2015 --format=diff .bashrc) || sc_rc2=$?
+        if ((sc_rc2 > 1)); then
+            echo -e "${RED}failed${NC} (shellcheck .bashrc exited $sc_rc2)"
+            return 1
+        fi
+        diff_output+="$extra"
         if [ -n "$diff_output" ]; then
             if ! echo "$diff_output" | git apply --allow-empty; then
                 echo -e "${RED}failed${NC} (git apply rejected shellcheck diff)"
@@ -219,11 +230,12 @@ check_python() {
         return 0
     fi
     if [[ "$FIX_MODE" == true ]]; then
-        # Don't gate on rc — ruff exits non-zero when unfixable findings
-        # remain, which is expected. But let its stderr through so the
-        # user sees what couldn't be auto-fixed instead of silent "fixed".
+        # --exit-zero: return 0 even when unfixable findings remain. ruff
+        # still exits non-zero on real errors (bad config, IO failure,
+        # crash), so dropping `|| true` means a crash is no longer
+        # papered over as a green "fixed" line.
         find . -name '*.py' -not -path './.git/*' -not -path '*/node_modules/*' -print0 |
-            xargs -0 ruff check --fix || true
+            xargs -0 ruff check --fix --exit-zero
         echo -e "${GREEN}fixed${NC}"
     else
         if find . -name '*.py' -not -path './.git/*' -not -path '*/node_modules/*' -print0 |
