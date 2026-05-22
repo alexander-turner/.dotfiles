@@ -129,9 +129,11 @@ unrelated to the actual change.
 Put new installers inside the `=== PROJECT CUSTOMIZATIONS ===` block so
 `template-sync.yaml`'s 3-way merge preserves them. Helpers, in order
 of preference: `webi_install_if_missing` (shfmt, gh, jq),
-`uv_install_if_missing` (pre-commit), `apt-get` guarded by `is_root`
-(shellcheck, fish), direct release tarball (gitleaks — webi doesn't
-ship it). The block currently installs `pre-commit`, `fish` (the
+`uv_install_if_missing` (most uv tools; pre-commit needs an inline
+`uv tool install pre-commit --with pre-commit-uv` for the plugin),
+`apt-get` guarded by `is_root` (shellcheck, fish), direct release
+tarball (gitleaks — webi doesn't ship it). The block currently
+installs `pre-commit`, `fish` (the
 `fish --no-execute` hook needs it even on machines that don't use fish
 interactively), and `gitleaks` (required, not optional — `bin/pre-push`
 sets `GITLEAKS_REQUIRED=1`, which flips `bin/lint.bash` from

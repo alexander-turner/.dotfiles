@@ -258,6 +258,10 @@ if ! command_exists trash-put; then
     uv tool install --quiet trash-cli
 fi
 
+if command_exists uv; then
+    uv tool install --quiet pre-commit --with pre-commit-uv
+fi
+
 # Clear trash which is over 30 days old, monthly
 if command_exists crontab && command_exists trash-empty; then
     CRON_ENTRY="@monthly $(command -v trash-empty) 30"
