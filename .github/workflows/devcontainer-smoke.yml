@@ -24,7 +24,7 @@ jobs:
     name: Build .devcontainer image and verify installed tools
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # Auth to GHCR only on actual pushes to main — PRs from forks can't
       # mint a token with packages:write anyway, and `push: filter` below

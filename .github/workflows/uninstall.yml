@@ -25,6 +25,6 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - run: pip install --quiet pytest
       - run: pytest -v tests/test_uninstall_roundtrip.py
