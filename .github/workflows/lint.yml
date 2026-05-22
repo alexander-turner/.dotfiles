@@ -34,16 +34,11 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          # 3.13 satisfies the `default_language_version` pin in
+          # Matches the `default_language_version` pin in
           # .pre-commit-config.yaml (pre-commit shells out to
           # `virtualenv -p python3.13` for python-language hooks).
-          # 3.11 stays as the *active* version (last in the list) so
-          # `pip install pre-commit/pytest` lands on the historically-used
-          # interpreter. Ubuntu-latest no longer ships 3.13 in the tool
-          # cache, so we have to install it explicitly.
-          python-version: |
-            3.13
-            3.11
+          # Ubuntu-latest no longer ships 3.13 in the tool cache.
+          python-version: "3.13"
 
       - name: Install pytest (for safe_link local hook)
         run: pip install pytest
