@@ -26,5 +26,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - run: pip install --quiet pytest
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv pip install --system --quiet pytest
       - run: pytest -v tests/test_uninstall_roundtrip.py

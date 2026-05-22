@@ -32,16 +32,23 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y fish
 
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v6
         with:
-          # Matches the `default_language_version` pin in
-          # .pre-commit-config.yaml (pre-commit shells out to
-          # `virtualenv -p python3.13` for python-language hooks).
-          # Ubuntu-latest no longer ships 3.13 in the tool cache.
-          python-version: "3.13"
+          # Cache uv's own downloads (interpreter + wheel cache) across runs.
+          enable-cache: true
 
-      - name: Install pytest (for safe_link local hook)
-        run: pip install pytest
+      - name: Install Python 3.13
+        # Matches the `default_language_version` pin in .pre-commit-config.yaml
+        # (pre-commit shells out to `virtualenv -p python3.13` for python-
+        # language hooks). uv installs interpreters on demand, so we don't
+        # depend on ubuntu-latest's tool cache shipping 3.13.
+        run: uv python install 3.13
+
+      - name: Install pytest + pre-commit
+        # `uv pip install --system` is drop-in for `pip install` but ~10×
+        # faster, and pre-commit ≥4 detects uv on PATH and uses it for
+        # hook venvs too.
+        run: uv pip install --system pytest pre-commit
 
       - uses: actions/cache@v4
         with:
@@ -55,7 +62,6 @@ jobs:
         # bad hook env) so the failure surfaces here with pre-commit's
         # traceback, not silently in the later verify step.
         run: |
-          pip install pre-commit
           pre-commit run --all-files --show-diff-on-failure || rc=$?
           [ "${rc:-0}" -le 1 ] || exit "$rc"
 
