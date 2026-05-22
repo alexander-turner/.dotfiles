@@ -19,8 +19,13 @@
 SECRET_STORE_BACKEND=""
 SECRET_STORE_FILE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/secrets"
 
-# shellcheck source=bin/lib/security-stdin.sh disable=SC1091
-source "${BASH_SOURCE[0]%/*}/security-stdin.sh"
+# Escape a string as a double-quoted argument for `security -i`. The parser
+# (SecurityTool's split_line) handles backslash escapes for " and \ inside
+# double quotes.
+_security_quote() {
+    local s=${1//\\/\\\\}
+    printf '"%s"' "${s//\"/\\\"}"
+}
 
 # Pick a backend exactly once per shell. Cached in $SECRET_STORE_BACKEND.
 secret_store_init() {

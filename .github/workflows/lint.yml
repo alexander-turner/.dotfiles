@@ -50,10 +50,14 @@ jobs:
           restore-keys: pre-commit-${{ runner.os }}-
 
       - name: Run pre-commit (auto-fix mode)
-        # Logic lives in bin/run-precommit-autofix.bash so shellcheck/shfmt
-        # cover the exit-code branching (per CLAUDE.md → "Workflow shell
-        # scripts live in bin/").
-        run: bash bin/run-precommit-autofix.bash
+        # Swallow rc=1 (hook auto-fixed files; the next commit step lands
+        # the diff). Propagate rc=3+ (FATAL: e.g. missing interpreter,
+        # bad hook env) so the failure surfaces here with pre-commit's
+        # traceback, not silently in the later verify step.
+        run: |
+          pip install pre-commit
+          pre-commit run --all-files --show-diff-on-failure || rc=$?
+          [ "${rc:-0}" -le 1 ] || exit "$rc"
 
       - name: Test Claude Code hooks
         run: bash bin/test-claude-hooks.bash

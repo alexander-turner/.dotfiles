@@ -8,8 +8,6 @@ stdin). These tests stub `security` to record its argv and stdin and
 assert the secret stays on the stdin side of the divide.
 """
 
-from __future__ import annotations
-
 import os
 import subprocess
 from pathlib import Path
