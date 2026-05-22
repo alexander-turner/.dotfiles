@@ -156,8 +156,10 @@ real dir → prompt, missing → create.
   about what it needs). `.sh` is reserved for `#!/bin/sh` POSIX scripts
   (e.g. `bin/aider-redpill-shim.sh`) and for sourced libraries under
   `bin/lib/` that declare `# shellcheck shell=bash` instead of carrying
-  a shebang. `bin/lint.bash`'s `check_sh_extension` enforces this in
-  CI — adding a new `.sh` file with a bash shebang fails the lint job.
+  a shebang. The `sh-extension` pre-commit hook
+  (`.pre-commit-config.yaml` → `bin/check-sh-extension.bash`) enforces
+  this in CI — adding a new `.sh` file with a bash shebang fails the
+  lint job.
 - Prefer fish abbreviations (`abbr -a`) over functions when the only
   job is text expansion — abbrs preserve history readability.
 - Use `command <name>` to bypass fish/bash function shadowing
@@ -176,8 +178,9 @@ Inline `run: |` blocks in `.github/workflows/*.yml` are invisible to
 shellcheck/shfmt and skip the auto-fix pipeline. Anything beyond a
 trivial 1-3 line install incantation should be extracted to
 `bin/<name>.bash` and invoked from the workflow as `run: bash
-bin/<name>.bash` — `bin/lint.bash`'s shellcheck glob (`bin/*.bash`)
-then covers it automatically.
+bin/<name>.bash` — the shellcheck pre-commit hook
+(`.pre-commit-config.yaml`) then covers it automatically via its
+`bin/[^/]*\.(bash|sh)` files pattern.
 
 Reference: `bin/check-idempotency.bash` is invoked from
 `.github/workflows/idempotency.yml` with `TEST_HOME` / `SCRATCH` passed
@@ -200,9 +203,12 @@ in `alexander-turner/claude-automation-template`.
 
 ## When fixing CI failures
 
-- `lint.yml` auto-fixes shellcheck/stylua/ruff issues and commits them
-  back. If your push is followed by a `style: auto-fix` commit, pull
-  before continuing.
+- `lint.yml` runs `pre-commit run --all-files` (orchestrated by
+  `.pre-commit-config.yaml`), then commits any auto-fixes back. If
+  your push is followed by a `style: auto-fix` commit, pull before
+  continuing. The verify-after-fix step re-runs `pre-commit` so
+  non-auto-fixable issues (shellcheck warnings, gitleaks hits, fish
+  syntax errors) still fail CI.
 - `gitleaks` failures are not auto-fixed. Treat any hit as a real
   incident: rotate the leaked credential, then either rewrite the
   commit (if local) or add an allowlist entry justifying the false
@@ -219,8 +225,9 @@ bash bin/doctor.bash              # health check
 bash bin/doctor.bash --quiet      # show only failures/skips
 bash bin/uninstall.bash           # remove $HOME symlinks, restore backups
 bash bin/uninstall.bash --yes     # ... non-interactive
-bash bin/lint.bash                # run all linters locally
-bash bin/lint.bash --fix          # auto-fix what we can
+bash bin/lint.bash                # run all linters (pre-commit run --all-files)
+pre-commit run shellcheck --all-files  # run one hook by id
+pre-commit autoupdate             # bump pinned hook versions
 bwseed                          # force Bitwarden → envchain refresh
 
 # After setup.bash has run once, the same chores are reachable via the
@@ -228,5 +235,5 @@ bwseed                          # force Bitwarden → envchain refresh
 dotfiles doctor                 # → bin/doctor.bash
 dotfiles uninstall --yes        # → bin/uninstall.bash
 dotfiles link                   # → setup.bash --link-only
-dotfiles lint --fix             # → bin/lint.bash
+dotfiles lint                   # → bin/lint.bash → pre-commit run --all-files
 ```

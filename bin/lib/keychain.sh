@@ -38,11 +38,7 @@ keychain_ensure_unlocked() {
     fi
 
     printf 'macOS keychain is locked. Enter login password to unlock: ' >&2
-    local saved_tty
-    saved_tty=$(stty -g)
-    stty -echo
-    IFS= read -r pw || pw=""
-    stty "$saved_tty"
+    IFS= read -rs pw || pw=""
     printf '\n' >&2
 
     if security unlock-keychain -p "$pw" "$kc" 2>/dev/null; then
