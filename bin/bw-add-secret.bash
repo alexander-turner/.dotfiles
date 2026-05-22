@@ -53,12 +53,12 @@ keychain_ensure_unlocked || exit 1
 read_secret_into_SECRET() {
     if [ -t 0 ]; then
         printf 'Value for %s (hidden): ' "$item_name" >&2
+        # read -rs handles the echo toggle; traps cover signal interruption
+        # mid-read (bash's restore-on-signal isn't guaranteed across versions).
         trap 'stty echo 2>/dev/null; exit 130' INT
         trap 'stty echo 2>/dev/null; exit 143' TERM
         trap 'stty echo 2>/dev/null' EXIT
-        stty -echo
-        IFS= read -r SECRET || true # allow EOF without triggering set -e
-        stty echo
+        IFS= read -rs SECRET || true # allow EOF without triggering set -e
         trap - INT TERM EXIT
         printf '\n' >&2
     else

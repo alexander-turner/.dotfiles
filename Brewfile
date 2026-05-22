@@ -18,6 +18,7 @@ brew "zoxide"
 brew "shellcheck"
 brew "fish-lsp"
 brew "gitleaks"   # pre-push secrets scan; CI runs it too
+brew "pre-commit" # orchestrates all linters; see .pre-commit-config.yaml
 
 # Modern Unix toolkit
 brew "fzf"
