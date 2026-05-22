@@ -5,8 +5,6 @@ rewriting express the same coverage in roughly half the lines a shell harness
 would need.
 """
 
-from __future__ import annotations
-
 import fcntl
 import os
 import pty

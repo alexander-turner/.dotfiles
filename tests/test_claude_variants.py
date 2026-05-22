@@ -8,8 +8,6 @@ miss + DNS-style network unreachable) using VENICE_MODELS_URL pointed at
 a closed local port.
 """
 
-from __future__ import annotations
-
 import os
 import stat
 import subprocess
