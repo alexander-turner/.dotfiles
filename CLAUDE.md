@@ -105,6 +105,42 @@ directory targets specially. If you extend it (e.g. for a new IDE config
 dir), keep the three-branch structure: already-correct symlink → no-op,
 real dir → prompt, missing → create.
 
+### Session-setup upkeep (Claude Code on the web)
+
+`.claude/hooks/session-setup.bash` bootstraps remote/web sessions where
+the container starts empty. Whenever a hook in `.pre-commit-config.yaml`
+or `bin/pre-push` (or any other script that runs on `git push`) gains a
+new external tool dependency, **add an installer for that tool to the
+session-setup script** — otherwise the next fresh session will fail
+its first push on a missing-tool error that has nothing to do with
+the user's actual change.
+
+Place the installer inside the marked `=== PROJECT CUSTOMIZATIONS ===`
+block so `template-sync.yaml`'s 3-way merge preserves it across upstream
+updates. Use the existing helpers when they fit:
+
+- `webi_install_if_missing <cmd>` — when webi.sh ships it (shfmt, gh, jq).
+- `uv_install_if_missing <cmd> [<pypi-pkg>]` — Python tooling (pre-commit).
+- `apt-get install -y -qq <pkg>` guarded by `is_root` — when only the
+  distro package manager has it (shellcheck, fish).
+- Direct GitHub-release tarball download — when none of the above apply
+  (gitleaks). Detect OS+arch from `uname`; install to `/usr/local/bin`
+  as root, `~/.local/bin` otherwise.
+
+Lessons learned:
+
+- **`fish` is a runtime dependency, not just a shell.** The
+  `fish --no-execute` pre-commit hook shells out to `fish` to syntax-check
+  `*.fish` files; without it, every push touching fish config blocks.
+- **`gitleaks` is required, not optional, in pre-push.** `bin/pre-push`
+  exports `GITLEAKS_REQUIRED=1`, which flips `bin/lint.bash` from
+  skip-on-missing to fail-on-missing. The session must have gitleaks
+  before the first push attempt.
+- **`pre-commit` itself is also a dependency.** `bin/lint.bash` invokes
+  `pre-commit run --all-files`; if the binary isn't on `PATH`, the
+  pre-push hook short-circuits with an install hint instead of running
+  the actual checks.
+
 ### Secrets
 
 - Bitwarden vault is the cross-machine source of truth; envchain is the
