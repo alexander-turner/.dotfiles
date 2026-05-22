@@ -7,9 +7,14 @@ would need.
 
 from __future__ import annotations
 
+import fcntl
 import os
+import pty
 import re
+import select
 import subprocess
+import termios
+import time
 from pathlib import Path
 
 import pytest
@@ -50,6 +55,57 @@ def source_and_run(snippet: str) -> subprocess.CompletedProcess[str]:
         ["bash", "-c", f"source {SAFE_LINK_SH}; {snippet}"],
         capture_output=True, text=True,
     )
+
+
+def run_with_pty(src: Path, tgt: Path, *, answer: bytes, timeout: float = 5.0) -> int:
+    """Invoke safe_link with stdin=pipe and a controlling PTY — mirrors what
+    setup.bash sees inside `while ... done < <(managed_symlinks)`: an
+    interactive shell where the loop body's own stdin is a pipe."""
+    master, slave = pty.openpty()
+    pipe_r, pipe_w = os.pipe()
+    pid = os.fork()
+    if pid == 0:
+        try:
+            os.setsid()
+            fcntl.ioctl(slave, termios.TIOCSCTTY, 0)
+            os.dup2(pipe_r, 0)
+            os.dup2(slave, 1)
+            os.dup2(slave, 2)
+            for fd in (master, slave, pipe_r, pipe_w):
+                try:
+                    os.close(fd)
+                except OSError:
+                    pass
+            os.execvp("bash", ["bash", str(SAFE_LINK_SH), str(src), str(tgt)])
+        except BaseException:
+            os._exit(127)
+    os.close(slave)
+    os.close(pipe_r)
+    os.close(pipe_w)
+    buf = b""
+    answered = False
+    deadline = time.time() + timeout
+    status = 0
+    while time.time() < deadline:
+        rd, _, _ = select.select([master], [], [], 0.1)
+        if rd:
+            try:
+                chunk = os.read(master, 4096)
+            except OSError:
+                chunk = b""
+            if chunk:
+                buf += chunk
+                if not answered and b"Overwrite?" in buf:
+                    os.write(master, answer)
+                    answered = True
+        done_pid, status = os.waitpid(pid, os.WNOHANG)
+        if done_pid == pid:
+            break
+    else:
+        os.kill(pid, 9)
+        _, status = os.waitpid(pid, 0)
+    os.close(master)
+    return os.WEXITSTATUS(status) if os.WIFEXITED(status) else -1
 
 
 def stamp_dirs() -> list[Path]:
@@ -123,6 +179,25 @@ def test_two_runs_are_idempotent(home: Path, tmp_path: Path) -> None:
     assert run_script(src, tgt) == 0
     assert os.readlink(tgt) == str(src)
     assert stamp_dirs() == []
+
+
+def test_piped_stdin_with_tty_prompts_via_tty_and_overwrites(
+    home: Path, tmp_path: Path
+) -> None:
+    """Regression for the `[ ! -t 0 ]` bug: setup.bash drives safe_link from
+    `while ... done < <(managed_symlinks)`, so stdin is a pipe inside the
+    loop even in an interactive shell. The old guard mistook that for
+    non-interactive and skipped silently. safe_link must read the y/N from
+    /dev/tty instead."""
+    src = tmp_path / "source"
+    src.write_text("new")
+    tgt = home / ".foo"
+    tgt.write_text("user-data")
+    assert run_with_pty(src, tgt, answer=b"y\n") == 0
+    assert tgt.is_symlink()
+    assert os.readlink(tgt) == str(src)
+    [stamp] = stamp_dirs()
+    assert (stamp / ".foo").read_text() == "user-data"
 
 
 def test_non_interactive_skips_real_file_silently(home: Path, tmp_path: Path) -> None:
