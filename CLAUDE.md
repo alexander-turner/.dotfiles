@@ -105,6 +105,25 @@ directory targets specially. If you extend it (e.g. for a new IDE config
 dir), keep the three-branch structure: already-correct symlink → no-op,
 real dir → prompt, missing → create.
 
+### Session-setup upkeep (Claude Code on the web)
+
+`.claude/hooks/session-setup.bash` bootstraps fresh web/cloud sessions.
+When a hook in `.pre-commit-config.yaml` or `bin/pre-push` gains a new
+tool dependency, install it from `session-setup.bash` — otherwise the
+next fresh session fails its first push on a missing-tool error
+unrelated to the actual change.
+
+Put new installers inside the `=== PROJECT CUSTOMIZATIONS ===` block so
+`template-sync.yaml`'s 3-way merge preserves them. Helpers, in order
+of preference: `webi_install_if_missing` (shfmt, gh, jq),
+`uv_install_if_missing` (pre-commit), `apt-get` guarded by `is_root`
+(shellcheck, fish), direct release tarball (gitleaks — webi doesn't
+ship it). The block currently installs `pre-commit`, `fish` (the
+`fish --no-execute` hook needs it even on machines that don't use fish
+interactively), and `gitleaks` (required, not optional — `bin/pre-push`
+sets `GITLEAKS_REQUIRED=1`, which flips `bin/lint.bash` from
+skip-on-missing to fail-on-missing).
+
 ### Secrets
 
 - Bitwarden vault is the cross-machine source of truth; envchain is the
@@ -164,6 +183,12 @@ real dir → prompt, missing → create.
   job is text expansion — abbrs preserve history readability.
 - Use `command <name>` to bypass fish/bash function shadowing
   (e.g. `command rm`, `command npm`) rather than removing the wrapper.
+- Recording a "lesson learned" **always** means landing a change via
+  PR — either a new commit on an open PR (use the `update-pr` skill)
+  or a fresh PR if none exists. The durable record is the PR
+  description plus any CLAUDE.md or code edits the lesson motivates.
+  Lessons that live only in chat history are vapor; they don't survive
+  the session.
 - Tests of repo behavior go in `tests/test_*.py` and run via `pytest` —
   cleaner assertions than shell, ruff already lints `.py`, and
   `tmp_path` handles isolation. Pattern:
