@@ -66,6 +66,32 @@ if ! command -v shellcheck &>/dev/null && is_root; then
     { apt-get update -qq && apt-get install -y -qq shellcheck; } || warn "Failed to install shellcheck"
 fi
 
+# === PROJECT CUSTOMIZATIONS: leave intact during template-sync merges ===
+# Tools required by this repo's pre-commit / pre-push hooks. Without these,
+# `git push` from a fresh session fails on hook errors that have nothing to
+# do with the actual change. Keep this list in sync with
+# .pre-commit-config.yaml and bin/pre-push.
+uv_install_if_missing pre-commit
+if ! command -v fish &>/dev/null && is_root; then
+    { apt-get update -qq && apt-get install -y -qq fish; } || warn "Failed to install fish"
+fi
+if ! command -v gitleaks &>/dev/null; then
+    # webi doesn't ship gitleaks; stream the release tarball straight to disk.
+    # uname -m gives x86_64/aarch64 on Linux, x86_64/arm64 on macOS; gitleaks
+    # release naming is x64/arm64 for both.
+    gl_v=8.21.2
+    gl_arch=$(uname -m)
+    [ "$gl_arch" = x86_64 ] && gl_arch=x64
+    [ "$gl_arch" = aarch64 ] && gl_arch=arm64
+    gl_os=$(uname | tr '[:upper:]' '[:lower:]')
+    gl_dest="$HOME/.local/bin"
+    is_root && gl_dest=/usr/local/bin
+    mkdir -p "$gl_dest"
+    curl -fsSL "https://github.com/gitleaks/gitleaks/releases/download/v${gl_v}/gitleaks_${gl_v}_${gl_os}_${gl_arch}.tar.gz" |
+        tar -xzf - -C "$gl_dest" gitleaks || warn "Failed to install gitleaks"
+fi
+# === END PROJECT CUSTOMIZATIONS ===
+
 #######################################
 # Git setup
 #######################################
