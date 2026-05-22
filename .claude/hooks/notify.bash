@@ -18,9 +18,12 @@ fi
 
 case "$(uname)" in
 Darwin)
+    # Pass `msg` as argv to avoid AppleScript injection (the prior
+    # `${msg//\"/\\\"}` left `\`, backticks, and newlines unescaped).
     # `display notification` truncates long bodies; trim aggressively.
-    safe=${msg//\"/\\\"}
-    osascript -e "display notification \"${safe:0:200}\" with title \"Claude Code\"" >/dev/null 2>&1 || true
+    osascript -e 'on run argv
+      display notification (item 1 of argv) with title "Claude Code"
+    end run' -- "${msg:0:200}" >/dev/null 2>&1 || true
     ;;
 Linux)
     if command -v notify-send >/dev/null 2>&1; then
