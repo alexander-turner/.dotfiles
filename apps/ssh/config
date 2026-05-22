@@ -1,0 +1,7 @@
+# Managed by dotfiles — apps/ssh/config, symlinked to ~/.ssh/config.
+
+Host *
+    # Surface dead connections within ~3 min instead of hanging on next keystroke.
+    ServerAliveInterval 60
+    ServerAliveCountMax 3
+    TCPKeepAlive yes

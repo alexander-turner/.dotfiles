@@ -23,6 +23,7 @@ $HOME/.config/fish/conf.d/carapace.fish|$DOTFILES_DIR/apps/fish/conf.d/carapace.
 $HOME/.config/fish/conf.d/mise.fish|$DOTFILES_DIR/apps/fish/conf.d/mise.fish|mise conf.d snippet
 $HOME/.local/bin/dotfiles|$DOTFILES_DIR/bin/dotfiles|dotfiles dispatcher
 $HOME/.config/mods/mods.yml|$DOTFILES_DIR/apps/mods/mods.yml|mods config
+$HOME/.ssh/config|$DOTFILES_DIR/apps/ssh/config|ssh config
 $HOME/.config/mise/config.toml|$DOTFILES_DIR/apps/mise/config.toml|mise config
 $HOME/.config/nvim|$DOTFILES_DIR/apps/nvim|nvim config
 $HOME/.config/vagrant-templates/Vagrantfile|$DOTFILES_DIR/ai/Vagrantfile|vagrant-templates/Vagrantfile
