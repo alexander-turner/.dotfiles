@@ -3,7 +3,9 @@
 # <bitbar.author>turntrout</bitbar.author>
 # <bitbar.desc>Status and control for Tailscale Mullvad exit node.</bitbar.desc>
 
-TAILSCALE=/opt/homebrew/bin/tailscale
+# Resolve via PATH so Intel macs (/usr/local/bin) work too. Fall back to
+# the canonical Apple Silicon path — SwiftBar inherits a minimal PATH.
+TAILSCALE="$(command -v tailscale 2>/dev/null || echo /opt/homebrew/bin/tailscale)"
 
 flag_for() {
     case "$1" in
