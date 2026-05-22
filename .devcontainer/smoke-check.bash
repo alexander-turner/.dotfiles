@@ -21,14 +21,33 @@ if [[ -z "${DOTFILES_TOOLS:-}" ]]; then
 fi
 
 missing=()
+unexecutable=()
 for cmd in $DOTFILES_TOOLS; do
     if ! command -v "$cmd" >/dev/null 2>&1; then
         missing+=("$cmd")
+        continue
+    fi
+    # `command -v` only checks resolvability — a Windows PE binary or
+    # arch-mismatched ELF on PATH still passes. Actually invoke the tool
+    # so ENOEXEC surfaces here instead of at first user run. `--version`
+    # is universal across $DOTFILES_TOOLS (verified locally).
+    if ! "$cmd" --version >/dev/null 2>&1; then
+        unexecutable+=("$cmd")
     fi
 done
 
 if [[ ${#missing[@]} -gt 0 ]]; then
     echo "FAIL: missing on PATH: ${missing[*]}"
+    exit 1
+fi
+
+if [[ ${#unexecutable[@]} -gt 0 ]]; then
+    echo "FAIL: on PATH but '<tool> --version' failed: ${unexecutable[*]}"
+    for cmd in "${unexecutable[@]}"; do
+        path=$(command -v "$cmd")
+        echo "  $cmd -> $path"
+        file "$path" 2>&1 | sed 's/^/    /'
+    done
     exit 1
 fi
 
