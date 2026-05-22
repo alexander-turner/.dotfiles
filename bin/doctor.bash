@@ -300,11 +300,33 @@ if $IS_MAC; then
         skip "tailscale-exit-node launch agent" "$TS_EXIT_PLIST not present"
     fi
 
+    HOMEBREW_TAILSCALED_PLIST="/Library/LaunchDaemons/homebrew.mxcl.tailscale.plist"
+    if [[ -f "$HOMEBREW_TAILSCALED_PLIST" ]]; then
+        fail "homebrew.mxcl.tailscale present" "conflicts with com.$USER.tailscaled; run setup.bash"
+    else
+        pass "homebrew.mxcl.tailscale absent"
+    fi
+
     TAILSCALE_PLIST="/Library/LaunchDaemons/com.$USER.tailscaled.plist"
     if [[ -f "$TAILSCALE_PLIST" ]]; then
         pass "Tailscale daemon plist installed"
+    elif command -v tailscale >/dev/null 2>&1; then
+        fail "Tailscale daemon plist" "missing at $TAILSCALE_PLIST (run setup.bash)"
     else
-        skip "Tailscale daemon" "plist not at $TAILSCALE_PLIST (run setup.bash to install)"
+        skip "Tailscale daemon" "tailscale CLI not installed"
+    fi
+
+    if command -v tailscale >/dev/null 2>&1 && [[ -f "$TAILSCALE_PLIST" ]]; then
+        if ts_output=$(tailscale status 2>&1); then
+            pass "Tailscale daemon reachable"
+        elif grep -q "operation not permitted" <<<"$ts_output"; then
+            fail "Tailscale daemon" "CLI denied access to socket (run: sudo launchctl kickstart -k system/com.$USER.tailscaled)"
+        elif grep -q "failed to connect" <<<"$ts_output"; then
+            fail "Tailscale daemon" "daemon not running (run: sudo launchctl bootstrap system $TAILSCALE_PLIST)"
+        else
+            # Non-zero but daemon talks back (e.g., logged out) — still healthy.
+            pass "Tailscale daemon reachable"
+        fi
     fi
 fi
 

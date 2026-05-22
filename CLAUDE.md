@@ -177,6 +177,19 @@ skip-on-missing to fail-on-missing).
 - macOS-only paths in `setup.bash` (launchd agents, defaults writes,
   iTerm2 integration) live inside `if [ "$(uname)" = "Darwin" ]`.
 
+### Tailscale daemon
+
+`com.$USER.tailscaled` is the sole tailscaled LaunchDaemon. `setup.bash`
+boots out `homebrew.mxcl.tailscale` (the daemon homebrew installs when
+`brew install tailscale` or `sudo brew services start tailscale` is
+run) and removes its plist before bootstrapping ours. Two daemons
+racing on `/var/run/tailscaled.socket` leave the socket carrying
+provenance for whichever lost the race, after which the homebrew CLI
+hits `connect: operation not permitted` and SwiftBar's `vpn.10s.bash`
+shows "🔴 off" even though `tailscaled` is running. `doctor.bash`
+fails if `homebrew.mxcl.tailscale.plist` exists or if
+`tailscale status` returns a socket-reachability error.
+
 ## Conventions
 
 - Bash scripts: `set -euo pipefail` at the top. Use `command_exists` for
