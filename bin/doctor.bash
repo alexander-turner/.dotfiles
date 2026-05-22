@@ -149,6 +149,25 @@ for cmd in trash-put trash-empty; do
     fi
 done
 
+# AI tooling installed by bin/setup_llm.bash. ccr is required at runtime for
+# the com.turntrout.ccr LaunchAgent below; the others are optional helpers
+# referenced from README. All skip-on-missing — doctor.bash must stay safe
+# to run on a partially-bootstrapped machine. Plain case (not declare -A)
+# because macOS /bin/bash is 3.2 and predates associative arrays.
+for cmd in ccr aider llm wut; do
+    if command -v "$cmd" >/dev/null 2>&1; then
+        pass "$cmd"
+    else
+        case "$cmd" in
+        ccr) hint="run: pnpm add -g @musistudio/claude-code-router (or bash bin/setup_llm.bash)" ;;
+        aider) hint="run: uv tool install aider-chat (or bash bin/setup_llm.bash)" ;;
+        llm) hint="run: uv tool install llm (or bash bin/setup_llm.bash)" ;;
+        wut) hint="run: uv tool install wut-cli (or bash bin/setup_llm.bash)" ;;
+        esac
+        skip "$cmd" "$hint"
+    fi
+done
+
 if $IS_MAC; then
     # Borders ships its binary as `borders`. Skip on Linux.
     check_command borders
@@ -158,6 +177,13 @@ if $IS_MAC; then
         pass "wally-cli"
     else
         skip "wally-cli" "not on PATH (run setup.bash or: go install github.com/zsa/wally-cli@latest)"
+    fi
+    # VSCodium: installed via brew cask in bin/setup_llm.bash. Skip rather
+    # than fail when absent — users who don't use Roo Cline can skip it.
+    if command -v codium >/dev/null 2>&1; then
+        pass "codium"
+    else
+        skip "codium" "not on PATH (run setup.bash or: brew install --cask vscodium)"
     fi
 fi
 
