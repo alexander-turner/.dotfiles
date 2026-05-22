@@ -192,6 +192,7 @@ abbr -a grs 'git restore --staged'
 abbr -a gd 'git diff'
 abbr -a gco 'git checkout'
 abbr -a uncommit 'git reset --soft HEAD^'
+abbr -a ghnew 'gh repo create --template alexander-turner/claude-automation-template --clone'
 
 function gk
     gitk --all &
