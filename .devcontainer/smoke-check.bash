@@ -27,10 +27,6 @@ for cmd in $DOTFILES_TOOLS; do
         missing+=("$cmd")
         continue
     fi
-    # `command -v` only checks resolvability — a Windows PE binary or
-    # arch-mismatched ELF on PATH still passes. Actually invoke the tool
-    # so ENOEXEC surfaces here instead of at first user run. `--version`
-    # is universal across $DOTFILES_TOOLS (verified locally).
     if ! "$cmd" --version >/dev/null 2>&1; then
         unexecutable+=("$cmd")
     fi
