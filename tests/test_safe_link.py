@@ -5,12 +5,11 @@ rewriting express the same coverage in roughly half the lines a shell harness
 would need.
 """
 
-import fcntl
 import os
 import pty
 import re
+import select
 import subprocess
-import termios
 import time
 from pathlib import Path
 
@@ -23,21 +22,6 @@ REPO_ROOT = Path(
 )
 SAFE_LINK_SH = REPO_ROOT / "bin" / "lib" / "safe_link.sh"
 STAMP_RE = re.compile(r"^\d{8}T\d{6}Z$")
-
-
-def _openpty_or_skip() -> tuple[int, int]:
-    """pty.openpty() can fail with 'out of pty devices' when the system-wide
-    kernel pty cap (kern.tty.maxptys) is saturated by other terminals/tmux.
-    Retry briefly, then skip — this is environmental, not a real regression."""
-    last_exc: OSError | None = None
-    for _ in range(5):
-        try:
-            return pty.openpty()
-        except OSError as e:
-            last_exc = e
-            time.sleep(0.1)
-    pytest.skip(f"pty.openpty() unavailable: {last_exc}")
-    raise AssertionError("unreachable")
 
 
 @pytest.fixture
@@ -76,48 +60,51 @@ def source_and_run(snippet: str) -> subprocess.CompletedProcess[str]:
 def run_with_pty(
     src: Path, tgt: Path, *, answer: bytes, timeout: float = 2.0
 ) -> tuple[int, bytes]:
-    """Invoke safe_link with stdin=/dev/null but a controlling pty available
-    on /dev/tty — what setup.bash sees inside `while ... done < <(...)`.
-    Returns (returncode, captured_pty_output)."""
-    master, slave = _openpty_or_skip()
+    """Run safe_link with a controlling pty so `exec 3<>/dev/tty` succeeds;
+    feed `answer` on the master. Returns (returncode, captured_pty_output).
 
-    def _make_pty_controlling() -> None:
-        os.setsid()
-        fcntl.ioctl(slave, termios.TIOCSCTTY, 0)
+    Uses pty.fork() rather than Popen+preexec_fn(TIOCSCTTY): the latter
+    deadlocks the bash child on macOS under a nested pty (pre-commit's
+    output-capture pty wrapping pytest)."""
+    try:
+        pid, master = pty.fork()
+    except OSError as exc:
+        pytest.skip(f"pty.fork() unavailable: {exc}")
+        raise AssertionError("unreachable")
+    if pid == 0:
+        os.execvp("bash", ["bash", str(SAFE_LINK_SH), str(src), str(tgt)])
 
     try:
-        os.write(master, answer)
-        proc = subprocess.Popen(
-            ["bash", str(SAFE_LINK_SH), str(src), str(tgt)],
-            stdin=subprocess.DEVNULL,
-            stdout=slave,
-            stderr=slave,
-            preexec_fn=_make_pty_controlling,
-            close_fds=True,
-        )
-        os.close(slave)
-        try:
-            proc.wait(timeout=timeout)
-        except subprocess.TimeoutExpired:
-            proc.kill()
-            proc.wait()
-        os.set_blocking(master, False)
         captured = bytearray()
+        wrote_answer = False
+        deadline = time.time() + timeout
         while True:
-            try:
-                chunk = os.read(master, 4096)
-            except (BlockingIOError, OSError):
+            done_pid, status = os.waitpid(pid, os.WNOHANG)
+            if done_pid == pid:
                 break
-            if not chunk:
+            if time.time() >= deadline:
+                os.kill(pid, 9)
+                _, status = os.waitpid(pid, 0)
                 break
-            captured.extend(chunk)
-        return proc.returncode, bytes(captured)
+            wr_list = [] if wrote_answer else [master]
+            rd, wr, _ = select.select([master], wr_list, [], 0.05)
+            if rd:
+                try:
+                    chunk = os.read(master, 4096)
+                except OSError:
+                    chunk = b""
+                if chunk:
+                    captured.extend(chunk)
+            if wr:
+                os.write(master, answer)
+                wrote_answer = True
+        rc = os.WEXITSTATUS(status) if os.WIFEXITED(status) else -1
+        return rc, bytes(captured)
     finally:
-        for fd in (master, slave):
-            try:
-                os.close(fd)
-            except OSError:
-                pass
+        try:
+            os.close(master)
+        except OSError:
+            pass
 
 
 def stamp_dirs() -> list[Path]:
