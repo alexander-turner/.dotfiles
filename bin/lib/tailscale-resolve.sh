@@ -1,24 +1,36 @@
 # shellcheck shell=bash
-# find_tailscale — print an absolute path to a *working* `tailscale` CLI.
+# Tailscale CLI + Mullvad exit-node config — single source of truth.
 #
 # A leftover /usr/local/bin/tailscale shim from the (uninstalled) Mac App
-# Store Tailscale exec's a missing binary and silently breaks every
-# caller. `command -v` alone can't tell good from bad, so each candidate
-# is probed with `tailscale version` before being returned.
+# Store Tailscale exec's a missing binary, so `command -v` alone isn't
+# enough — each candidate is probed with `tailscale version`.
 
-find_tailscale() {
-    local candidate
-    for candidate in /opt/homebrew/bin/tailscale /usr/local/bin/tailscale; do
-        if [ -x "$candidate" ] && "$candidate" version >/dev/null 2>&1; then
-            printf '%s\n' "$candidate"
-            return 0
-        fi
+# "code flag host"  — append a row to add a country.
+# shellcheck disable=SC2034
+TAILSCALE_EXIT_NODES=(
+    "us 🇺🇸 us-chi-wg-301.mullvad.ts.net"
+    "ca 🇨🇦 ca-mtr-wg-001.mullvad.ts.net"
+    "jp 🇯🇵 jp-tyo-wg-001.mullvad.ts.net"
+)
+
+# Print "flag host" for $1 (country code). Non-zero on unknown code.
+tailscale_node_lookup() {
+    local row
+    for row in "${TAILSCALE_EXIT_NODES[@]}"; do
+        [ "${row%% *}" = "$1" ] && printf '%s\n' "${row#* }" && return 0
     done
-    local from_path
-    from_path="$(command -v tailscale 2>/dev/null || true)"
-    if [ -n "$from_path" ] && "$from_path" version >/dev/null 2>&1; then
-        printf '%s\n' "$from_path"
-        return 0
-    fi
+    return 1
+}
+
+# Print absolute path to a working tailscale CLI; non-zero if none found.
+find_tailscale() {
+    local c
+    for c in /opt/homebrew/bin/tailscale /usr/local/bin/tailscale \
+        "$(command -v tailscale 2>/dev/null || true)"; do
+        [ -n "$c" ] && [ -x "$c" ] && "$c" version >/dev/null 2>&1 && {
+            printf '%s\n' "$c"
+            return 0
+        }
+    done
     return 1
 }
