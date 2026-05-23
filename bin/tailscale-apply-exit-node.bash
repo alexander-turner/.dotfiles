@@ -3,15 +3,20 @@
 # tailscaled is still handshaking with the control plane.
 set -euo pipefail
 
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
+# shellcheck source=bin/lib/tailscale-resolve.sh disable=SC1091
+source "$DOTFILES_DIR/bin/lib/tailscale-resolve.sh"
+
 EXIT_NODE="ca-mtr-wg-001.mullvad.ts.net"
-# Resolve via PATH so Intel macs (/usr/local/bin) work too. Fall back to
-# the canonical Apple Silicon path because LaunchAgents start with a
-# minimal PATH and may not see `command -v` finding brew's bin dir.
-TAILSCALE="$(command -v tailscale 2>/dev/null || echo /opt/homebrew/bin/tailscale)"
 MAX_ATTEMPTS=20
 SLEEP_BETWEEN=3
 
 log() { printf '%s %s\n' "$(date -u +%FT%TZ)" "$*"; }
+
+if ! TAILSCALE="$(find_tailscale)"; then
+    log "no working tailscale CLI on PATH" >&2
+    exit 127
+fi
 
 for i in $(seq 1 "$MAX_ATTEMPTS"); do
     if "$TAILSCALE" status >/dev/null 2>&1; then

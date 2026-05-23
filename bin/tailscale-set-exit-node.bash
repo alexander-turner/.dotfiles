@@ -1,10 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TAILSCALE="$(command -v tailscale 2>/dev/null || echo /opt/homebrew/bin/tailscale)"
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
+# shellcheck source=bin/lib/tailscale-resolve.sh disable=SC1091
+source "$DOTFILES_DIR/bin/lib/tailscale-resolve.sh"
+
 LOG_DIR="$HOME/Library/Logs/com.turntrout.tailscale-exit-node"
 LOG_FILE="$LOG_DIR/menu.log"
 mkdir -p "$LOG_DIR"
+
+if ! TAILSCALE="$(find_tailscale)"; then
+    printf '%s no working tailscale CLI on PATH\n' "$(date -u +%FT%TZ)" >>"$LOG_FILE"
+    exit 127
+fi
 
 log() { printf '%s %s\n' "$(date -u +%FT%TZ)" "$*" >>"$LOG_FILE"; }
 

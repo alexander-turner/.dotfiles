@@ -3,10 +3,11 @@
 # <bitbar.author>turntrout</bitbar.author>
 # <bitbar.desc>Status and control for Tailscale Mullvad exit node.</bitbar.desc>
 
-# Resolve via PATH so Intel macs (/usr/local/bin) work too. Fall back to
-# the canonical Apple Silicon path — SwiftBar inherits a minimal PATH.
-TAILSCALE="$(command -v tailscale 2>/dev/null || echo /opt/homebrew/bin/tailscale)"
-APPLY="$HOME/.dotfiles/bin/tailscale-set-exit-node.bash"
+DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
+APPLY="$DOTFILES_DIR/bin/tailscale-set-exit-node.bash"
+# shellcheck source=../../bin/lib/tailscale-resolve.sh disable=SC1091
+source "$DOTFILES_DIR/bin/lib/tailscale-resolve.sh"
+TAILSCALE="$(find_tailscale || echo /opt/homebrew/bin/tailscale)"
 
 flag_for() {
     case "$1" in

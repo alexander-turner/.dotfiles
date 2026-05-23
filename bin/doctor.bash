@@ -358,6 +358,16 @@ if $IS_MAC; then
             pass "Tailscale daemon reachable"
         fi
     fi
+
+    # Detect leftover Mac App Store Tailscale shim that exec's a missing
+    # binary. SwiftBar's VPN plugin and tailscale-set-exit-node.bash both
+    # probe via find_tailscale(), so this only warns — but a broken shim
+    # on PATH ahead of brew's tailscale silently breaks anything that
+    # uses `command -v tailscale` directly.
+    APPSTORE_SHIM="/usr/local/bin/tailscale"
+    if [[ -e "$APPSTORE_SHIM" ]] && ! "$APPSTORE_SHIM" version >/dev/null 2>&1; then
+        fail "Tailscale CLI shim" "broken $APPSTORE_SHIM (App Store Tailscale uninstalled) — remove with: sudo rm $APPSTORE_SHIM"
+    fi
 fi
 
 # ── Summary ─────────────────────────────────────────────────────────────────
