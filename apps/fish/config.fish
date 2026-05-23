@@ -121,31 +121,13 @@ abbr -a la 'ls -laF'
 abbr -a lt 'ls --tree --level=2'
 
 function ssh
-    if type -q mosh; and not _ssh_needs_raw $argv
+    if type -q mosh
         mosh $argv
     else if $IS_MAC
         command /usr/bin/ssh $argv
     else
         command ssh $argv
     end
-end
-
-function _ssh_needs_raw --description 'Return 0 when ssh flags are incompatible with mosh'
-    set -l i 1
-    while test $i -le (count $argv)
-        switch $argv[$i]
-            case -L -R -D -W -N -f -G -J -o -b -c -e -i -l -m -p -w -E -F -I -O -Q -S
-                return 0
-            case '-*'
-                for flag in L R D W N f G J
-                    if string match -qr "^-[A-Za-z]*$flag" -- $argv[$i]
-                        return 0
-                    end
-                end
-        end
-        set i (math $i + 1)
-    end
-    return 1
 end
 
 if $IS_MAC
