@@ -71,7 +71,11 @@ fi
 # `git push` from a fresh session fails on hook errors that have nothing to
 # do with the actual change. Keep this list in sync with
 # .pre-commit-config.yaml and bin/pre-push.
-uv_install_if_missing pre-commit
+if command -v uv &>/dev/null; then
+    uv tool install --quiet pre-commit --with pre-commit-uv || warn "Failed to install pre-commit"
+else
+    warn "Cannot install pre-commit: uv not found"
+fi
 if ! command -v fish &>/dev/null && is_root; then
     { apt-get update -qq && apt-get install -y -qq fish; } || warn "Failed to install fish"
 fi

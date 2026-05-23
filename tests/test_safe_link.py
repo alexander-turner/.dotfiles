@@ -5,11 +5,12 @@ rewriting express the same coverage in roughly half the lines a shell harness
 would need.
 """
 
-from __future__ import annotations
-
 import os
+import pty
 import re
+import select
 import subprocess
+import time
 from pathlib import Path
 
 import pytest
@@ -36,10 +37,14 @@ def home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 def run_script(src: Path, tgt: Path, *, stdin: str | None = None) -> int:
-    """Invoke safe_link.sh as a script — the entry point setup.bash uses."""
+    """Invoke safe_link.sh as a script — the entry point setup.bash uses.
+
+    start_new_session=True detaches the child from pytest's controlling
+    terminal so safe_link's /dev/tty open fails (the non-interactive path)."""
     return subprocess.run(
         ["bash", str(SAFE_LINK_SH), str(src), str(tgt)],
         input=stdin, capture_output=True, text=True,
+        start_new_session=True,
     ).returncode
 
 
@@ -50,6 +55,56 @@ def source_and_run(snippet: str) -> subprocess.CompletedProcess[str]:
         ["bash", "-c", f"source {SAFE_LINK_SH}; {snippet}"],
         capture_output=True, text=True,
     )
+
+
+def run_with_pty(
+    src: Path, tgt: Path, *, answer: bytes, timeout: float = 2.0
+) -> tuple[int, bytes]:
+    """Run safe_link with a controlling pty so `exec 3<>/dev/tty` succeeds;
+    feed `answer` on the master. Returns (returncode, captured_pty_output).
+
+    Uses pty.fork() rather than Popen+preexec_fn(TIOCSCTTY): the latter
+    deadlocks the bash child on macOS under a nested pty (pre-commit's
+    output-capture pty wrapping pytest)."""
+    try:
+        pid, master = pty.fork()
+    except OSError as exc:
+        pytest.skip(f"pty.fork() unavailable: {exc}")
+        raise AssertionError("unreachable")
+    if pid == 0:
+        os.execvp("bash", ["bash", str(SAFE_LINK_SH), str(src), str(tgt)])
+
+    try:
+        captured = bytearray()
+        wrote_answer = False
+        deadline = time.time() + timeout
+        while True:
+            done_pid, status = os.waitpid(pid, os.WNOHANG)
+            if done_pid == pid:
+                break
+            if time.time() >= deadline:
+                os.kill(pid, 9)
+                _, status = os.waitpid(pid, 0)
+                break
+            wr_list = [] if wrote_answer else [master]
+            rd, wr, _ = select.select([master], wr_list, [], 0.05)
+            if rd:
+                try:
+                    chunk = os.read(master, 4096)
+                except OSError:
+                    chunk = b""
+                if chunk:
+                    captured.extend(chunk)
+            if wr:
+                os.write(master, answer)
+                wrote_answer = True
+        rc = os.WEXITSTATUS(status) if os.WIFEXITED(status) else -1
+        return rc, bytes(captured)
+    finally:
+        try:
+            os.close(master)
+        except OSError:
+            pass
 
 
 def stamp_dirs() -> list[Path]:
@@ -125,6 +180,31 @@ def test_two_runs_are_idempotent(home: Path, tmp_path: Path) -> None:
     assert stamp_dirs() == []
 
 
+def test_piped_stdin_with_tty_prompts_via_tty_and_overwrites(
+    home: Path, tmp_path: Path
+) -> None:
+    """When stdin is a pipe but a controlling terminal is available
+    (setup.bash's `while ... done < <(managed_symlinks)` from an
+    interactive shell), safe_link must prompt via /dev/tty and proceed
+    on 'y'."""
+    src = tmp_path / "source"
+    src.write_text("new")
+    tgt = home / ".foo"
+    tgt.write_text("user-data")
+    rc, output = run_with_pty(src, tgt, answer=b"y\n")
+    assert rc == 0
+    assert tgt.is_symlink()
+    assert os.readlink(tgt) == str(src)
+    [stamp] = stamp_dirs()
+    assert (stamp / ".foo").read_text() == "user-data"
+    # Prompt must disambiguate by path, not just basename — two managed
+    # symlinks (apps/ssh/config, apps/mods/config) both bottom out as "config".
+    # Both target and source get ~-collapsed when they live under $HOME.
+    assert b"~/.foo already exists" in output, output
+    # `src` from tmp_path is not under $HOME, so it stays absolute here.
+    assert str(src).encode() in output, output
+
+
 def test_non_interactive_skips_real_file_silently(home: Path, tmp_path: Path) -> None:
     """CI idempotency depends on setup.bash's closed-stdin runs not blocking
     or tripping set -e on the overwrite prompt."""
@@ -132,7 +212,6 @@ def test_non_interactive_skips_real_file_silently(home: Path, tmp_path: Path) ->
     src.write_text("x")
     tgt = home / ".foo"
     tgt.write_text("user-data")
-    # stdin="" with no real TTY trips `[ ! -t 0 ]` → silent skip.
     assert run_script(src, tgt, stdin="") == 0
     assert not tgt.is_symlink()
     assert tgt.read_text() == "user-data"

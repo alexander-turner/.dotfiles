@@ -129,6 +129,25 @@ if $IS_MAC; then
         *) echo "  skip tailscale-exit-node launch agent" ;;
         esac
     fi
+
+    TAILSCALED_PLIST="/Library/LaunchDaemons/com.$USER.tailscaled.plist"
+    if [[ -f "$TAILSCALED_PLIST" ]]; then
+        if $ASSUME_YES; then
+            choice=y
+        else
+            read -rp "Unload + remove tailscaled launch daemon? (requires sudo) (y/N) " choice
+        fi
+        case "$choice" in
+        y | Y)
+            if sudo launchctl print "system/com.$USER.tailscaled" &>/dev/null; then
+                sudo launchctl bootout "system/com.$USER.tailscaled"
+            fi
+            sudo rm -f "$TAILSCALED_PLIST"
+            echo "  removed tailscaled launch daemon"
+            ;;
+        *) echo "  skip tailscaled launch daemon" ;;
+        esac
+    fi
 fi
 
 # Remove trash-empty cron job if present

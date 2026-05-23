@@ -127,9 +127,11 @@ unrelated to the actual change.
 Put new installers inside the `=== PROJECT CUSTOMIZATIONS ===` block so
 `template-sync.yaml`'s 3-way merge preserves them. Helpers, in order
 of preference: `webi_install_if_missing` (shfmt, gh, jq),
-`uv_install_if_missing` (pre-commit), `apt-get` guarded by `is_root`
-(shellcheck, fish), direct release tarball (gitleaks — webi doesn't
-ship it). The block currently installs `pre-commit`, `fish` (the
+`uv_install_if_missing` (most uv tools; pre-commit needs an inline
+`uv tool install pre-commit --with pre-commit-uv` for the plugin),
+`apt-get` guarded by `is_root` (shellcheck, fish), direct release
+tarball (gitleaks — webi doesn't ship it). The block currently
+installs `pre-commit`, `fish` (the
 `fish --no-execute` hook needs it even on machines that don't use fish
 interactively), and `gitleaks` (required, not optional — `bin/pre-push`
 sets `GITLEAKS_REQUIRED=1`, which flips `bin/lint.bash` from
@@ -175,6 +177,19 @@ skip-on-missing to fail-on-missing).
 - macOS-only paths in `setup.bash` (launchd agents, defaults writes,
   iTerm2 integration) live inside `if [ "$(uname)" = "Darwin" ]`.
 
+### Tailscale daemon
+
+`com.$USER.tailscaled` is the sole tailscaled LaunchDaemon. `setup.bash`
+boots out `homebrew.mxcl.tailscale` (the daemon homebrew installs when
+`brew install tailscale` or `sudo brew services start tailscale` is
+run) and removes its plist before bootstrapping ours. Two daemons
+racing on `/var/run/tailscaled.socket` leave the socket carrying
+provenance for whichever lost the race, after which the homebrew CLI
+hits `connect: operation not permitted` and SwiftBar's `vpn.10s.bash`
+shows "🔴 off" even though `tailscaled` is running. `doctor.bash`
+fails if `homebrew.mxcl.tailscale.plist` exists or if
+`tailscale status` returns a socket-reachability error.
+
 ## Conventions
 
 - Bash scripts: `set -euo pipefail` at the top. Use `command_exists` for
@@ -207,6 +222,12 @@ skip-on-missing to fail-on-missing).
   `.github/workflows/uninstall.yml`. Avoid non-trivial shell in workflow
   `run:` blocks for the same reason: it skips static analysis. A `run:`
   block of more than a handful of meaningful lines is the smell.
+- **No `from __future__` imports.** Python here is 3.13+; PEP 563
+  lazy annotations, `Path | None` union syntax, and generic builtins
+  (`list[int]`) all work natively, so the import is dead weight that
+  also subtly changes `inspect.get_annotations` behavior. The
+  `no-future-import` pre-commit hook (`.pre-commit-config.yaml`)
+  fails the lint job on any `from __future__` line in `*.py`.
 
 ## Workflow shell scripts live in `bin/`, not inline in `.yml`
 

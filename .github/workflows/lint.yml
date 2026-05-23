@@ -50,7 +50,7 @@ jobs:
         # provide.
         run: |
           uv tool install pytest
-          uv tool install pre-commit
+          uv tool install pre-commit --with pre-commit-uv
 
       - uses: actions/cache@v4
         with:

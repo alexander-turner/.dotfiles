@@ -98,6 +98,12 @@ repos:
         files: \.sh$
         exclude: ^bin/lib/
 
+      - id: no-future-import
+        name: ban "from __future__" imports
+        entry: bash -c 'hits=$(grep -lE "^[[:space:]]*from __future__" "$@" || true); if [ -n "$hits" ]; then printf "remove __future__ imports — repo targets Python 3.13+:\n%s\n" "$hits" >&2; exit 1; fi' --
+        language: system
+        files: \.py$
+
       - id: safe-link-tests
         name: pytest tests/test_safe_link.py
         entry: pytest -q tests/test_safe_link.py

@@ -185,17 +185,37 @@ if [ "$(uname)" = "Darwin" ]; then
     # OrbStack: lightweight Docker alternative for macOS
     brew_quiet_install --cask orbstack
 
-    # Tailscale VPN daemon — only touch the system plist when missing or
-    # out of date, otherwise re-runs prompt for sudo every time.
+    # Tailscale VPN daemon — `com.$USER.tailscaled` is the sole daemon; boot
+    # out homebrew's if present. Two daemons racing on /var/run/tailscaled.socket
+    # leaves stale provenance on the socket → CLI hits EPERM on connect.
     TAILSCALE_PLIST_DEST="/Library/LaunchDaemons/com.$USER.tailscaled.plist"
     TAILSCALE_PLIST_RENDERED="$(mktemp)"
     sed "s/__USERNAME__/$ESCAPED_USER/g" "$DOTFILES_DIR/launchagents/com.tailscaled.plist.template" \
         >"$TAILSCALE_PLIST_RENDERED"
+    needs_bootstrap=false
     if [ ! -f "$TAILSCALE_PLIST_DEST" ] || ! cmp -s "$TAILSCALE_PLIST_RENDERED" "$TAILSCALE_PLIST_DEST"; then
         sudo install -o root -g wheel -m 0644 "$TAILSCALE_PLIST_RENDERED" "$TAILSCALE_PLIST_DEST"
-        sudo launchctl bootstrap system "$TAILSCALE_PLIST_DEST" 2>/dev/null || true
+        needs_bootstrap=true
     fi
     rm -f "$TAILSCALE_PLIST_RENDERED"
+
+    HOMEBREW_TAILSCALED_PLIST="/Library/LaunchDaemons/homebrew.mxcl.tailscale.plist"
+    if [ -f "$HOMEBREW_TAILSCALED_PLIST" ]; then
+        status_msg "Removing homebrew.mxcl.tailscale (conflicts with com.$USER.tailscaled)"
+        if sudo launchctl print system/homebrew.mxcl.tailscale &>/dev/null; then
+            sudo launchctl bootout system/homebrew.mxcl.tailscale
+        fi
+        sudo rm -f "$HOMEBREW_TAILSCALED_PLIST"
+        needs_bootstrap=true
+    fi
+
+    if $needs_bootstrap; then
+        if sudo launchctl print "system/com.$USER.tailscaled" &>/dev/null; then
+            sudo launchctl bootout "system/com.$USER.tailscaled"
+        fi
+        sudo launchctl bootstrap system "$TAILSCALE_PLIST_DEST"
+    fi
+    unset needs_bootstrap
 
     # claude-code-router (ccr): backs claude-{fast,private,think} wrappers.
     # Supervised by launchd so it's running before any wrapper invocation
@@ -236,6 +256,10 @@ fi
 # Install CLI tools via uv (not in Brewfile -- they're Python packages)
 if ! command_exists trash-put; then
     uv tool install --quiet trash-cli
+fi
+
+if command_exists uv; then
+    uv tool install --quiet pre-commit --with pre-commit-uv
 fi
 
 # Clear trash which is over 30 days old, monthly

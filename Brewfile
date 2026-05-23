@@ -17,7 +17,7 @@ brew "zoxide"
 brew "shellcheck"
 brew "fish-lsp"
 brew "gitleaks"   # pre-push secrets scan; CI runs it too
-brew "pre-commit" # orchestrates all linters; see .pre-commit-config.yaml
+# pre-commit installed in setup.bash via uv (needs the pre-commit-uv plugin).
 
 # Modern Unix toolkit
 brew "fzf"

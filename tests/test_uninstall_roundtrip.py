@@ -6,8 +6,6 @@ via bin/lib/symlinks.sh). Scope matches uninstall.bash — symlinks only, not th
 touch-files setup.bash creates.
 """
 
-from __future__ import annotations
-
 import os
 import subprocess
 from pathlib import Path

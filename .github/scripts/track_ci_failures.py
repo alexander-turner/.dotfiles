@@ -8,8 +8,6 @@ Notification/labeling system only — does NOT ping @claude. The Stop hook
   3. Labels the PR `needs-human-review` when all workflows are exhausted
 """
 
-from __future__ import annotations
-
 import json
 import os
 import re

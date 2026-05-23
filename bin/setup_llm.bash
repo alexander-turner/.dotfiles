@@ -23,11 +23,11 @@ IS_MAC=false
 # launchagents/com.turntrout.ccr.plist.
 if command_exists pnpm; then
     status_msg "Installing claude-code + claude-code-router via pnpm..."
-    pnpm add --global @anthropic-ai/claude-code @musistudio/claude-code-router >/dev/null
+    pnpm add --global --reporter=append-only @anthropic-ai/claude-code @musistudio/claude-code-router
 
     CLAUDE_INSTALLER="$(pnpm root -g)/@anthropic-ai/claude-code/install.cjs"
     if [[ -f "$CLAUDE_INSTALLER" ]] && command_exists node; then
-        node "$CLAUDE_INSTALLER" >/dev/null 2>&1 || true
+        node "$CLAUDE_INSTALLER" || true
     fi
 else
     status_msg "WARN: pnpm not found — skipping claude-code + ccr install"

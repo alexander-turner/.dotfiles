@@ -19,9 +19,8 @@ cd "$(git rev-parse --show-toplevel)"
 
 if ! command -v pre-commit >/dev/null 2>&1; then
     cat >&2 <<EOF
-pre-commit is not installed. Install with one of:
-  brew install pre-commit
-  pip install --user pre-commit
+pre-commit is not installed. Install with:
+  uv tool install pre-commit --with pre-commit-uv
 EOF
     exit 127
 fi
