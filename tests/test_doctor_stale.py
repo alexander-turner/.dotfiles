@@ -1,7 +1,8 @@
-"""doctor.bash: stale-symlink detection.
+"""bin/lib/stale-symlinks.sh — rename-leftover detection.
 
-Catches rename-leftovers like ~/.config/swiftbar/vpn.10s.sh -> .../vpn.10s.sh
-that the managed list no longer references.
+Drives the lib directly (not the full doctor.bash) so the test stays a
+sub-second pure-logic check instead of an integration run that spawns bw,
+brew, gh, launchctl, etc.
 """
 
 import os
@@ -13,14 +14,17 @@ import pytest
 DOTFILES = Path(
     subprocess.check_output(["git", "rev-parse", "--show-toplevel"], text=True).strip()
 )
+STALE_SH = DOTFILES / "bin" / "lib" / "stale-symlinks.sh"
 
 
-def _run_doctor(home: Path) -> str:
+def _run_stale(home: Path) -> str:
     return subprocess.run(
-        ["bash", str(DOTFILES / "bin" / "doctor.bash")],
+        ["bash", str(STALE_SH)],
         env={**os.environ, "HOME": str(home)},
         capture_output=True,
         text=True,
+        stdin=subprocess.DEVNULL,
+        timeout=5,
     ).stdout
 
 
@@ -43,5 +47,5 @@ def test_stale_detection(tmp_path: Path, target_kind: str, flagged: bool) -> Non
     }
     rogue.symlink_to(targets[target_kind])
 
-    out = _run_doctor(tmp_path)
-    assert ("stale symlink" in out and "rogue.yml" in out) is flagged
+    out = _run_stale(tmp_path)
+    assert (str(rogue) in out) is flagged
