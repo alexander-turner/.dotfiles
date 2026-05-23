@@ -9,7 +9,6 @@ import fcntl
 import os
 import pty
 import re
-import select
 import subprocess
 import termios
 import time
@@ -24,6 +23,21 @@ REPO_ROOT = Path(
 )
 SAFE_LINK_SH = REPO_ROOT / "bin" / "lib" / "safe_link.sh"
 STAMP_RE = re.compile(r"^\d{8}T\d{6}Z$")
+
+
+def _openpty_or_skip() -> tuple[int, int]:
+    """pty.openpty() can fail with 'out of pty devices' when the system-wide
+    kernel pty cap (kern.tty.maxptys) is saturated by other terminals/tmux.
+    Retry briefly, then skip — this is environmental, not a real regression."""
+    last_exc: OSError | None = None
+    for _ in range(5):
+        try:
+            return pty.openpty()
+        except OSError as e:
+            last_exc = e
+            time.sleep(0.1)
+    pytest.skip(f"pty.openpty() unavailable: {last_exc}")
+    raise AssertionError("unreachable")
 
 
 @pytest.fixture
@@ -62,58 +76,48 @@ def source_and_run(snippet: str) -> subprocess.CompletedProcess[str]:
 def run_with_pty(
     src: Path, tgt: Path, *, answer: bytes, timeout: float = 2.0
 ) -> tuple[int, bytes]:
-    """Invoke safe_link with stdin=pipe and a controlling PTY — what
-    setup.bash sees inside `while ... done < <(managed_symlinks)`.
-
-    Pre-queues `answer` on the master so a child that bails before reading
-    doesn't deadlock our timeout. Drains the master concurrently so the
-    slave's small tty buffer can't block a child mid-write.
+    """Invoke safe_link with stdin=/dev/null but a controlling pty available
+    on /dev/tty — what setup.bash sees inside `while ... done < <(...)`.
     Returns (returncode, captured_pty_output)."""
-    master, slave = pty.openpty()
-    pipe_r, pipe_w = os.pipe()
-    pid = os.fork()
-    if pid == 0:
+    master, slave = _openpty_or_skip()
+
+    def _make_pty_controlling() -> None:
+        os.setsid()
+        fcntl.ioctl(slave, termios.TIOCSCTTY, 0)
+
+    try:
+        os.write(master, answer)
+        proc = subprocess.Popen(
+            ["bash", str(SAFE_LINK_SH), str(src), str(tgt)],
+            stdin=subprocess.DEVNULL,
+            stdout=slave,
+            stderr=slave,
+            preexec_fn=_make_pty_controlling,
+            close_fds=True,
+        )
+        os.close(slave)
         try:
-            os.setsid()
-            fcntl.ioctl(slave, termios.TIOCSCTTY, 0)
-            os.dup2(pipe_r, 0)
-            os.dup2(slave, 1)
-            os.dup2(slave, 2)
-            for fd in (master, slave, pipe_r, pipe_w):
-                try:
-                    os.close(fd)
-                except OSError:
-                    pass
-            os.execvp("bash", ["bash", str(SAFE_LINK_SH), str(src), str(tgt)])
-        except BaseException:
-            os._exit(127)
-    os.close(slave)
-    os.close(pipe_r)
-    os.close(pipe_w)
-    os.write(master, answer)
-    deadline = time.time() + timeout
-    status = 0
-    captured = b""
-    while True:
-        done_pid, status = os.waitpid(pid, os.WNOHANG)
-        if done_pid == pid:
-            break
-        if time.time() >= deadline:
-            os.kill(pid, 9)
-            _, status = os.waitpid(pid, 0)
-            break
-        # Drain in 50ms slices so the slave's small tty buffer never blocks
-        # a child mid-write while we're polling waitpid.
-        rd, _, _ = select.select([master], [], [], 0.05)
-        if rd:
+            proc.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait()
+        os.set_blocking(master, False)
+        captured = bytearray()
+        while True:
             try:
                 chunk = os.read(master, 4096)
+            except (BlockingIOError, OSError):
+                break
+            if not chunk:
+                break
+            captured.extend(chunk)
+        return proc.returncode, bytes(captured)
+    finally:
+        for fd in (master, slave):
+            try:
+                os.close(fd)
             except OSError:
-                chunk = b""
-            captured += chunk
-    os.close(master)
-    rc = os.WEXITSTATUS(status) if os.WIFEXITED(status) else -1
-    return rc, captured
+                pass
 
 
 def stamp_dirs() -> list[Path]:
