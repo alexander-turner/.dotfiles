@@ -120,12 +120,8 @@ abbr -a ll 'ls -lF'
 abbr -a la 'ls -laF'
 abbr -a lt 'ls --tree --level=2'
 
-set USE_MOSH false
 function ssh
-    if $USE_MOSH and (type -q mosh)
-        echo "Using mosh instead. To disable, set \$USE_MOSH in shell config."
-        mosh $argv
-    else if $IS_MAC
+    if $IS_MAC
         command /usr/bin/ssh $argv
     else
         command ssh $argv

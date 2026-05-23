@@ -22,8 +22,7 @@ git clone https://github.com/alexander-turner/.dotfiles ~/.dotfiles && cd ~/.dot
 6. Installs a bunch of nice shortcuts, including `git` aliases (e.g. `git add` -> `ga`).
 7. Overrides `rm` in favor of the reversible `tp` (`trash-put`) command. No more accidentally permanently deleting crucial files!
 8. Installs `tmux` with the `tmux-restore` and `tmux-continuum` plugins. Basically, this means that your `tmux` sessions will be saved and restored automatically. No more losing your work when your computer crashes!
-9. Installs `mosh` alongside `ssh`. `mosh` is a more robust version of `ssh` that handles network changes and disconnections more gracefully. Set `USE_MOSH=true` in `config.fish` to use it by default.
-10. Installs `envchain` (OS Keychain at runtime) plus the [Bitwarden CLI](https://bitwarden.com/help/cli/) for cross-machine secret sync. API keys live encrypted in your Bitwarden vault; a background sync at shell startup pulls updates into envchain so wrappers like `npm`, `rclone`, `twine`, and `aider_redpill` stay zero-prompt at runtime.
+9. Installs `envchain` (OS Keychain at runtime) plus the [Bitwarden CLI](https://bitwarden.com/help/cli/) for cross-machine secret sync. API keys live encrypted in your Bitwarden vault; a background sync at shell startup pulls updates into envchain so wrappers like `npm`, `rclone`, `twine`, and `aider_redpill` stay zero-prompt at runtime.
 11. Configures open source AI-powered development tools, with inference routed through [Venice](https://venice.ai) for end-to-end encryption between client and inference:
     - Automatic commit message generation,
     - Aider for CLI coding,
@@ -56,9 +55,7 @@ git clone https://github.com/alexander-turner/.dotfiles ~/.dotfiles && cd ~/.dot
     - `.mcp.json` configures the filesystem MCP server scoped to `~/.dotfiles` for Claude Code sessions in this repo.
     - `.claude/hooks/notify.bash` fires cross-platform desktop notifications when Claude Code needs input.
 
-14. macOS keyboard-driven WM:
-    - `aerospace` for tiling.
-    - `JankyBorders` (`borders`) draws a colored outline around the focused window; config at `apps/borders/bordersrc`, spawned by Aerospace's `after-startup-command`.
+14. macOS keyboard-driven WM: `aerospace` for tiling.
 
 15. Most importantly, the `goosesay` command. A variant on the classic `cowsay` (which renders text inside a cow's speech bubble), `goosesay` goosens up your terminal just the right amount. For example:
 
@@ -94,7 +91,7 @@ echo "Never gonna give you up" | goosesay
 
 ## The setup process
 
-`setup.bash` will (with warning) **overwrite** your existing `.bashrc`, `.vimrc`, `.gitconfig`, `.npmrc`, `.tmux.conf`, `.config/nvim`, `.config/fish/config.fish`, `.config/mods/mods.yml`, and any `.aider*` files. On macOS it also links `.aerospace.toml`, `~/Library/com.googlecode.iterm2.plist`, `~/.config/borders/bordersrc`, and `~/.config/vagrant-templates/Vagrantfile`. Before clobbering, the previous file is moved to `~/.dotfiles-backup/<UTC-timestamp>/<rel-path>/` — so a misclick on the y/N prompt is recoverable. The new files are symlinked to the files in the repository, so edits to the originals are reflected immediately.
+`setup.bash` will (with warning) **overwrite** your existing `.bashrc`, `.vimrc`, `.gitconfig`, `.npmrc`, `.tmux.conf`, `.config/nvim`, `.config/fish/config.fish`, `.config/mods/mods.yml`, and any `.aider*` files. On macOS it also links `.aerospace.toml`, `~/Library/com.googlecode.iterm2.plist`, and `~/.config/vagrant-templates/Vagrantfile`. Before clobbering, the previous file is moved to `~/.dotfiles-backup/<UTC-timestamp>/<rel-path>/` — so a misclick on the y/N prompt is recoverable. The new files are symlinked to the files in the repository, so edits to the originals are reflected immediately.
 
 You can also run `bash setup.bash --link-only` to refresh symlinks without reinstalling packages. Both setup paths end by running `bin/doctor.bash`, which reports a green health summary (or tells you exactly what's still broken).
 

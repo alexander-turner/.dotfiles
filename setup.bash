@@ -25,7 +25,7 @@ source "$DOTFILES_DIR/bin/lib/symlinks.sh"
 # ── Symlinks (always run) ────────────────────────────────────────────────────
 status_msg "Linking dotfiles..."
 # Iterate the shared list. safe_link handles directory targets via mv-to-backup,
-# so nvim/borders/aerospace all flow through this one path with no bespoke branches.
+# so nvim/aerospace all flow through this one path with no bespoke branches.
 # Anything bespoke (in-repo .hooks/pre-push, launchagent plists) stays inline below.
 while IFS='|' read -r target source _label; do
     mkdir -p "$(dirname "$target")"

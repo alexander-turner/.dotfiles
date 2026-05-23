@@ -33,8 +33,6 @@ keeping `setup.bash`, `doctor.bash`, and CI honest with each other.
   carapace).
 - `apps/mods/mods.yml` — Charm `mods` config; routes through Venice
   (E2EE) only. Wrapped by the `mods` fish function.
-- `apps/borders/bordersrc` — JankyBorders config; spawned by Aerospace's
-  `after-startup-command`.
 - `AGENTS.md` — symlink to `CLAUDE.md`. Lets Cursor / Aider / OpenCode
   pick up the same project context Claude Code uses.
 - `.mcp.json` — Claude Code MCP server config; currently registers the
