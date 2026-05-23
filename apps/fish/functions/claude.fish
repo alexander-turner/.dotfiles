@@ -7,7 +7,7 @@ function claude --description 'Run Claude Code; auto-launches the dotfiles devco
     end
 
     if not type -q devcontainer
-        echo "claude: devcontainer CLI not installed (run setup.sh, or 'pnpm i -g @devcontainers/cli')." >&2
+        echo "claude: devcontainer CLI not installed (run setup.bash, or 'pnpm add -g @devcontainers/cli')." >&2
         echo "claude: falling back to host execution; set CLAUDE_NO_SANDBOX=1 to silence this notice." >&2
         command claude $argv
         return $status
