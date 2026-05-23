@@ -183,8 +183,6 @@ for cmd in ccr aider llm wut devcontainer; do
 done
 
 if $IS_MAC; then
-    # Borders ships its binary as `borders`. Skip on Linux.
-    check_command borders
     # wally-cli is installed on-demand (go install) and only needed for ZSA
     # keyboard flashing — skip rather than fail when it's absent.
     if command -v wally-cli >/dev/null 2>&1; then

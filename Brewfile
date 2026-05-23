@@ -52,9 +52,6 @@ if OS.mac?
   tap "rishikanthc/scriberr"
   tap "felixkratz/formulae"
 
-  # Active-window border for keyboard-driven WMs (pairs with Aerospace).
-  brew "borders"
-
   # Formulae
   brew "coreutils"
   brew "pyvim"

@@ -13,12 +13,7 @@ after-login-command = []
 # 'after-startup-command' is run after 'after-login-command'
 # Available commands : https://nikitabobko.github.io/AeroSpace/commands
 #
-# Spawn JankyBorders so the focused window has a colored outline. The
-# --hidpi flag is set in ~/.config/borders/bordersrc, which `borders`
-# reads automatically.
-after-startup-command = [
-    'exec-and-forget borders'
-]
+after-startup-command = []
 
 # Start AeroSpace at login
 start-at-login = true
