@@ -224,6 +224,12 @@ fails if `homebrew.mxcl.tailscale.plist` exists or if
   `.github/workflows/uninstall.yml`. Avoid non-trivial shell in workflow
   `run:` blocks for the same reason: it skips static analysis. A `run:`
   block of more than a handful of meaningful lines is the smell.
+- **No `from __future__` imports.** Python here is 3.13+; PEP 563
+  lazy annotations, `Path | None` union syntax, and generic builtins
+  (`list[int]`) all work natively, so the import is dead weight that
+  also subtly changes `inspect.get_annotations` behavior. The
+  `no-future-import` pre-commit hook (`.pre-commit-config.yaml`)
+  fails the lint job on any `from __future__` line in `*.py`.
 
 ## Workflow shell scripts live in `bin/`, not inline in `.yml`
 
