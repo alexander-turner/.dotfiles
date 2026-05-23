@@ -3,6 +3,7 @@ brew "gh"
 brew "fish"
 brew "neovim"
 brew "tmux"
+brew "mosh"
 brew "envchain"
 # Bitwarden CLI is installed via pnpm (@bitwarden/cli) — see setup.bash.
 # The Rust brew flavor has scripting quirks our bin/bw-*.bash can't dodge.
