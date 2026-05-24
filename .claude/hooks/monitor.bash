@@ -9,9 +9,8 @@
 #
 # Provider auto-detection (override with MONITOR_PROVIDER):
 #   1. ANTHROPIC_API_KEY set  -> Anthropic Messages API + claude-haiku-4-5
-#   2. VENICE_INFERENCE_KEY   -> Venice (OpenAI-compat)  + mistral-small-2603
-#   3. OPENAI_API_KEY         -> OpenAI-compat endpoint  + gpt-4o-mini
-#   4. none                   -> fall back to MONITOR_FAIL_MODE
+#   2. VENICE_INFERENCE_KEY   -> Venice (OpenAI-compat)  + qwen3-5-9b
+#   3. none                   -> warn once per session, then pass through
 #
 # Environment variables:
 #   MONITOR_PROVIDER     "anthropic" | "openai"  (auto-detected if unset)
@@ -38,13 +37,15 @@ fi
 
 envelope="$(cat)"
 
+# Missing dependencies = the monitor cannot function. Exit 2 blocks the
+# tool call and surfaces the error to the user — fail closed, not open.
 if ! command -v jq &>/dev/null; then
-    echo "monitor: jq required but not found" >&2
-    exit 0
+    echo "MONITOR BLOCKED: jq is required but not installed. Install jq or set MONITOR_DISABLED=1." >&2
+    exit 2
 fi
 if ! command -v curl &>/dev/null; then
-    echo "monitor: curl required but not found" >&2
-    exit 0
+    echo "MONITOR BLOCKED: curl is required but not installed. Install curl or set MONITOR_DISABLED=1." >&2
+    exit 2
 fi
 
 tool_name=$(printf '%s' "$envelope" | jq -r '.tool_name // "unknown"')
@@ -72,27 +73,25 @@ if [[ -z "$provider" ]]; then
         provider="anthropic"
     elif [[ -n "${VENICE_INFERENCE_KEY:-}" ]]; then
         provider="openai"
-    elif [[ -n "${OPENAI_API_KEY:-}" ]]; then
-        provider="openai"
     fi
 fi
 
 if [[ -z "$api_key" ]]; then
     case "${provider:-}" in
     anthropic) api_key="${ANTHROPIC_API_KEY:-}" ;;
-    openai) api_key="${VENICE_INFERENCE_KEY:-${OPENAI_API_KEY:-}}" ;;
+    openai) api_key="${VENICE_INFERENCE_KEY:-}" ;;
     esac
 fi
 
-# No API key → warn once per session, then pass through silently.
+# No API key → warn once per session, then pass through.
 if [[ -z "$api_key" ]]; then
-    session_id=$(printf '%s' "$envelope" | jq -r '.session_id // "unknown"' 2>/dev/null)
+    session_id=$(printf '%s' "$envelope" | jq -r '.session_id // "unknown"')
     warned_file="/tmp/claude-monitor-no-key-${session_id}"
     if [[ -f "$warned_file" ]]; then
         exit 0
     fi
-    touch "$warned_file" 2>/dev/null || true
-    jq -nc '{hookSpecificOutput:{hookEventName:"PreToolUse",permissionDecision:"ask",permissionDecisionReason:"[MONITOR] No API key configured — monitoring is INACTIVE this session. Set ANTHROPIC_API_KEY, VENICE_INFERENCE_KEY, or OPENAI_API_KEY to enable. Set MONITOR_DISABLED=1 to silence this warning."}}' 2>/dev/null
+    touch "$warned_file"
+    jq -nc '{hookSpecificOutput:{hookEventName:"PreToolUse",permissionDecision:"ask",permissionDecisionReason:"[MONITOR] No API key configured — monitoring is INACTIVE this session. Set ANTHROPIC_API_KEY or VENICE_INFERENCE_KEY to enable. Set MONITOR_DISABLED=1 to silence this warning."}}'
     exit 0
 fi
 
@@ -102,24 +101,21 @@ anthropic)
     model="${model:-claude-haiku-4-5-20251001}"
     ;;
 openai)
-    if [[ -n "${VENICE_INFERENCE_KEY:-}" && -z "${MONITOR_API_URL:-}" ]]; then
-        api_url="${api_url:-https://api.venice.ai/api/v1/chat/completions}"
-        model="${model:-mistral-small-2603}"
-    else
-        api_url="${api_url:-https://api.openai.com/v1/chat/completions}"
-        model="${model:-gpt-4o-mini}"
-    fi
+    api_url="${api_url:-https://api.venice.ai/api/v1/chat/completions}"
+    model="${model:-qwen3-5-9b}"
     ;;
 *)
-    exit 0
+    echo "MONITOR BLOCKED: could not detect provider from available API keys." >&2
+    exit 2
     ;;
 esac
 
 # --- Build monitor prompt ---
-# Truncate tool_input to keep monitor costs low and avoid context blowouts.
 truncated_input=$(printf '%s' "$tool_input" | head -c 4000)
 timeout="${MONITOR_TIMEOUT:-10}"
 
+# read -d '' returns 1 on EOF (no null byte in heredoc), so || true is
+# structurally required here — not error swallowing.
 read -r -d '' system_prompt <<'SYSTEM' || true
 You are a security monitor reviewing tool calls from an AI coding assistant. Flag dangerous actions.
 
@@ -145,6 +141,7 @@ Input: ${truncated_input}"
 
 # --- Call monitor model ---
 monitor_output=""
+curl_stderr=""
 case "$provider" in
 anthropic)
     request_body=$(jq -nc \
@@ -153,14 +150,15 @@ anthropic)
         --arg user "$user_msg" \
         '{model:$model,max_tokens:150,temperature:0,system:$system,messages:[{role:"user",content:$user}]}')
 
+    curl_stderr=$(mktemp)
     response=$(printf '%s' "$request_body" | curl -fsS --max-time "$timeout" \
         -H "x-api-key: $api_key" \
         -H "anthropic-version: 2023-06-01" \
         -H "content-type: application/json" \
         -d @- \
-        "$api_url" 2>/dev/null) || true
+        "$api_url" 2>"$curl_stderr") || true
 
-    monitor_output=$(printf '%s' "$response" | jq -r '.content[0].text // empty' 2>/dev/null) || true
+    monitor_output=$(printf '%s' "$response" | jq -r '.content[0].text // empty') || true
     ;;
 openai)
     request_body=$(jq -nc \
@@ -169,13 +167,14 @@ openai)
         --arg user "$user_msg" \
         '{model:$model,max_tokens:150,temperature:0,messages:[{role:"system",content:$system},{role:"user",content:$user}]}')
 
+    curl_stderr=$(mktemp)
     response=$(printf '%s' "$request_body" | curl -fsS --max-time "$timeout" \
         -H "Authorization: Bearer $api_key" \
         -H "content-type: application/json" \
         -d @- \
-        "$api_url" 2>/dev/null) || true
+        "$api_url" 2>"$curl_stderr") || true
 
-    monitor_output=$(printf '%s' "$response" | jq -r '.choices[0].message.content // empty' 2>/dev/null) || true
+    monitor_output=$(printf '%s' "$response" | jq -r '.choices[0].message.content // empty') || true
     ;;
 esac
 
@@ -185,21 +184,26 @@ reason=""
 
 if [[ -z "${monitor_output:-}" ]]; then
     decision="$fail_mode"
-    reason="API call failed or returned empty"
+    curl_err=""
+    [[ -n "${curl_stderr:-}" && -f "$curl_stderr" ]] && curl_err=$(cat "$curl_stderr")
+    reason="API call failed: ${curl_err:-no response from $api_url}"
 else
     # Strip markdown code fences, then parse JSON directly with jq.
     # Avoids grep -oP (non-portable; macOS BSD grep lacks -P) and handles
     # nested braces in reason strings that a naive {[^}]+} regex would break.
     cleaned=$(printf '%s' "$monitor_output" | sed '/^```/d' | tr -d '\n')
 
-    decision=$(printf '%s' "$cleaned" | jq -r '.decision // empty' 2>/dev/null) || true
-    reason=$(printf '%s' "$cleaned" | jq -r '.reason // empty' 2>/dev/null) || true
+    decision=$(printf '%s' "$cleaned" | jq -r '.decision // empty') || true
+    reason=$(printf '%s' "$cleaned" | jq -r '.reason // empty') || true
 
     if [[ -z "$decision" ]]; then
         decision="$fail_mode"
         reason="Unparseable monitor response: ${monitor_output:0:200}"
     fi
 fi
+
+# Clean up curl stderr tempfile.
+[[ -n "${curl_stderr:-}" && -f "$curl_stderr" ]] && rm -f "$curl_stderr"
 
 case "$decision" in
 allow) hook_decision="allow" ;;
@@ -208,6 +212,8 @@ deny) hook_decision="deny" ;;
 esac
 
 # --- Structured log (JSONL) ---
+# Log write failure is non-critical — suppress to avoid blocking tool calls
+# over a full disk or missing dir, but still attempt it.
 log_file="${MONITOR_LOG:-$HOME/.cache/claude-monitor/monitor.jsonl}"
 mkdir -p "$(dirname "$log_file")" 2>/dev/null || true
 jq -nc \
