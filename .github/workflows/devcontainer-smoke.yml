@@ -5,13 +5,17 @@ on:
     branches: [main, master]
     paths:
       - ".devcontainer/**"
+      - ".claude/hooks/**"
       - "bin/check-devcontainer.bash"
+      - "bin/check-compose-lifecycle.bash"
       - ".github/workflows/devcontainer-smoke.yml"
   pull_request:
     branches: [main, master]
     paths:
       - ".devcontainer/**"
+      - ".claude/hooks/**"
       - "bin/check-devcontainer.bash"
+      - "bin/check-compose-lifecycle.bash"
       - ".github/workflows/devcontainer-smoke.yml"
 
 # packages:write lets the action push to GHCR on main; read-only otherwise.
@@ -71,3 +75,17 @@ jobs:
       - name: Show smoke check output on failure
         if: failure()
         run: cat smoke-check.log 2>/dev/null || echo "No smoke-check.log found (build failed before runCmd)"
+
+  # Full compose lifecycle: builds all three containers (firewall, app,
+  # monitor), validates network namespace sharing, capability separation,
+  # entrypoint hardening, root ownership, and monitor fail-closed behavior.
+  # Uses a stub firewall (no iptables) since NET_ADMIN is unreliable in
+  # GitHub Actions.
+  compose-lifecycle:
+    name: Test three-container compose lifecycle
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run compose lifecycle checks
+        run: bash bin/check-compose-lifecycle.bash

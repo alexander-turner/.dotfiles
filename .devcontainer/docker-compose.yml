@@ -38,8 +38,6 @@ services:
         TZ: ${TZ:-America/Los_Angeles}
         GIT_DELTA_VERSION: "0.18.2"
     network_mode: "service:firewall"
-    security_opt:
-      - no-new-privileges:true
     pids_limit: 512
     mem_limit: 8g
     memswap_limit: 8g
