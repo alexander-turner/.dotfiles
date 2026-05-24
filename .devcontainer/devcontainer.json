@@ -10,7 +10,10 @@
   "runArgs": [
     "--cap-add=NET_ADMIN",
     "--cap-add=NET_RAW",
-    "--pids-limit=512"
+    "--pids-limit=512",
+    "--memory=8g",
+    "--memory-swap=8g",
+    "--cpus=4"
   ],
   "customizations": {
     "vscode": {
@@ -43,11 +46,21 @@
     "NODE_OPTIONS": "--max-old-space-size=4096",
     "CLAUDE_CONFIG_DIR": "/home/node/.claude",
     "NPM_CONFIG_IGNORE_SCRIPTS": "true",
-    "CLAUDE_CODE_VERSION": "latest"
+    "CLAUDE_CODE_VERSION": "latest",
+    "IS_SANDBOX": "no",
+    "GH_TOKEN": "",
+    "GITHUB_TOKEN": "",
+    "AWS_ACCESS_KEY_ID": "",
+    "AWS_SECRET_ACCESS_KEY": "",
+    "AWS_SESSION_TOKEN": "",
+    "NPM_TOKEN": "",
+    "PYPI_TOKEN": "",
+    "DOCKER_PASSWORD": "",
+    "DOCKER_AUTH_CONFIG": ""
   },
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
   "workspaceFolder": "/workspace",
-  "postCreateCommand": "pnpm add -g --allow-build=@anthropic-ai/claude-code @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}",
-  "postStartCommand": "sudo /usr/local/bin/init-firewall.bash",
+  "postCreateCommand": "install-claude.bash",
+  "postStartCommand": "sudo /usr/local/bin/entrypoint.bash && sudo bash /workspace/.devcontainer/harden-monitor.bash",
   "waitFor": "postStartCommand"
 }

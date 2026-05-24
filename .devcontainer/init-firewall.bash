@@ -23,8 +23,6 @@ fi
 
 iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
 iptables -A INPUT -p udp --sport 53 -j ACCEPT
-iptables -A OUTPUT -p tcp --dport 22 -j ACCEPT
-iptables -A INPUT -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
 iptables -A INPUT -i lo -j ACCEPT
 iptables -A OUTPUT -o lo -j ACCEPT
 
@@ -59,11 +57,6 @@ for domain in \
     "files.pythonhosted.org" \
     "raw.githubusercontent.com" \
     "objects.githubusercontent.com" \
-    "sentry.io" \
-    "statsig.com" \
-    "marketplace.visualstudio.com" \
-    "vscode.blob.core.windows.net" \
-    "update.code.visualstudio.com" \
     "en.wikipedia.org" \
     "en.m.wikipedia.org" \
     "upload.wikimedia.org" \
@@ -102,11 +95,10 @@ if [ -z "$HOST_IP" ]; then
     exit 1
 fi
 
-HOST_NETWORK=$(echo "$HOST_IP" | sed "s/\.[0-9]*$/.0\/24/")
-echo "Host network detected as: $HOST_NETWORK"
+echo "Host gateway detected as: $HOST_IP"
 
-iptables -A INPUT -s "$HOST_NETWORK" -j ACCEPT
-iptables -A OUTPUT -d "$HOST_NETWORK" -j ACCEPT
+iptables -A INPUT -s "$HOST_IP" -j ACCEPT
+iptables -A OUTPUT -d "$HOST_IP" -j ACCEPT
 
 iptables -P INPUT DROP
 iptables -P FORWARD DROP
@@ -134,3 +126,16 @@ if ! curl --connect-timeout 5 https://api.github.com/zen >/dev/null 2>&1; then
 else
     echo "Firewall verification passed - able to reach https://api.github.com as expected"
 fi
+
+echo "Tightening DNS to Docker resolver only..."
+iptables -D OUTPUT -p udp --dport 53 -j ACCEPT
+iptables -D INPUT -p udp --sport 53 -j ACCEPT
+# Rate-limit outgoing DNS to mitigate data exfiltration via subdomain
+# encoding. Docker's resolver forwards queries upstream, so arbitrary
+# domain lookups succeed even though TCP to the resolved IP is blocked.
+# This doesn't prevent one-shot exfiltration (a single query can carry
+# ~60 bytes in subdomain labels), but throttles sustained DNS tunneling
+# (which needs hundreds of queries/sec for meaningful bandwidth).
+iptables -I OUTPUT 1 -p udp --dport 53 -d 127.0.0.11 \
+    -m limit --limit 60/min --limit-burst 50 -j ACCEPT
+iptables -I INPUT 1 -p udp --sport 53 -s 127.0.0.11 -j ACCEPT

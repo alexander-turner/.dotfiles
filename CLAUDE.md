@@ -37,6 +37,13 @@ keeping `setup.bash`, `doctor.bash`, and CI honest with each other.
   pick up the same project context Claude Code uses.
 - `.mcp.json` — Claude Code MCP server config; currently registers the
   filesystem MCP scoped to `~/.dotfiles`.
+- `.claude/hooks/monitor.bash` — AI safety "trusted monitor" PreToolUse
+  hook. Sends each tool call to a cheap/OSS model for review before
+  execution (the "AI control" pattern). Auto-detects provider from
+  available API keys: Anthropic (Haiku) or Venice (qwen3-coder-480b / OSS).
+  Skips Read by default. Logs decisions to
+  `~/.cache/claude-monitor/monitor.jsonl`. Disable with
+  `MONITOR_DISABLED=1`.
 - `.claude/hooks/notify.bash` — cross-platform desktop notification for
   the Notification lifecycle hook.
 - `Brewfile` — package manifest, gated by `if OS.mac?` for cask blocks.
@@ -155,6 +162,18 @@ skip-on-missing to fail-on-missing).
 - Public files must not contain credentials. The lint workflow runs
   `gitleaks` against the full git history on every PR — if it flags
   something, rotate the secret first, then fix the commit.
+
+### Trusted infrastructure protection
+
+Safety-critical files — the monitor hook, its audit log, and the
+settings that wire it up — must be protected from modification by
+the AI model being monitored. Prefer OS-level enforcement (root
+ownership, read-only bind mounts) over permission deny rules in
+`settings.json` — deny rules are glob patterns that are trivially
+bypassed via alternative commands, indirect invocations, or
+aliasing. Root ownership is kernel-enforced. In the devcontainer,
+`IS_SANDBOX=no` keeps the monitor active while the container's own
+sandboxing limits blast radius.
 
 ### AI provider routing
 
