@@ -242,6 +242,7 @@ function rm
         echo "rm is disabled; using the reversible 'trash-put' instead (aliased to 'tp'). To force rm, use 'command rm'."
         trash-put $argv
     else
+        echo "trash-put not found; falling back to real rm. Install trash-cli to enable safe deletion."
         command rm $argv
     end
 end

@@ -142,9 +142,18 @@ check_command() {
     fi
 }
 
-for cmd in git fish nvim tmux brew zoxide gh fzf rg fd bat eza delta tokei dust btm mise carapace shfmt mods gitleaks pre-commit pnpm; do
+for cmd in git fish nvim tmux brew zoxide gh fzf rg fd bat eza delta tokei dust btm mise carapace shfmt mods gitleaks pre-commit; do
     check_command "$cmd"
 done
+
+# pnpm is in Brewfile (cross-platform) and required for ccr, @bitwarden/cli,
+# @devcontainers/cli, and prettier. Skip rather than fail so doctor stays safe
+# to run on a partially-bootstrapped machine where brew hasn't run yet.
+if command -v pnpm >/dev/null 2>&1; then
+    pass "pnpm"
+else
+    skip "pnpm" "not on PATH (run: brew install pnpm or bash setup.bash)"
+fi
 
 # Verify the Python version pinned in .pre-commit-config.yaml is functional.
 # A broken pyexpat (e.g. Homebrew Python 3.14 / libexpat ABI mismatch) causes
