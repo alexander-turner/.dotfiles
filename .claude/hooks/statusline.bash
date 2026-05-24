@@ -26,8 +26,10 @@ secs=$(((duration % 60000) / 1000))
 
 cost_fmt=$(printf '%.2f' "$cost" 2>/dev/null || echo "0.00")
 
-if [[ "$pct" -lt 60 ]]; then c="\033[32m"
-elif [[ "$pct" -lt 85 ]]; then c="\033[33m"
+if [[ "$pct" -lt 60 ]]; then
+    c="\033[32m"
+elif [[ "$pct" -lt 85 ]]; then
+    c="\033[33m"
 else c="\033[31m"; fi
 
 printf '%s | %s/%s | %dm%ds\n' "$model" "$repo" "$branch" "$mins" "$secs"
