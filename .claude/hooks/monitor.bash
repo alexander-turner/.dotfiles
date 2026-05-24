@@ -50,14 +50,16 @@ model="${MONITOR_MODEL:-}"
 fail_mode="${MONITOR_FAIL_MODE:-ask}"
 
 if [[ -z "$provider" ]]; then
-    if [[ -n "${ANTHROPIC_API_KEY:-}" ]]; then provider="anthropic"
-    elif [[ -n "${VENICE_INFERENCE_KEY:-}" ]]; then provider="openai"
+    if [[ -n "${ANTHROPIC_API_KEY:-}" ]]; then
+        provider="anthropic"
+    elif [[ -n "${VENICE_INFERENCE_KEY:-}" ]]; then
+        provider="openai"
     fi
 fi
 
 [[ -z "$api_key" ]] && case "${provider:-}" in
-    anthropic) api_key="${ANTHROPIC_API_KEY:-}" ;;
-    openai) api_key="${VENICE_INFERENCE_KEY:-}" ;;
+anthropic) api_key="${ANTHROPIC_API_KEY:-}" ;;
+openai) api_key="${VENICE_INFERENCE_KEY:-}" ;;
 esac
 
 if [[ -z "$api_key" ]]; then
@@ -70,9 +72,18 @@ if [[ -z "$api_key" ]]; then
 fi
 
 case "${provider:-}" in
-    anthropic) api_url="${api_url:-https://api.anthropic.com/v1/messages}"; model="${model:-claude-haiku-4-5-20251001}" ;;
-    openai) api_url="${api_url:-https://api.venice.ai/api/v1/chat/completions}"; model="${model:-qwen3-coder-480b-a35b-instruct-turbo}" ;;
-    *) echo "MONITOR BLOCKED: could not detect provider from available API keys." >&2; exit 2 ;;
+anthropic)
+    api_url="${api_url:-https://api.anthropic.com/v1/messages}"
+    model="${model:-claude-haiku-4-5-20251001}"
+    ;;
+openai)
+    api_url="${api_url:-https://api.venice.ai/api/v1/chat/completions}"
+    model="${model:-qwen3-coder-480b-a35b-instruct-turbo}"
+    ;;
+*)
+    echo "MONITOR BLOCKED: could not detect provider from available API keys." >&2
+    exit 2
+    ;;
 esac
 
 # --- Build request ---
@@ -143,9 +154,9 @@ fi
 [[ -f "${curl_stderr:-}" ]] && rm -f "$curl_stderr"
 
 case "$decision" in
-    allow) hook_decision="allow" ;;
-    deny) hook_decision="deny" ;;
-    *) hook_decision="$fail_mode" ;;
+allow) hook_decision="allow" ;;
+deny) hook_decision="deny" ;;
+*) hook_decision="$fail_mode" ;;
 esac
 
 # --- Log (non-critical) ---
