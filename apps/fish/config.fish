@@ -236,15 +236,9 @@ abbr -a n nvim
 abbr -a tp trash-put
 abbr -a tl trash-list
 
-# No unsafe rm by default; to override use "\rm"
 function rm
-    if command -q trash-put
-        echo "rm is disabled; using the reversible 'trash-put' instead (aliased to 'tp'). To force rm, use 'command rm'."
-        trash-put $argv
-    else
-        echo "trash-put not found; falling back to real rm. Install trash-cli to enable safe deletion."
-        command rm $argv
-    end
+    echo "rm is disabled; using the reversible 'trash-put' instead (aliased to 'tp'). To force rm, use 'command rm'."
+    trash-put $argv
 end
 
 # Load iTerm2 integration before the grep/cat shadows so its internal
