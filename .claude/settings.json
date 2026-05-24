@@ -14,6 +14,15 @@
     ],
     "PreToolUse": [
       {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/monitor.bash"
+          }
+        ]
+      },
+      {
         "matcher": "Bash(git push*|gh pr create*)",
         "hooks": [
           {
