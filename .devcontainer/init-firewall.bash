@@ -137,7 +137,7 @@ echo "Configuring dnsmasq DNS allowlist..."
 DNSMASQ_CONF="/etc/dnsmasq.d/allowlist.conf"
 mkdir -p /etc/dnsmasq.d
 
-cat > /etc/dnsmasq.conf <<'DNSMASQ_BASE'
+cat >/etc/dnsmasq.conf <<'DNSMASQ_BASE'
 no-resolv
 no-hosts
 listen-address=127.0.0.1
@@ -147,7 +147,7 @@ conf-dir=/etc/dnsmasq.d
 DNSMASQ_BASE
 
 # Default: NXDOMAIN for everything not explicitly allowed
-echo "address=/#/" > "$DNSMASQ_CONF"
+echo "address=/#/" >"$DNSMASQ_CONF"
 
 # Forward allowed domains to Docker's embedded resolver
 ALLOWED_DOMAINS=(
@@ -177,12 +177,12 @@ ALLOWED_DOMAINS=(
 )
 
 for domain in "${ALLOWED_DOMAINS[@]}"; do
-    echo "server=/$domain/127.0.0.11" >> "$DNSMASQ_CONF"
+    echo "server=/$domain/127.0.0.11" >>"$DNSMASQ_CONF"
 done
 
 dnsmasq --test && echo "dnsmasq config valid"
 dnsmasq
-echo "dnsmasq started — $(wc -l < "$DNSMASQ_CONF") rules"
+echo "dnsmasq started — $(wc -l <"$DNSMASQ_CONF") rules"
 
 # Replace wide-open DNS rules with locked-down policy:
 # - node user can only query dnsmasq (127.0.0.1)
@@ -201,7 +201,7 @@ iptables -I INPUT 1 -p udp --sport 53 -s 127.0.0.11 -j ACCEPT
 
 # Point system DNS to dnsmasq
 cp /etc/resolv.conf /etc/resolv.conf.docker
-echo "nameserver 127.0.0.1" > /etc/resolv.conf
+echo "nameserver 127.0.0.1" >/etc/resolv.conf
 
 # Verify DNS allowlist works
 echo "Verifying DNS allowlist..."
@@ -209,12 +209,12 @@ if dig +short +timeout=2 @127.0.0.1 api.github.com A | grep -q '^[0-9]'; then
     echo "DNS allowlist passed — allowed domain resolves"
 else
     echo "ERROR: DNS allowlist failed — allowed domain did not resolve"
-    cat /etc/resolv.conf.docker > /etc/resolv.conf
+    cat /etc/resolv.conf.docker >/etc/resolv.conf
     exit 1
 fi
 if dig +short +timeout=2 @127.0.0.1 evil-exfil.example.com A 2>/dev/null | grep -q '^[0-9]'; then
     echo "ERROR: DNS allowlist failed — blocked domain resolved"
-    cat /etc/resolv.conf.docker > /etc/resolv.conf
+    cat /etc/resolv.conf.docker >/etc/resolv.conf
     exit 1
 else
     echo "DNS allowlist passed — blocked domain returns NXDOMAIN"

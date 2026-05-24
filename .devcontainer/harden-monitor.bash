@@ -16,7 +16,7 @@ MONITOR_LOG_DIR="/home/node/.cache/claude-monitor"
 if [[ -f "$MONITOR" ]]; then
     chown root:root "$MONITOR"
     chmod 700 "$MONITOR"
-    sha256sum "$MONITOR" | awk '{print $1}' > /etc/claude-monitor/monitor.sha256
+    sha256sum "$MONITOR" | awk '{print $1}' >/etc/claude-monitor/monitor.sha256
     chown root:root /etc/claude-monitor/monitor.sha256
     chmod 444 /etc/claude-monitor/monitor.sha256
     echo "monitor: hardened $MONITOR (root:root 700, checksum recorded)"
