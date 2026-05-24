@@ -20,3 +20,4 @@ apps/iterm2/com.googlecode.iterm2.plist
 __pycache__/
 .pytest_cache/
 .claude/worktrees
+secure-claude-code-defaults/

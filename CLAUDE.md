@@ -8,11 +8,12 @@ keeping `setup.bash`, `doctor.bash`, and CI honest with each other.
 - `setup.bash` — top-level installer; idempotent, supports `--link-only`.
   Always finishes by running `bin/doctor.bash` so the user sees a green
   health summary (or knows exactly what's still broken).
-- `secure-claude-code-defaults/` — git submodule
-  (`alexander-turner/secure-claude-code-defaults`). Contains all
+- `secure-claude-code-defaults/` — cloned repo
+  (`alexander-turner/secure-claude-code-defaults`), `.gitignore`d.
+  `setup.bash` clones or pulls it on every run. Contains all
   Claude Code configuration: hooks, skills, project/global settings,
   wrapper scripts, Venice/ccr routing, and the ccr LaunchAgent plist.
-  `.claude/` in this repo is symlinks into this submodule.
+  `.claude/` in this repo is symlinks into this directory.
   - `hooks/monitor.bash` — AI safety "trusted monitor" PreToolUse hook.
     Sends each tool call to a cheap/OSS model for review before
     execution (the "AI control" pattern). Auto-detects provider from

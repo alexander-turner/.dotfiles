@@ -27,8 +27,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Init submodules
-        run: git submodule update --init secure-claude-code-defaults
+      - name: Clone secure-claude-code-defaults
+        run: git clone https://github.com/alexander-turner/secure-claude-code-defaults.git secure-claude-code-defaults
 
       - name: Run idempotency check
         env:

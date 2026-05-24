@@ -22,6 +22,15 @@ source "$DOTFILES_DIR/bin/lib/safe_link.sh"
 # shellcheck source=bin/lib/symlinks.sh disable=SC1091
 source "$DOTFILES_DIR/bin/lib/symlinks.sh"
 
+# ── secure-claude-code-defaults (always run) ────────────────────────────────
+SCCD_DIR="$DOTFILES_DIR/secure-claude-code-defaults"
+SCCD_URL="https://github.com/alexander-turner/secure-claude-code-defaults.git"
+if [[ -d "$SCCD_DIR/.git" ]]; then
+    git -C "$SCCD_DIR" pull --ff-only origin main 2>/dev/null || true
+else
+    git clone "$SCCD_URL" "$SCCD_DIR"
+fi
+
 # ── Symlinks (always run) ────────────────────────────────────────────────────
 status_msg "Linking dotfiles..."
 # Iterate the shared list. safe_link handles the backup-on-clobber logic.

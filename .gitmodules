@@ -1,5 +1,0 @@
-[submodule "secure-claude-code-defaults"]
-	path = secure-claude-code-defaults
-	url = https://github.com/alexander-turner/secure-claude-code-defaults.git
-	update = rebase
-	branch = main
