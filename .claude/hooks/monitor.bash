@@ -184,7 +184,7 @@ if [[ "$hook_decision" == "ask" ]]; then
         setup_nudge="/tmp/claude-monitor-ntfy-nudge-$(printf '%s' "$envelope" | jq -r '.session_id // "unknown"')"
         if [[ ! -f "$setup_nudge" ]]; then
             touch "$setup_nudge"
-            reason="${reason:+$reason | }Run /setup-ntfy to get push notifications for monitor alerts"
+            reason="${reason:+$reason | }Run 'bash bin/setup-ntfy.bash' in a separate terminal to get push notifications"
         fi
     fi
 fi
