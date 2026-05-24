@@ -1,10 +1,11 @@
 #!/bin/bash
-# Post-start entrypoint: configures the firewall as root, then locks
-# it down so the node user cannot modify iptables rules.
+# Post-start entrypoint: hardens the app container after the firewall
+# container has already configured iptables/dnsmasq/squid in the shared
+# network namespace. This container has no NET_ADMIN/NET_RAW.
 #
-# Strategy: after the firewall is up, remove the sudoers entry that
-# allowed node to run this script, and strip setuid/capabilities from
-# network and namespace tools so unprivileged users can't touch them.
+# Strategy: strip setuid/capabilities from network and namespace tools
+# (defense in depth — the app lacks NET_ADMIN anyway), lock down
+# config directories, and scrub credential env vars.
 set -euo pipefail
 
 WORKSPACE="/workspace"
@@ -13,8 +14,6 @@ WORKSPACE="/workspace"
 if [[ -f "$WORKSPACE/.devcontainer/harden-monitor.bash" ]]; then
     bash "$WORKSPACE/.devcontainer/harden-monitor.bash"
 fi
-
-/usr/local/bin/init-firewall.bash
 
 echo "Locking down firewall and namespace tools..."
 

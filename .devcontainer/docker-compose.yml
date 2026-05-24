@@ -1,4 +1,35 @@
 services:
+  # Configures iptables/dnsmasq/squid then holds the network namespace
+  # alive. The app container joins this namespace via network_mode, so
+  # firewall rules apply to its traffic without granting it NET_ADMIN.
+  firewall:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        TZ: ${TZ:-America/Los_Angeles}
+        GIT_DELTA_VERSION: "0.18.2"
+    user: root
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    command:
+      - bash
+      - -c
+      - |
+        /usr/local/bin/init-firewall.bash \
+          && touch /tmp/firewall-ready \
+          && exec sleep infinity
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/firewall-ready"]
+      interval: 5s
+      timeout: 2s
+      retries: 12
+      start_period: 60s
+    pids_limit: 32
+    mem_limit: 256m
+    cpus: 1
+
   app:
     build:
       context: .
@@ -6,9 +37,9 @@ services:
       args:
         TZ: ${TZ:-America/Los_Angeles}
         GIT_DELTA_VERSION: "0.18.2"
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
+    network_mode: "service:firewall"
+    security_opt:
+      - no-new-privileges:true
     pids_limit: 512
     mem_limit: 8g
     memswap_limit: 8g
@@ -34,6 +65,8 @@ services:
       DOCKER_PASSWORD: ""
       DOCKER_AUTH_CONFIG: ""
     depends_on:
+      firewall:
+        condition: service_healthy
       monitor:
         condition: service_started
 
