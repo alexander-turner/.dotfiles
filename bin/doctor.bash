@@ -53,16 +53,27 @@ pass() {
 }
 fail() {
     FAIL=$((FAIL + 1))
+    [[ "$VERBOSE" == false ]] && _maybe_print_section
     printf "  ${RED}FAIL${NC} %s\n" "$1"
     [[ -n "${2:-}" ]] && printf "       %s\n" "$2"
 }
 skip() {
     SKIP=$((SKIP + 1))
+    [[ "$VERBOSE" == false ]] && _maybe_print_section
     printf "  ${YELLOW}SKIP${NC} %s (%s)\n" "$1" "$2"
 }
 
+_current_section=""
 section() {
+    _current_section="$1"
     [[ "$VERBOSE" == true ]] && printf "\n${YELLOW}=== %s ===${NC}\n" "$1"
+}
+
+_maybe_print_section() {
+    if [[ -n "$_current_section" ]]; then
+        printf "\n${YELLOW}=== %s ===${NC}\n" "$_current_section"
+        _current_section=""
+    fi
 }
 
 # ── Symlinks ────────────────────────────────────────────────────────────────
@@ -162,16 +173,16 @@ for cmd in trash-put trash-empty; do
     fi
 done
 
-# AI tooling installed by bin/setup_llm.bash. ccr is required at runtime for
-# the com.turntrout.ccr LaunchAgent below; the others are optional helpers
-# referenced from README. All skip-on-missing — doctor.bash must stay safe
-# to run on a partially-bootstrapped machine. Plain case (not declare -A)
-# because macOS /bin/bash is 3.2 and predates associative arrays.
-for cmd in ccr aider llm wut devcontainer; do
+# AI tooling installed by bin/setup_llm.bash and setup.bash. pnpm is their
+# shared installer. All skip-on-missing — doctor.bash must stay safe to run on
+# a partially-bootstrapped machine. Plain case (not declare -A) because macOS
+# /bin/bash is 3.2 and predates associative arrays.
+for cmd in pnpm ccr aider llm wut devcontainer; do
     if command -v "$cmd" >/dev/null 2>&1; then
         pass "$cmd"
     else
         case "$cmd" in
+        pnpm) hint="run: brew install pnpm (or bash setup.bash)" ;;
         ccr) hint="run: pnpm add -g @musistudio/claude-code-router (or bash bin/setup_llm.bash)" ;;
         aider) hint="run: uv tool install aider-chat (or bash bin/setup_llm.bash)" ;;
         llm) hint="run: uv tool install llm (or bash bin/setup_llm.bash)" ;;
