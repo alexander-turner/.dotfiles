@@ -4,8 +4,7 @@
     "dockerfile": "Dockerfile",
     "args": {
       "TZ": "${localEnv:TZ:America/Los_Angeles}",
-      "GIT_DELTA_VERSION": "0.18.2",
-      "ZSH_IN_DOCKER_VERSION": "1.2.0"
+      "GIT_DELTA_VERSION": "0.18.2"
     }
   },
   "runArgs": [
@@ -30,7 +29,6 @@
         "terminal.integrated.defaultProfile.linux": "fish",
         "terminal.integrated.profiles.linux": {
           "bash": { "path": "bash", "icon": "terminal-bash" },
-          "zsh":  { "path": "zsh" },
           "fish": { "path": "fish" }
         }
       }
@@ -44,13 +42,12 @@
   "containerEnv": {
     "NODE_OPTIONS": "--max-old-space-size=4096",
     "CLAUDE_CONFIG_DIR": "/home/node/.claude",
-    "POWERLEVEL9K_DISABLE_GITSTATUS": "true",
     "NPM_CONFIG_IGNORE_SCRIPTS": "true",
     "CLAUDE_CODE_VERSION": "latest"
   },
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
   "workspaceFolder": "/workspace",
-  "postCreateCommand": "npm install -g --ignore-scripts=false @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}",
+  "postCreateCommand": "pnpm add -g --allow-build=@anthropic-ai/claude-code @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}",
   "postStartCommand": "sudo /usr/local/bin/init-firewall.bash",
   "waitFor": "postStartCommand"
 }

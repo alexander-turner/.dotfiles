@@ -36,7 +36,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   ripgrep \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /usr/local/share/npm-global && \
+RUN mkdir -p /usr/local/share/pnpm-global && \
   chown -R node:node /usr/local/share
 
 ARG USERNAME=node
@@ -63,8 +63,8 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 USER node
 
-ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
-ENV PATH=$PATH:/usr/local/share/npm-global/bin
+ENV PNPM_HOME=/usr/local/share/pnpm-global
+ENV PATH=$PATH:$PNPM_HOME
 ENV NPM_CONFIG_IGNORE_SCRIPTS=true
 
 ENV EDITOR=nano
@@ -87,4 +87,4 @@ USER node
 # without listing the binary here means the smoke test passes by
 # accident; listing one here without an install step means it fails
 # loudly. Whitespace-separated; alphabetised for diff sanity.
-ENV DOTFILES_TOOLS="bash claude fish fzf gh git iptables ipset jq node npm pnpm python3 rg zsh"
+ENV DOTFILES_TOOLS="bash claude fish fzf gh git iptables ipset jq node npm pnpm python3 rg"
