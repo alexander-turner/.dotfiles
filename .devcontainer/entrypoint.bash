@@ -83,7 +83,7 @@ if [[ -d "$WORKSPACE/.devcontainer" ]]; then
     find "$WORKSPACE/.devcontainer" \( -name '*.bash' -o -name '*.py' -o -name '*.sh' \) -exec chmod a+x {} + 2>/dev/null || true
 fi
 for doc in CLAUDE.md AGENTS.md; do
-    if [[ -f "$WORKSPACE/$doc" ]]; then
+    if [[ -f "$WORKSPACE/$doc" && ! -L "$WORKSPACE/$doc" ]]; then
         chown root:root "$WORKSPACE/$doc"
         chmod 444 "$WORKSPACE/$doc"
     fi

@@ -99,8 +99,9 @@ done
 pass ".claude/ and .devcontainer/ are root-owned"
 
 for doc in CLAUDE.md AGENTS.md; do
+    # Skip symlinks — AGENTS.md is a symlink to CLAUDE.md
     # shellcheck disable=SC2086
-    if $DC exec -T app test -f "/workspace/$doc" 2>/dev/null; then
+    if $DC exec -T app test -f "/workspace/$doc" -a ! -L "/workspace/$doc" 2>/dev/null; then
         # shellcheck disable=SC2086
         owner=$($DC exec -T app stat -c '%U' "/workspace/$doc")
         [[ "$owner" == "root" ]] || fail "$doc owned by '$owner', expected root"
