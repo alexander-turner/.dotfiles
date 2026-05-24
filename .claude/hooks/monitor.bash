@@ -161,28 +161,24 @@ deny) hook_decision="deny" ;;
 esac
 
 # --- ntfy.sh push for ASK tier (potential misalignment — get the human) ---
-# Topic is read from a file (not an env var) so the monitored model
-# can't see it and craft manipulative notification text. The file
-# should be root-owned in the devcontainer.
 ntfy_conf="${MONITOR_NTFY_CONF:-$HOME/.config/claude-monitor/ntfy.conf}"
-if [[ "$hook_decision" == "ask" && -f "$ntfy_conf" ]]; then
-    ntfy_topic="" ntfy_url="https://ntfy.sh"
-    while IFS='=' read -r key val; do
-        case "$key" in
-        topic) ntfy_topic="$val" ;;
-        url) ntfy_url="$val" ;;
-        esac
-    done <"$ntfy_conf"
-    if [[ -n "$ntfy_topic" ]]; then
-        # Only include the tool name and a sanitized reason — never
-        # echo raw tool_input into the notification, since the model
-        # controls that content and could craft social-engineering text.
-        curl -fsS --max-time 5 \
-            -H "Title: Claude Monitor" \
-            -H "Priority: high" \
-            -H "Tags: warning" \
-            -d "ASK on ${tool_name}: ${reason:0:100}" \
-            "${ntfy_url}/${ntfy_topic}" >/dev/null 2>&1 || true
+if [[ "$hook_decision" == "ask" ]]; then
+    if [[ -f "$ntfy_conf" ]]; then
+        ntfy_topic="" ntfy_url="https://ntfy.sh"
+        while IFS='=' read -r key val; do
+            case "$key" in
+            topic) ntfy_topic="$val" ;;
+            url) ntfy_url="$val" ;;
+            esac
+        done < <(sudo cat "$ntfy_conf" 2>/dev/null)
+        if [[ -n "$ntfy_topic" ]]; then
+            curl -fsS --max-time 5 \
+                -H "Title: Claude Monitor" \
+                -H "Priority: high" \
+                -H "Tags: warning" \
+                -d "ASK on ${tool_name}: ${reason:0:100}" \
+                "${ntfy_url}/${ntfy_topic}" >/dev/null 2>&1 || true
+        fi
     fi
 fi
 

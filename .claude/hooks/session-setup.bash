@@ -180,3 +180,17 @@ fi
 if [ "$SETUP_WARNINGS" -gt 0 ]; then
     echo "Setup done with $SETUP_WARNINGS warning(s) — see above" >&2
 fi
+
+#######################################
+# Monitor ntfy check
+#######################################
+
+NTFY_CONF="${HOME}/.config/claude-monitor/ntfy.conf"
+if [ ! -f "$NTFY_CONF" ] && [ ! -f /etc/claude-monitor/ntfy.conf ]; then
+    echo "" >&2
+    echo "━━━ AI Safety Monitor ━━━" >&2
+    echo "Push notifications are not configured." >&2
+    echo "To get phone alerts when the monitor flags suspicious behavior:" >&2
+    echo "  bash bin/setup-ntfy.bash" >&2
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━" >&2
+fi
