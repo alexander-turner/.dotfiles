@@ -120,6 +120,13 @@ repos:
         pass_filenames: false
         files: ^(bin/lib/(secret-store|keychain)\.sh|tests/test_security_argv\.py)$
 
+      - id: claude-wrapper-tests
+        name: pytest tests/test_claude_wrapper.py
+        entry: pytest -q tests/test_claude_wrapper.py
+        language: system
+        pass_filenames: false
+        files: ^(bin/claude|apps/fish/functions/claude\.fish|tests/test_claude_wrapper\.py)$
+
       - id: gitleaks
         name: gitleaks detect
         # bin/pre-push sets GITLEAKS_LOG_OPTS to narrow to the push range;
