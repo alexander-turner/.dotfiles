@@ -69,4 +69,36 @@ if ! test -x /usr/local/bin/entrypoint.bash; then
     exit 1
 fi
 
-echo "==> Smoke check passed: ${#missing[@]} missing, init-firewall.bash + entrypoint.bash present"
+if ! test -x /usr/local/bin/install-claude.bash; then
+    echo "FAIL: /usr/local/bin/install-claude.bash not executable (path drift in Dockerfile COPY?)"
+    exit 1
+fi
+
+echo "==> Image tools OK: ${#missing[@]} missing, init-firewall.bash + entrypoint.bash + install-claude.bash present"
+
+# ── Runtime tool verification ──────────────────────────────────────────
+# claude-code is installed at runtime (not baked into the image) because
+# its postinstall fetches an arch-specific native binary.  We install it
+# here instead of via postCreateCommand so pnpm's stdout/stderr are
+# visible in the CI log — postCreateCommand failures surface only as
+# "exit code: undefined" in devcontainers/ci annotations.
+RUNTIME_TOOLS="claude"
+
+echo "==> Installing runtime tools via install-claude.bash..."
+if ! install-claude.bash; then
+    echo "FAIL: install-claude.bash exited non-zero"
+    exit 1
+fi
+
+for cmd in $RUNTIME_TOOLS; do
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        echo "FAIL: runtime tool '$cmd' not on PATH after install"
+        echo "  PATH=$PATH"
+        echo "  PNPM_HOME=${PNPM_HOME:-<unset>}"
+        find "${PNPM_HOME:-.}" -maxdepth 1 -ls 2>&1 | head -20
+        exit 1
+    fi
+done
+
+echo "==> Runtime tools OK: claude $(claude --version 2>&1 || echo '<version failed>')"
+echo "==> Smoke check passed"
