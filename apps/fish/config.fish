@@ -121,11 +121,9 @@ abbr -a ll 'ls -lF'
 abbr -a la 'ls -laF'
 abbr -a lt 'ls --tree --level=2'
 
-function ssh
+function ms --description 'Connect via mosh (UDP-persistent; falls back to ssh)'
     if type -q mosh
         mosh $argv
-    else if $IS_MAC
-        command /usr/bin/ssh $argv
     else
         command ssh $argv
     end
@@ -238,7 +236,6 @@ abbr -a n nvim
 abbr -a tp trash-put
 abbr -a tl trash-list
 
-# No unsafe rm by default; to override use "\rm"
 function rm
     echo "rm is disabled; using the reversible 'trash-put' instead (aliased to 'tp'). To force rm, use 'command rm'."
     trash-put $argv
@@ -411,5 +408,8 @@ end
 
 if not string match -q -- "$PNPM_HOME/bin" $PATH
     set -gx PATH "$PNPM_HOME/bin" $PATH
+end
+if not string match -q -- "$PNPM_HOME" $PATH
+    set -gx PATH "$PNPM_HOME" $PATH
 end
 # pnpm end

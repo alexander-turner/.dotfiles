@@ -24,9 +24,9 @@ source "$DOTFILES_DIR/bin/lib/symlinks.sh"
 
 # ── Symlinks (always run) ────────────────────────────────────────────────────
 status_msg "Linking dotfiles..."
-# Iterate the shared list. safe_link handles directory targets via mv-to-backup,
-# so nvim/aerospace all flow through this one path with no bespoke branches.
-# Anything bespoke (in-repo .hooks/pre-push, launchagent plists) stays inline below.
+# Iterate the shared list. safe_link handles the backup-on-clobber logic.
+# Anything bespoke — the in-repo .hooks/pre-push relative symlink, the neovim
+# directory target, and launchagent plists — stays inline below.
 while IFS='|' read -r target source _label; do
     mkdir -p "$(dirname "$target")"
     safe_link "$source" "$target"
@@ -235,7 +235,7 @@ if [ "$(uname)" = "Darwin" ]; then
     launchctl bootstrap "gui/$(id -u)" "$TS_EXIT_PLIST_DEST" 2>/dev/null || true
 
     # Install wally-cli for keyboard flashing
-    if ! command_exists wally-cli; then
+    if ! command_exists wally-cli && command_exists go; then
         go install github.com/zsa/wally-cli@latest >/dev/null
     fi
 
