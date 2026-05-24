@@ -3,7 +3,7 @@
 To install:
 
 ```bash
-git clone https://github.com/alexander-turner/.dotfiles ~/.dotfiles && cd ~/.dotfiles && bash setup.bash
+git clone --recurse-submodules https://github.com/alexander-turner/.dotfiles ~/.dotfiles && cd ~/.dotfiles && bash setup.bash
 ```
 
 ## Features
