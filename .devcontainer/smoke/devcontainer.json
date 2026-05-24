@@ -11,5 +11,5 @@
   },
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
   "workspaceFolder": "/workspace",
-  "postCreateCommand": "env -u NPM_CONFIG_IGNORE_SCRIPTS pnpm add -g --allow-build=@anthropic-ai/claude-code @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
+  "postCreateCommand": "bash .devcontainer/install-claude.bash"
 }
