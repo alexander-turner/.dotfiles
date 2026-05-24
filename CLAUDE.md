@@ -165,15 +165,38 @@ skip-on-missing to fail-on-missing).
 
 ### Trusted infrastructure protection
 
-Safety-critical files — the monitor hook, its audit log, and the
-settings that wire it up — must be protected from modification by
-the AI model being monitored. Prefer OS-level enforcement (root
-ownership, read-only bind mounts) over permission deny rules in
-`settings.json` — deny rules are glob patterns that are trivially
-bypassed via alternative commands, indirect invocations, or
-aliasing. Root ownership is kernel-enforced. In the devcontainer,
-`IS_SANDBOX=no` keeps the monitor active while the container's own
-sandboxing limits blast radius.
+The AI safety monitor (`monitor.bash`), its policy prompt, audit
+log, and ntfy config must be unreadable and unmodifiable by the
+monitored model. If the model can read the monitor, it can find
+parsing vulnerabilities or learn which patterns are flagged and
+tailor actions to evade detection.
+
+**Defense layers (devcontainer):**
+
+1. **Root ownership (kernel-enforced).**
+   `harden-monitor.bash` sets `monitor.bash` to `root:root 700`
+   (unreadable by the `node` user Claude runs as), the policy prompt
+   at `/etc/claude-monitor/policy.txt` to `root:root 600`, and the
+   log directory to `root:root 1733` (append-only for non-root).
+
+2. **Dispatch wrapper.**  Bash scripts must be readable to execute,
+   so `settings.json` points to `monitor-dispatch.bash` — a tiny
+   readable wrapper that `sudo`s into the real script. The model can
+   read the 8-line dispatch but learns nothing about detection logic.
+
+3. **Deny rules (defense in depth).** `settings.json` denies
+   `Read(.claude/hooks/monitor.bash)` and
+   `Read(/etc/claude-monitor/**)`. These are glob patterns and
+   trivially bypassable — they exist only to catch accidental reads,
+   not as a security boundary.
+
+4. **`IS_SANDBOX=no`** in `devcontainer.json` keeps the monitor
+   active inside the container (the Anthropic cloud sets
+   `IS_SANDBOX=yes`, which skips monitoring).
+
+**On the host** (no devcontainer), root ownership isn't enforced
+automatically — the user owns the repo. Protection comes from Claude
+Code's permission prompts (no `--dangerously-skip-permissions`).
 
 ### AI provider routing
 
