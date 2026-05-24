@@ -17,7 +17,10 @@ DC="docker compose -p $PROJECT
   -f $REPO_ROOT/.devcontainer/docker-compose.yml
   -f $REPO_ROOT/.devcontainer/smoke/docker-compose.smoke.yml"
 
-fail() { echo "FAIL: $*" >&2; exit 1; }
+fail() {
+    echo "FAIL: $*" >&2
+    exit 1
+}
 pass() { echo "PASS: $*"; }
 
 cleanup() {
@@ -77,8 +80,8 @@ pass "app lacks NET_ADMIN (iptables denied)"
 # ── Entrypoint hardening ─────────────────────────────────────────────
 echo "==> Running entrypoint hardening in app..."
 # shellcheck disable=SC2086
-$DC exec -T -u root app /usr/local/bin/entrypoint.bash \
-    || fail "entrypoint.bash exited non-zero"
+$DC exec -T -u root app /usr/local/bin/entrypoint.bash ||
+    fail "entrypoint.bash exited non-zero"
 pass "entrypoint.bash completed"
 
 # ── Root ownership ────────────────────────────────────────────────────
