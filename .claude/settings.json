@@ -18,7 +18,17 @@
       "Bash(capsh *)",
       "Bash(setcap *)",
       "Bash(nsenter *)",
-      "Bash(unshare *)"
+      "Bash(unshare *)",
+      "Edit(.claude/*)",
+      "Write(.claude/*)",
+      "Bash(*>.claude/*)",
+      "Bash(*>> .claude/*)",
+      "Bash(rm *.claude/*)",
+      "Bash(mv *.claude/*)",
+      "Bash(cp *.claude/*)",
+      "Bash(chmod *.claude/*)",
+      "Bash(sed * .claude/*)",
+      "Bash(tee *.claude/*)"
     ]
   },
   "hooks": {
