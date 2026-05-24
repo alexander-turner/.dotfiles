@@ -20,7 +20,7 @@ IS_MAC=false
 
 # ── claude-code + claude-code-router (ccr) ──────────────────────────────────
 # pnpm keeps both under $PNPM_HOME, matching the path baked into
-# launchagents/com.turntrout.ccr.plist.
+# secure-claude-code-defaults/launchagents/com.turntrout.ccr.plist.
 if command_exists pnpm; then
     status_msg "Installing claude-code + claude-code-router via pnpm..."
     pnpm add --global --reporter=append-only @anthropic-ai/claude-code @musistudio/claude-code-router
@@ -66,8 +66,8 @@ fi
 # ── Venice default_code resolver cache ──────────────────────────────────────
 # Refresh the cached model id that claude-private / claude-paranoid read
 # from. Falls back internally if the API is unreachable.
-# shellcheck source=lib/venice-resolve.bash disable=SC1091
-source "$DOTFILES_DIR/bin/lib/venice-resolve.bash"
+# shellcheck source=../secure-claude-code-defaults/bin/lib/venice-resolve.bash disable=SC1091
+source "$DOTFILES_DIR/secure-claude-code-defaults/bin/lib/venice-resolve.bash"
 status_msg "Resolving Venice default_code model..."
 cache_venice_trait default_code "$VENICE_DEFAULT_CODE_FALLBACK"
 

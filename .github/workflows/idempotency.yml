@@ -27,6 +27,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Clone secure-claude-code-defaults
+        run: git clone https://github.com/alexander-turner/secure-claude-code-defaults.git secure-claude-code-defaults
+
       - name: Run idempotency check
         env:
           # Scratch dirs under $RUNNER_TEMP keep the workflow's own log/listing
