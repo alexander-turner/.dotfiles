@@ -43,6 +43,7 @@ services:
       dockerfile: .devcontainer/Dockerfile.monitor
     volumes:
       - monitor-socket:/var/run/monitor
+    network_mode: none
     cap_drop:
       - ALL
     read_only: true

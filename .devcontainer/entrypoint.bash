@@ -7,13 +7,11 @@
 # network and namespace tools so unprivileged users can't touch them.
 set -euo pipefail
 
-# Harden the monitor FIRST — before any other work — so monitor.bash is
-# never world-readable during the window between image build and lockdown.
 WORKSPACE="/workspace"
-if [[ -x /workspace/.devcontainer/harden-monitor.bash ]]; then
-    bash /workspace/.devcontainer/harden-monitor.bash
-elif [[ -f /workspace/.devcontainer/harden-monitor.bash ]]; then
-    bash /workspace/.devcontainer/harden-monitor.bash
+
+# Harden the monitor FIRST so monitor.bash is never world-readable.
+if [[ -f "$WORKSPACE/.devcontainer/harden-monitor.bash" ]]; then
+    bash "$WORKSPACE/.devcontainer/harden-monitor.bash"
 fi
 
 /usr/local/bin/init-firewall.bash
@@ -61,7 +59,6 @@ for name in (env | string match -r '^[^=]+' )
 end
 SCRUB_FISH
 
-WORKSPACE="/workspace"
 if [[ "${CLAUDE_SELF_EDIT:-0}" == "1" ]]; then
     echo "CLAUDE_SELF_EDIT=1 — skipping .claude/ lockdown (supervised mode)."
 else
@@ -117,7 +114,7 @@ export HTTP_PROXY="http://127.0.0.1:3128"
 export HTTPS_PROXY="http://127.0.0.1:3128"
 export no_proxy="localhost,127.0.0.1"
 export NO_PROXY="localhost,127.0.0.1"
-export NODE_EXTRA_CA_CERTS="/etc/squid/ssl_cert/ca.pem"
+export NODE_EXTRA_CA_CERTS="/etc/squid/ssl_cert/ca-cert.pem"
 PROXY_BASH
 
 PROXY_FISH=/etc/fish/conf.d/proxy.fish
@@ -128,7 +125,12 @@ set -gx HTTP_PROXY "http://127.0.0.1:3128"
 set -gx HTTPS_PROXY "http://127.0.0.1:3128"
 set -gx no_proxy "localhost,127.0.0.1"
 set -gx NO_PROXY "localhost,127.0.0.1"
-set -gx NODE_EXTRA_CA_CERTS "/etc/squid/ssl_cert/ca.pem"
+set -gx NODE_EXTRA_CA_CERTS "/etc/squid/ssl_cert/ca-cert.pem"
 PROXY_FISH_CONF
+
+# Lock all profile scripts — readable (shells source them) but not writable
+chmod 444 /etc/profile.d/proxy.sh /etc/profile.d/scrub-secrets.sh \
+    /etc/profile.d/histverify.sh /etc/fish/conf.d/proxy.fish \
+    /etc/fish/conf.d/scrub-secrets.fish
 
 echo "Lockdown complete."

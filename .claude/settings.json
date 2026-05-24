@@ -73,14 +73,7 @@
       "Bash(*nc*-U*/var/run/monitor*)",
       "Read(/var/run/monitor/**)",
       "Bash(*dnsmasq*)",
-      "Bash(*cat*/etc/dnsmasq*)",
-      "Bash(*cat*/etc/resolv*)",
-      "Edit(/etc/dnsmasq*)",
-      "Edit(/etc/resolv*)",
       "Bash(*squid*)",
-      "Bash(*cat*/etc/squid*)",
-      "Edit(/etc/squid/**)",
-      "Read(/etc/squid/**)",
       "Bash(*unset*http_proxy*)",
       "Bash(*unset*https_proxy*)",
       "Bash(*unset*HTTP_PROXY*)",
@@ -90,9 +83,7 @@
       "Bash(*HTTP_PROXY=*)",
       "Bash(*HTTPS_PROXY=*)",
       "Bash(*no_proxy=*)",
-      "Bash(*NO_PROXY=*)",
-      "Edit(/etc/profile.d/proxy*)",
-      "Edit(/etc/fish/conf.d/proxy*)"
+      "Bash(*NO_PROXY=*)"
     ]
   },
   "statusLine": {

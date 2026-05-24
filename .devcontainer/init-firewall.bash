@@ -166,6 +166,10 @@ fi
 # === DNS lockdown ===
 # Static records only — dnsmasq never forwards to Docker's resolver.
 # Block ALL DNS to Docker's resolver since we don't need it anymore.
+# Lock down DNS configs — node user cannot read or modify
+chmod 640 /etc/dnsmasq.conf "$DNSMASQ_CONF"
+chown root:root /etc/dnsmasq.conf "$DNSMASQ_CONF"
+
 dnsmasq --test && echo "dnsmasq config valid"
 dnsmasq
 echo "dnsmasq started — $(wc -l <"$DNSMASQ_CONF") rules (all static)"
@@ -179,6 +183,7 @@ iptables -I INPUT 1 -p udp --sport 53 -s 127.0.0.1 -j ACCEPT
 
 cp /etc/resolv.conf /etc/resolv.conf.docker
 echo "nameserver 127.0.0.1" >/etc/resolv.conf
+chmod 444 /etc/resolv.conf
 
 echo "Verifying DNS allowlist..."
 if dig +short +timeout=2 @127.0.0.1 api.github.com A | grep -q '^[0-9]'; then
@@ -215,7 +220,7 @@ done
 cat >"$SQUID_CONF" <<'SQUID'
 # Sandbox proxy: enforce GET/HEAD-only for read-only domains
 http_port 3128 ssl-bump \
-  cert=/etc/squid/ssl_cert/ca.pem \
+  cert=/etc/squid/ssl_cert/ca-bundle.pem \
   generate-host-certificates=on \
   dynamic_cert_mem_cache_size=4MB
 
@@ -241,6 +246,10 @@ access_log none
 cache_log /dev/null
 cache deny all
 SQUID
+
+# Lock down squid configs — node user cannot read or modify
+chmod 640 "$SQUID_CONF" "$RO_DOMAINS"
+chown root:proxy "$SQUID_CONF" "$RO_DOMAINS"
 
 squid -k parse 2>/dev/null && echo "squid config valid"
 squid

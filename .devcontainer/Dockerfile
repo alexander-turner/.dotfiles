@@ -46,13 +46,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN mkdir -p /etc/squid/ssl_cert && \
   openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 \
     -subj "/CN=sandbox-proxy-ca" \
-    -keyout /etc/squid/ssl_cert/ca.pem \
-    -out /etc/squid/ssl_cert/ca.pem && \
+    -keyout /etc/squid/ssl_cert/ca-key.pem \
+    -out /etc/squid/ssl_cert/ca-cert.pem && \
+  cat /etc/squid/ssl_cert/ca-key.pem /etc/squid/ssl_cert/ca-cert.pem \
+    >/etc/squid/ssl_cert/ca-bundle.pem && \
   /usr/lib/squid/security_file_certgen -c -s /var/spool/squid/ssl_db -M 4MB && \
-  update-ca-certificates 2>/dev/null; \
-  cp /etc/squid/ssl_cert/ca.pem /usr/local/share/ca-certificates/sandbox-proxy-ca.crt && \
+  cp /etc/squid/ssl_cert/ca-cert.pem /usr/local/share/ca-certificates/sandbox-proxy-ca.crt && \
   update-ca-certificates && \
-  chown -R proxy:proxy /etc/squid/ssl_cert /var/spool/squid/ssl_db
+  chown -R root:proxy /etc/squid/ssl_cert /var/spool/squid/ssl_db && \
+  chmod 640 /etc/squid/ssl_cert/ca-key.pem /etc/squid/ssl_cert/ca-bundle.pem && \
+  chmod 444 /etc/squid/ssl_cert/ca-cert.pem
 
 RUN mkdir -p /usr/local/share/pnpm-global && \
   chown -R node:node /usr/local/share
