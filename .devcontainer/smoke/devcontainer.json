@@ -6,6 +6,10 @@
     "context": ".."
   },
   "remoteUser": "node",
+  "containerEnv": {
+    "CLAUDE_CODE_VERSION": "latest"
+  },
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
-  "workspaceFolder": "/workspace"
+  "workspaceFolder": "/workspace",
+  "postCreateCommand": "npm install -g --ignore-scripts=false @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
 }

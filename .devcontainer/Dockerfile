@@ -14,8 +14,6 @@ ARG TARGETARCH
 ARG TZ
 ENV TZ="$TZ"
 
-ARG CLAUDE_CODE_VERSION=latest
-
 RUN apt-get update && apt-get install -y --no-install-recommends \
   less \
   git \
@@ -88,13 +86,9 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
   -a "export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" \
   -x
 
-# claude-code's postinstall picks the per-platform native binary, so it
-# has to run despite the global NPM_CONFIG_IGNORE_SCRIPTS=true.
-RUN npm install -g --ignore-scripts=false @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
+# claude-code MUST be installed at container runtime (postCreateCommand),
+# not here — its postinstall fetches an arch-specific native binary.
 
-# Firewall init script. Filename was renamed .sh→.bash in #65 (script-extension
-# convention); both the COPY source and the sudoers entry must match the
-# actual filename, otherwise `docker build` fails at COPY.
 COPY init-firewall.bash /usr/local/bin/
 USER root
 RUN chmod +x /usr/local/bin/init-firewall.bash && \
