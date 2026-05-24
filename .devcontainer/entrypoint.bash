@@ -66,4 +66,17 @@ else
     echo ".claude/ is root-owned — agent cannot modify its own settings or hooks."
 fi
 
+CLAUDE_USER_DIR="/home/node/.claude"
+if [[ -d "$CLAUDE_USER_DIR" ]]; then
+    echo "Locking down user-level Claude config..."
+    for f in settings.json settings.local.json; do
+        touch "$CLAUDE_USER_DIR/$f"
+        chown root:root "$CLAUDE_USER_DIR/$f"
+        chmod 444 "$CLAUDE_USER_DIR/$f"
+    done
+    mkdir -p "$CLAUDE_USER_DIR/hooks"
+    chown root:root "$CLAUDE_USER_DIR/hooks"
+    chmod 555 "$CLAUDE_USER_DIR/hooks"
+fi
+
 echo "Lockdown complete."

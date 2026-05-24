@@ -16,7 +16,15 @@
       "Bash(capsh *)",
       "Bash(setcap *)",
       "Bash(nsenter *)",
-      "Bash(unshare *)"
+      "Bash(unshare *)",
+      "Bash(ssh *)",
+      "Bash(npm publish*)",
+      "Bash(pnpm publish*)",
+      "Bash(twine upload*)",
+      "Bash(pip upload*)",
+      "Bash(git push *--force*)",
+      "Bash(git push *-f *)",
+      "Bash(git push *--delete*)"
     ]
   },
   "hooks": {
