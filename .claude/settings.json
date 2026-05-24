@@ -80,7 +80,7 @@
       "Bash(*squid*)",
       "Bash(*cat*/etc/squid*)",
       "Edit(/etc/squid/**)",
-      "Read(/etc/squid/ssl_cert/**)",
+      "Read(/etc/squid/**)",
       "Bash(*unset*http_proxy*)",
       "Bash(*unset*https_proxy*)",
       "Bash(*unset*HTTP_PROXY*)",
