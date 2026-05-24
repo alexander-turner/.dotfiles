@@ -7,10 +7,6 @@
 # ecosystem keeps the digest fresh; see .github/dependabot.yml.
 FROM node:20@sha256:8f693eaa7e0a8e71560c9a82b55fd54c2ae920a2ba5d2cde28bac7d1c01c9ba5
 
-# BuildKit auto-populates TARGETARCH per --platform target. Used below
-# for the git-delta install so cross-arch builds pick the right binary.
-ARG TARGETARCH
-
 ARG TZ
 ENV TZ="$TZ"
 
@@ -58,12 +54,11 @@ RUN mkdir -p /workspace /home/node/.claude && \
 
 WORKDIR /workspace
 
-# git-delta — use TARGETARCH so multi-arch builds pull the right .deb.
-# TARGETARCH ("amd64"/"arm64") happens to align with delta's release naming.
 ARG GIT_DELTA_VERSION=0.18.2
-RUN wget "https://github.com/dandavison/delta/releases/download/${GIT_DELTA_VERSION}/git-delta_${GIT_DELTA_VERSION}_${TARGETARCH}.deb" \
-  && sudo dpkg -i "git-delta_${GIT_DELTA_VERSION}_${TARGETARCH}.deb" \
-  && rm "git-delta_${GIT_DELTA_VERSION}_${TARGETARCH}.deb"
+RUN arch=$(dpkg --print-architecture) \
+  && wget "https://github.com/dandavison/delta/releases/download/${GIT_DELTA_VERSION}/git-delta_${GIT_DELTA_VERSION}_${arch}.deb" \
+  && sudo dpkg -i "git-delta_${GIT_DELTA_VERSION}_${arch}.deb" \
+  && rm "git-delta_${GIT_DELTA_VERSION}_${arch}.deb"
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
