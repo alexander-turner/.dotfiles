@@ -9,7 +9,7 @@
 #
 # Provider auto-detection (override with MONITOR_PROVIDER):
 #   1. ANTHROPIC_API_KEY set  -> Anthropic Messages API + claude-haiku-4-5
-#   2. VENICE_INFERENCE_KEY   -> Venice (OpenAI-compat)  + qwen3-5-9b
+#   2. VENICE_INFERENCE_KEY   -> Venice (OpenAI-compat)  + qwen3-coder-480b-a35b-instruct-turbo
 #   3. none                   -> warn once per session, then pass through
 #
 # Environment variables:
@@ -102,7 +102,7 @@ anthropic)
     ;;
 openai)
     api_url="${api_url:-https://api.venice.ai/api/v1/chat/completions}"
-    model="${model:-qwen3-5-9b}"
+    model="${model:-qwen3-coder-480b-a35b-instruct-turbo}"
     ;;
 *)
     echo "MONITOR BLOCKED: could not detect provider from available API keys." >&2

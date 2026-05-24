@@ -40,7 +40,7 @@ keeping `setup.bash`, `doctor.bash`, and CI honest with each other.
 - `.claude/hooks/monitor.bash` — AI safety "trusted monitor" PreToolUse
   hook. Sends each tool call to a cheap/OSS model for review before
   execution (the "AI control" pattern). Auto-detects provider from
-  available API keys: Anthropic (Haiku) or Venice (qwen3-5-9b / OSS).
+  available API keys: Anthropic (Haiku) or Venice (qwen3-coder-480b / OSS).
   Skips Read by default. Logs decisions to
   `~/.cache/claude-monitor/monitor.jsonl`. Disable with
   `MONITOR_DISABLED=1`.
