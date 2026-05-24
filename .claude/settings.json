@@ -76,7 +76,21 @@
       "Bash(*cat*/etc/dnsmasq*)",
       "Bash(*cat*/etc/resolv*)",
       "Edit(/etc/dnsmasq*)",
-      "Edit(/etc/resolv*)"
+      "Edit(/etc/resolv*)",
+      "Bash(*unset*http_proxy*)",
+      "Bash(*unset*https_proxy*)",
+      "Bash(*unset*HTTP_PROXY*)",
+      "Bash(*unset*HTTPS_PROXY*)",
+      "Bash(*http_proxy=*)",
+      "Bash(*https_proxy=*)",
+      "Bash(*HTTP_PROXY=*)",
+      "Bash(*HTTPS_PROXY=*)",
+      "Bash(*squid*)",
+      "Bash(*cat*/etc/squid*)",
+      "Edit(/etc/squid/**)",
+      "Read(/etc/squid/**)",
+      "Edit(/etc/profile.d/proxy*)",
+      "Edit(/etc/fish/conf.d/proxy*)"
     ]
   },
   "statusLine": {

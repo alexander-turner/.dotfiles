@@ -36,7 +36,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   ripgrep \
   libcap2-bin \
   dnsmasq \
+  squid-openssl \
+  ssl-cert \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Generate a throwaway CA cert for squid ssl_bump. This CA is only
+# trusted inside the container — it lets squid inspect HTTPS to
+# read-only domains so we can enforce GET/HEAD-only access.
+RUN mkdir -p /etc/squid/ssl_cert && \
+  openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 \
+    -subj "/CN=sandbox-proxy-ca" \
+    -keyout /etc/squid/ssl_cert/ca.pem \
+    -out /etc/squid/ssl_cert/ca.pem && \
+  /usr/lib/squid/security_file_certgen -c -s /var/spool/squid/ssl_db -M 4MB && \
+  update-ca-certificates 2>/dev/null; \
+  cp /etc/squid/ssl_cert/ca.pem /usr/local/share/ca-certificates/sandbox-proxy-ca.crt && \
+  update-ca-certificates && \
+  chown -R proxy:proxy /etc/squid/ssl_cert /var/spool/squid/ssl_db
 
 RUN mkdir -p /usr/local/share/pnpm-global && \
   chown -R node:node /usr/local/share
@@ -95,4 +111,4 @@ USER node
 # without listing the binary here means the smoke test passes by
 # accident; listing one here without an install step means it fails
 # loudly. Whitespace-separated; alphabetised for diff sanity.
-ENV DOTFILES_TOOLS="bash capsh dnsmasq fish fzf gh git iptables ipset jq node npm pnpm python3 rg"
+ENV DOTFILES_TOOLS="bash capsh dnsmasq fish fzf gh git iptables ipset jq node npm pnpm python3 rg squid"
