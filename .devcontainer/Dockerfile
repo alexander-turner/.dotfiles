@@ -75,15 +75,10 @@ ENV NPM_CONFIG_IGNORE_SCRIPTS=true
 ENV EDITOR=nano
 ENV VISUAL=nano
 
-# Install claude-code at build time.  Each CI matrix leg builds natively
-# on its target arch, so the postinstall fetches the correct binary.
-# Rebuild (or `pnpm add -g ...` inside the container) to change versions.
-ARG CLAUDE_CODE_VERSION=latest
-RUN env -u NPM_CONFIG_IGNORE_SCRIPTS pnpm add -g \
-    --allow-build=@anthropic-ai/claude-code \
-    "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" || \
-    env -u NPM_CONFIG_IGNORE_SCRIPTS pnpm add -g \
-    "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
+# claude-code is installed at container runtime (postCreateCommand in
+# devcontainer.json) — its postinstall fetches an arch-specific native
+# binary.  The smoke CI validates the image tools only; claude-code is
+# verified by local use.
 
 COPY init-firewall.bash entrypoint.bash install-claude.bash /usr/local/bin/
 USER root
@@ -99,4 +94,4 @@ USER node
 # without listing the binary here means the smoke test passes by
 # accident; listing one here without an install step means it fails
 # loudly. Whitespace-separated; alphabetised for diff sanity.
-ENV DOTFILES_TOOLS="bash capsh claude fish fzf gh git iptables ipset jq node npm pnpm python3 rg"
+ENV DOTFILES_TOOLS="bash capsh fish fzf gh git iptables ipset jq node npm pnpm python3 rg"
