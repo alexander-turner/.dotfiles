@@ -74,9 +74,9 @@ ENV VISUAL=nano
 # claude-code MUST be installed at container runtime (postCreateCommand),
 # not here — its postinstall fetches an arch-specific native binary.
 
-COPY init-firewall.bash entrypoint.bash /usr/local/bin/
+COPY init-firewall.bash entrypoint.bash install-claude.bash /usr/local/bin/
 USER root
-RUN chmod +x /usr/local/bin/init-firewall.bash /usr/local/bin/entrypoint.bash && \
+RUN chmod +x /usr/local/bin/init-firewall.bash /usr/local/bin/entrypoint.bash /usr/local/bin/install-claude.bash && \
   echo "node ALL=(root) NOPASSWD: /usr/local/bin/entrypoint.bash" > /etc/sudoers.d/node-firewall && \
   chmod 0440 /etc/sudoers.d/node-firewall
 USER node

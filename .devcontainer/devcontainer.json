@@ -56,7 +56,7 @@
   },
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
   "workspaceFolder": "/workspace",
-  "postCreateCommand": "bash .devcontainer/install-claude.bash",
+  "postCreateCommand": "install-claude.bash",
   "postStartCommand": "sudo /usr/local/bin/entrypoint.bash",
   "waitFor": "postStartCommand"
 }
