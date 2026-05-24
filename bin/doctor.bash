@@ -146,15 +146,6 @@ for cmd in git fish nvim tmux brew zoxide gh fzf rg fd bat eza delta tokei dust 
     check_command "$cmd"
 done
 
-# pnpm is in Brewfile (cross-platform) and required for ccr, @bitwarden/cli,
-# @devcontainers/cli, and prettier. Skip rather than fail so doctor stays safe
-# to run on a partially-bootstrapped machine where brew hasn't run yet.
-if command -v pnpm >/dev/null 2>&1; then
-    pass "pnpm"
-else
-    skip "pnpm" "not on PATH (run: brew install pnpm or bash setup.bash)"
-fi
-
 # Verify the Python version pinned in .pre-commit-config.yaml is functional.
 # A broken pyexpat (e.g. Homebrew Python 3.14 / libexpat ABI mismatch) causes
 # pre-commit to fail when initialising hook virtualenvs with a cryptic error.
@@ -182,16 +173,16 @@ for cmd in trash-put trash-empty; do
     fi
 done
 
-# AI tooling installed by bin/setup_llm.bash. ccr is required at runtime for
-# the com.turntrout.ccr LaunchAgent below; the others are optional helpers
-# referenced from README. All skip-on-missing — doctor.bash must stay safe
-# to run on a partially-bootstrapped machine. Plain case (not declare -A)
-# because macOS /bin/bash is 3.2 and predates associative arrays.
-for cmd in ccr aider llm wut devcontainer; do
+# AI tooling installed by bin/setup_llm.bash and setup.bash. pnpm is their
+# shared installer. All skip-on-missing — doctor.bash must stay safe to run on
+# a partially-bootstrapped machine. Plain case (not declare -A) because macOS
+# /bin/bash is 3.2 and predates associative arrays.
+for cmd in pnpm ccr aider llm wut devcontainer; do
     if command -v "$cmd" >/dev/null 2>&1; then
         pass "$cmd"
     else
         case "$cmd" in
+        pnpm) hint="run: brew install pnpm (or bash setup.bash)" ;;
         ccr) hint="run: pnpm add -g @musistudio/claude-code-router (or bash bin/setup_llm.bash)" ;;
         aider) hint="run: uv tool install aider-chat (or bash bin/setup_llm.bash)" ;;
         llm) hint="run: uv tool install llm (or bash bin/setup_llm.bash)" ;;
