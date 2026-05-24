@@ -34,6 +34,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   python3-venv \
   pipx \
   ripgrep \
+  libcap2-bin \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /usr/local/share/pnpm-global && \
@@ -59,7 +60,11 @@ RUN arch=$(dpkg --print-architecture) \
   && sudo dpkg -i "git-delta_${GIT_DELTA_VERSION}_${arch}.deb" \
   && rm "git-delta_${GIT_DELTA_VERSION}_${arch}.deb"
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+ENV COREPACK_HOME=/usr/local/share/corepack
+RUN mkdir -p "$COREPACK_HOME" && \
+  corepack enable && \
+  corepack prepare pnpm@latest --activate && \
+  chmod -R a+rX "$COREPACK_HOME"
 
 USER node
 
@@ -70,13 +75,15 @@ ENV NPM_CONFIG_IGNORE_SCRIPTS=true
 ENV EDITOR=nano
 ENV VISUAL=nano
 
-# claude-code MUST be installed at container runtime (postCreateCommand),
-# not here — its postinstall fetches an arch-specific native binary.
+# claude-code is installed at container runtime (postCreateCommand in
+# devcontainer.json) — its postinstall fetches an arch-specific native
+# binary.  The smoke CI validates the image tools only; claude-code is
+# verified by local use.
 
-COPY init-firewall.bash /usr/local/bin/
+COPY init-firewall.bash entrypoint.bash install-claude.bash /usr/local/bin/
 USER root
-RUN chmod +x /usr/local/bin/init-firewall.bash && \
-  echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.bash" > /etc/sudoers.d/node-firewall && \
+RUN chmod +x /usr/local/bin/init-firewall.bash /usr/local/bin/entrypoint.bash /usr/local/bin/install-claude.bash && \
+  echo "node ALL=(root) NOPASSWD: /usr/local/bin/entrypoint.bash" > /etc/sudoers.d/node-firewall && \
   chmod 0440 /etc/sudoers.d/node-firewall
 USER node
 
@@ -87,4 +94,4 @@ USER node
 # without listing the binary here means the smoke test passes by
 # accident; listing one here without an install step means it fails
 # loudly. Whitespace-separated; alphabetised for diff sanity.
-ENV DOTFILES_TOOLS="bash claude fish fzf gh git iptables ipset jq node npm pnpm python3 rg"
+ENV DOTFILES_TOOLS="bash capsh fish fzf gh git iptables ipset jq node npm pnpm python3 rg"

@@ -63,4 +63,10 @@ if ! test -x /usr/local/bin/init-firewall.bash; then
     exit 1
 fi
 
-echo "==> Smoke check passed: ${#missing[@]} missing, init-firewall.bash present"
+if ! test -x /usr/local/bin/entrypoint.bash; then
+    echo "FAIL: /usr/local/bin/entrypoint.bash not executable (path drift in Dockerfile COPY?)"
+    ls -la /usr/local/bin/entrypoint* 2>&1 || true
+    exit 1
+fi
+
+echo "==> Smoke check passed: ${#missing[@]} missing, init-firewall.bash + entrypoint.bash present"
