@@ -57,17 +57,6 @@
     "DOCKER_PASSWORD": "",
     "DOCKER_AUTH_CONFIG": ""
   },
-  "remoteEnv": {
-    "GH_TOKEN": "",
-    "GITHUB_TOKEN": "",
-    "AWS_ACCESS_KEY_ID": "",
-    "AWS_SECRET_ACCESS_KEY": "",
-    "AWS_SESSION_TOKEN": "",
-    "NPM_TOKEN": "",
-    "PYPI_TOKEN": "",
-    "DOCKER_PASSWORD": "",
-    "DOCKER_AUTH_CONFIG": ""
-  },
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
   "workspaceFolder": "/workspace",
   "postCreateCommand": "npm install -g --ignore-scripts=false @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}",
