@@ -66,6 +66,8 @@ else
     echo ".claude/ is root-owned — agent cannot modify its own settings or hooks."
 fi
 
+# User-level config is locked unconditionally (including CLAUDE_SELF_EDIT=1)
+# because supervised mode unlocks the *project* config, not global overrides.
 CLAUDE_USER_DIR="/home/node/.claude"
 if [[ -d "$CLAUDE_USER_DIR" ]]; then
     echo "Locking down user-level Claude config..."
@@ -77,6 +79,8 @@ if [[ -d "$CLAUDE_USER_DIR" ]]; then
     mkdir -p "$CLAUDE_USER_DIR/hooks"
     chown root:root "$CLAUDE_USER_DIR/hooks"
     chmod 555 "$CLAUDE_USER_DIR/hooks"
+else
+    echo "WARN: $CLAUDE_USER_DIR does not exist — skipping user-level lockdown"
 fi
 
 echo "Lockdown complete."

@@ -13,6 +13,7 @@
     "--cap-add=NET_RAW",
     "--pids-limit=512",
     "--memory=8g",
+    "--memory-swap=8g",
     "--cpus=4"
   ],
   "customizations": {
