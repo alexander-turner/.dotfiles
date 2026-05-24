@@ -78,9 +78,15 @@ if [[ -z "$api_key" ]]; then
     esac
 fi
 
+# No API key → warn once per session, then pass through silently.
 if [[ -z "$api_key" ]]; then
-    jq -nc --arg fm "$fail_mode" \
-        '{hookSpecificOutput:{hookEventName:"PreToolUse",permissionDecision:$fm,permissionDecisionReason:"Monitor: no API key (set ANTHROPIC_API_KEY, VENICE_INFERENCE_KEY, or OPENAI_API_KEY)"}}' 2>/dev/null
+    session_id=$(printf '%s' "$envelope" | jq -r '.session_id // "unknown"' 2>/dev/null)
+    warned_file="/tmp/claude-monitor-no-key-${session_id}"
+    if [[ -f "$warned_file" ]]; then
+        exit 0
+    fi
+    touch "$warned_file" 2>/dev/null || true
+    jq -nc '{hookSpecificOutput:{hookEventName:"PreToolUse",permissionDecision:"ask",permissionDecisionReason:"[MONITOR] No API key configured — monitoring is INACTIVE this session. Set ANTHROPIC_API_KEY, VENICE_INFERENCE_KEY, or OPENAI_API_KEY to enable. Set MONITOR_DISABLED=1 to silence this warning."}}' 2>/dev/null
     exit 0
 fi
 
@@ -99,8 +105,6 @@ openai)
     fi
     ;;
 *)
-    jq -nc --arg fm "$fail_mode" \
-        '{hookSpecificOutput:{hookEventName:"PreToolUse",permissionDecision:$fm,permissionDecisionReason:"Monitor: unknown provider"}}' 2>/dev/null
     exit 0
     ;;
 esac
