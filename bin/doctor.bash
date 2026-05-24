@@ -53,16 +53,27 @@ pass() {
 }
 fail() {
     FAIL=$((FAIL + 1))
+    [[ "$VERBOSE" == false ]] && _maybe_print_section
     printf "  ${RED}FAIL${NC} %s\n" "$1"
     [[ -n "${2:-}" ]] && printf "       %s\n" "$2"
 }
 skip() {
     SKIP=$((SKIP + 1))
+    [[ "$VERBOSE" == false ]] && _maybe_print_section
     printf "  ${YELLOW}SKIP${NC} %s (%s)\n" "$1" "$2"
 }
 
+_current_section=""
 section() {
+    _current_section="$1"
     [[ "$VERBOSE" == true ]] && printf "\n${YELLOW}=== %s ===${NC}\n" "$1"
+}
+
+_maybe_print_section() {
+    if [[ -n "$_current_section" ]]; then
+        printf "\n${YELLOW}=== %s ===${NC}\n" "$_current_section"
+        _current_section=""
+    fi
 }
 
 # ── Symlinks ────────────────────────────────────────────────────────────────
@@ -131,7 +142,7 @@ check_command() {
     fi
 }
 
-for cmd in git fish nvim tmux brew zoxide gh fzf rg fd bat eza delta tokei dust btm mise carapace shfmt mods gitleaks pre-commit; do
+for cmd in git fish nvim tmux brew zoxide gh fzf rg fd bat eza delta tokei dust btm mise carapace shfmt mods gitleaks pre-commit pnpm; do
     check_command "$cmd"
 done
 
