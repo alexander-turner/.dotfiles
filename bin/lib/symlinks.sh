@@ -27,7 +27,6 @@ $HOME/.config/mods/mods.yml|$DOTFILES_DIR/apps/mods/mods.yml|mods config
 $HOME/.ssh/config|$DOTFILES_DIR/apps/ssh/config|ssh config
 $HOME/.config/mise/config.toml|$DOTFILES_DIR/apps/mise/config.toml|mise config
 $HOME/.config/nvim|$DOTFILES_DIR/apps/nvim|nvim config
-$HOME/.config/vagrant-templates/Vagrantfile|$DOTFILES_DIR/ai/Vagrantfile|vagrant-templates/Vagrantfile
 $HOME/.local/bin/bw-node|$DOTFILES_DIR/bin/bw-node|bw-node wrapper
 $HOME/.claude/settings.json|$DOTFILES_DIR/secure-claude-code-defaults/user-config/settings.json|Claude Code settings
 $HOME/.claude/CLAUDE.md|$DOTFILES_DIR/secure-claude-code-defaults/user-config/CLAUDE.md|Claude Code global CLAUDE.md
