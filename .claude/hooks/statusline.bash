@@ -35,7 +35,7 @@ max_k=$((context_max / 1000))
 
 if [[ "$duration" -gt 0 ]] 2>/dev/null; then
     mins=$((duration / 60000))
-    secs=$(( (duration % 60000) / 1000 ))
+    secs=$(((duration % 60000) / 1000))
     elapsed="${mins}m${secs}s"
 else
     elapsed="0m0s"
