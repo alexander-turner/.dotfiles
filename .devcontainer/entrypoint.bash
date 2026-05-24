@@ -20,6 +20,22 @@ for bin in iptables iptables-save iptables-restore ip6tables ipset \
     setcap -r "$path" 2>/dev/null || true
 done
 
+SCRUB_VARS=(
+    GH_TOKEN GITHUB_TOKEN
+    AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+    NPM_TOKEN PYPI_TOKEN
+    DOCKER_PASSWORD DOCKER_AUTH_CONFIG
+)
+UNSET_LINES=""
+FISH_LINES=""
+for var in "${SCRUB_VARS[@]}"; do
+    UNSET_LINES+="unset $var;"$'\n'
+    FISH_LINES+="set -e $var;"$'\n'
+done
+echo "$UNSET_LINES" >/etc/profile.d/scrub-secrets.sh
+mkdir -p /etc/fish/conf.d
+echo "$FISH_LINES" >/etc/fish/conf.d/scrub-secrets.fish
+
 WORKSPACE="/workspace"
 if [[ "${CLAUDE_SELF_EDIT:-0}" == "1" ]]; then
     echo "CLAUDE_SELF_EDIT=1 — skipping .claude/ lockdown (supervised mode)."
