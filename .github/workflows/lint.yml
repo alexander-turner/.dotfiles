@@ -68,7 +68,7 @@ jobs:
           [ "${rc:-0}" -le 1 ] || exit "$rc"
 
       - name: Test Claude Code hooks
-        run: bash bin/test-claude-hooks.bash
+        run: bash secure-claude-code-defaults/tests/test-claude-hooks.bash
 
       - name: Commit fixes if any
         run: bash bin/commit-lint-fixes.bash

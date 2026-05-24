@@ -8,7 +8,8 @@
 # Maintenance invariant: every safe_link in setup.bash whose target lives in
 # $HOME should have a matching entry here (or be intentionally bespoke).
 # Anything bespoke — the in-repo .hooks/pre-push relative symlink, the ccr
-# launch agent, etc. — stays inline in setup.bash / doctor.bash / uninstall.bash.
+# launch agent (in secure-claude-code-defaults/), etc. — stays inline in
+# setup.bash / doctor.bash / uninstall.bash.
 managed_symlinks() {
     cat <<EOF
 $HOME/.bashrc|$DOTFILES_DIR/.bashrc|.bashrc
@@ -28,13 +29,13 @@ $HOME/.config/mise/config.toml|$DOTFILES_DIR/apps/mise/config.toml|mise config
 $HOME/.config/nvim|$DOTFILES_DIR/apps/nvim|nvim config
 $HOME/.config/vagrant-templates/Vagrantfile|$DOTFILES_DIR/ai/Vagrantfile|vagrant-templates/Vagrantfile
 $HOME/.local/bin/bw-node|$DOTFILES_DIR/bin/bw-node|bw-node wrapper
-$HOME/.claude/settings.json|$DOTFILES_DIR/ai/prompting/settings.json|Claude Code settings
-$HOME/.claude/CLAUDE.md|$DOTFILES_DIR/ai/prompting/CLAUDE.md|Claude Code global CLAUDE.md
-$HOME/.claude/commands|$DOTFILES_DIR/ai/prompting/skills|Claude Code slash-command dir
-$HOME/.local/bin/claude|$DOTFILES_DIR/bin/claude|claude shim
-$HOME/.local/bin/claude-private|$DOTFILES_DIR/bin/claude-private|claude-private (ccr→Venice default_code, --think → Opus)
-$HOME/.local/bin/claude-paranoid|$DOTFILES_DIR/bin/claude-paranoid|claude-paranoid (ccr→Venice default_code, always)
-$HOME/.local/bin/claude-create-worktree|$DOTFILES_DIR/bin/claude-create-worktree|claude-create-worktree (shared worktree helper)
+$HOME/.claude/settings.json|$DOTFILES_DIR/secure-claude-code-defaults/user-config/settings.json|Claude Code settings
+$HOME/.claude/CLAUDE.md|$DOTFILES_DIR/secure-claude-code-defaults/user-config/CLAUDE.md|Claude Code global CLAUDE.md
+$HOME/.claude/commands|$DOTFILES_DIR/secure-claude-code-defaults/user-config/skills|Claude Code slash-command dir
+$HOME/.local/bin/claude|$DOTFILES_DIR/secure-claude-code-defaults/bin/claude|claude shim
+$HOME/.local/bin/claude-private|$DOTFILES_DIR/secure-claude-code-defaults/bin/claude-private|claude-private (ccr→Venice default_code, --think → Opus)
+$HOME/.local/bin/claude-paranoid|$DOTFILES_DIR/secure-claude-code-defaults/bin/claude-paranoid|claude-paranoid (ccr→Venice default_code, always)
+$HOME/.local/bin/claude-create-worktree|$DOTFILES_DIR/secure-claude-code-defaults/bin/claude-create-worktree|claude-create-worktree (shared worktree helper)
 $HOME/.devcontainer|$DOTFILES_DIR/.devcontainer|.devcontainer
 EOF
     if [[ "$(uname)" == "Darwin" ]]; then

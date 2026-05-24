@@ -222,7 +222,7 @@ if [ "$(uname)" = "Darwin" ]; then
     # and respawned if it crashes.
     CCR_PLIST_DEST="$HOME/Library/LaunchAgents/com.turntrout.ccr.plist"
     mkdir -p "$HOME/Library/LaunchAgents" "$HOME/Library/Logs/com.turntrout.ccr"
-    safe_link "$DOTFILES_DIR/launchagents/com.turntrout.ccr.plist" "$CCR_PLIST_DEST"
+    safe_link "$DOTFILES_DIR/secure-claude-code-defaults/launchagents/com.turntrout.ccr.plist" "$CCR_PLIST_DEST"
     launchctl bootout "gui/$(id -u)" "$CCR_PLIST_DEST" 2>/dev/null || true
     launchctl bootstrap "gui/$(id -u)" "$CCR_PLIST_DEST" 2>/dev/null || true
 
@@ -311,8 +311,9 @@ if command_exists mise; then
     mise install node@22 2>/dev/null || status_msg "WARN: mise install node@22 failed; bin/bw-node will fall back to PATH's node."
 fi
 
-# devcontainer CLI — used by the host-side `claude` wrappers (bin/claude and
-# apps/fish/functions/claude.fish) to bring up .devcontainer/ on demand.
+# devcontainer CLI — used by the host-side `claude` wrappers
+# (secure-claude-code-defaults/bin/claude and fish/claude.fish) to bring up
+# .devcontainer/ on demand.
 # pnpm is configured above (PNPM_HOME + PATH), so this lands alongside the
 # other globals (claude-code, ccr, prettier, @bitwarden/cli).
 if command_exists pnpm; then

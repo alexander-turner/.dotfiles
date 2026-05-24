@@ -8,19 +8,37 @@ keeping `setup.bash`, `doctor.bash`, and CI honest with each other.
 - `setup.bash` — top-level installer; idempotent, supports `--link-only`.
   Always finishes by running `bin/doctor.bash` so the user sees a green
   health summary (or knows exactly what's still broken).
+- `secure-claude-code-defaults/` — git submodule
+  (`alexander-turner/secure-claude-code-defaults`). Contains all
+  Claude Code configuration: hooks, skills, project/global settings,
+  wrapper scripts, Venice/ccr routing, and the ccr LaunchAgent plist.
+  `.claude/` in this repo is symlinks into this submodule.
+  - `hooks/monitor.bash` — AI safety "trusted monitor" PreToolUse hook.
+    Sends each tool call to a cheap/OSS model for review before
+    execution (the "AI control" pattern). Auto-detects provider from
+    available API keys: Anthropic (Haiku) or Venice (qwen3-coder-480b /
+    OSS). Skips Read by default. Logs decisions to
+    `~/.cache/claude-monitor/monitor.jsonl`. Disable with
+    `MONITOR_DISABLED=1`.
+  - `hooks/notify.bash` — cross-platform desktop notification for the
+    Notification lifecycle hook.
+  - `bin/claude-private`, `bin/claude-paranoid` — claude-code wrappers
+    that route through ccr to Venice. `claude-private` defaults to
+    Venice's `default_code` model and escalates to `claude-opus-4-7`
+    when `CLAUDE_PRIVATE_THINK=1`; `claude-paranoid` always uses
+    `default_code` with no escalation. Both source
+    `bin/lib/venice-resolve.bash` for the cached model id with a
+    hardcoded fallback.
+  - `launchagents/com.turntrout.ccr.plist` — ccr LaunchAgent.
+  - `user-config/` — global (user-level) Claude Code config symlinked
+    to `~/.claude/` by `symlinks.sh`.
 - `bin/setup_llm.bash` — AI tooling installer invoked from `setup.bash`:
   claude-code + ccr (pnpm), aider/llm/wut (uv), VSCodium + extensions,
   llm-based commit-msg template hook. Also refreshes the Venice
-  `default_code` model cache via `bin/lib/venice-resolve.bash`. The ccr
-  binary it installs is what the `com.turntrout.ccr` LaunchAgent
-  (`setup.bash:200`) starts; without this script, that LaunchAgent
-  KeepAlive-respawns a missing binary.
-- `bin/claude-private`, `bin/claude-paranoid` — claude-code wrappers
-  that route through ccr to Venice. `claude-private` defaults to
-  Venice's `default_code` model and escalates to `claude-opus-4-7` when
-  `CLAUDE_PRIVATE_THINK=1`; `claude-paranoid` always uses `default_code`
-  with no escalation. Both source `bin/lib/venice-resolve.bash` for the
-  cached model id with a hardcoded fallback.
+  `default_code` model cache via the subrepo's
+  `bin/lib/venice-resolve.bash`. The ccr binary it installs is what the
+  `com.turntrout.ccr` LaunchAgent starts; without this script, that
+  LaunchAgent KeepAlive-respawns a missing binary.
 - `bin/lib/safe_link.sh` — the only place that creates user-facing symlinks.
   Backs up real files to `~/.dotfiles-backup/<UTC-timestamp>/` before
   overwriting.
@@ -37,15 +55,8 @@ keeping `setup.bash`, `doctor.bash`, and CI honest with each other.
   pick up the same project context Claude Code uses.
 - `.mcp.json` — Claude Code MCP server config; currently registers the
   filesystem MCP scoped to `~/.dotfiles`.
-- `.claude/hooks/monitor.bash` — AI safety "trusted monitor" PreToolUse
-  hook. Sends each tool call to a cheap/OSS model for review before
-  execution (the "AI control" pattern). Auto-detects provider from
-  available API keys: Anthropic (Haiku) or Venice (qwen3-coder-480b / OSS).
-  Skips Read by default. Logs decisions to
-  `~/.cache/claude-monitor/monitor.jsonl`. Disable with
-  `MONITOR_DISABLED=1`.
-- `.claude/hooks/notify.bash` — cross-platform desktop notification for
-  the Notification lifecycle hook.
+- `.claude/` — symlinks into `secure-claude-code-defaults/`:
+  `settings.json`, `hooks/`, `skills/`, `README.md`.
 - `Brewfile` — package manifest, gated by `if OS.mac?` for cask blocks.
 - `launchagents/`, `etc/sudoers.d/` — `__USERNAME__` templates rendered
   during install.
@@ -125,7 +136,8 @@ real dir → prompt, missing → create.
 
 ### Session-setup upkeep (Claude Code on the web)
 
-`.claude/hooks/session-setup.bash` bootstraps fresh web/cloud sessions.
+`secure-claude-code-defaults/hooks/session-setup.bash` (symlinked via
+`.claude/hooks/`) bootstraps fresh web/cloud sessions.
 When a hook in `.pre-commit-config.yaml` or `bin/pre-push` gains a new
 tool dependency, install it from `session-setup.bash` — otherwise the
 next fresh session fails its first push on a missing-tool error
