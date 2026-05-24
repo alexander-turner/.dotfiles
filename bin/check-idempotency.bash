@@ -47,8 +47,9 @@ run_setup() {
 }
 
 list_symlinks() {
-    (cd "$TEST_HOME" && find . -type l | sort |
-        xargs -I{} bash -c 'echo "{} -> $(readlink "{}")"')
+    while IFS= read -r link; do
+        printf '%s -> %s\n' "$link" "$(readlink "$TEST_HOME/${link#./}")"
+    done < <(cd "$TEST_HOME" && find . -type l | sort)
 }
 
 run_setup "$SCRATCH/run1.log"
