@@ -3,7 +3,13 @@
 # <bitbar.author>turntrout</bitbar.author>
 # <bitbar.desc>Status and control for Tailscale Mullvad exit node.</bitbar.desc>
 
-DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
+_self="${BASH_SOURCE[0]}"
+while [[ -L "$_self" ]]; do
+    _link="$(readlink "$_self")"
+    case "$_link" in /*) _self="$_link" ;; *) _self="${_self%/*}/$_link" ;; esac
+done
+_self_dir="$(dirname "$_self")"
+DOTFILES_DIR="${DOTFILES_DIR:-$(git -C "$_self_dir" rev-parse --show-toplevel)}"
 # shellcheck source=../../bin/lib/tailscale-resolve.sh disable=SC1091
 source "$DOTFILES_DIR/bin/lib/tailscale-resolve.sh"
 

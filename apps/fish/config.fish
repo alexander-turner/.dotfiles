@@ -43,13 +43,14 @@ end
 # No default greeting
 set fish_greeting ''
 
-set -gx DOTFILES_DIR "$HOME/.dotfiles"
+set -l _self_dir (dirname (realpath (status filename)))
+set -gx DOTFILES_DIR (git -C $_self_dir rev-parse --show-toplevel)
 
 # These elements don't scale with font size
 set --universal tide_right_prompt_prefix ''
 set --universal tide_left_prompt_suffix ''
 
-abbr -a goosesay 'cowsay -f ~/.dotfiles/apps/goose.cow'
+abbr -a goosesay "cowsay -f $DOTFILES_DIR/apps/goose.cow"
 
 # Check if the operating system is macOS and set IS_MAC flag
 if test (uname) = Darwin

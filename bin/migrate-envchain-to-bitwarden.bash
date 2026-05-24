@@ -16,7 +16,8 @@
 
 set -euo pipefail
 
-DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
+_self_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+DOTFILES_DIR="${DOTFILES_DIR:-$(git -C "$_self_dir" rev-parse --show-toplevel)}"
 # shellcheck source=bin/lib/bw-common.sh disable=SC1091
 # bw-common.sh transitively sources bin/lib/secret-store.sh, which defines
 # secret_store_required_cmd used below.

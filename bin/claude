@@ -86,7 +86,8 @@ fi
 
 cfg_args=()
 if [[ ! -e "$workspace_folder/.devcontainer/devcontainer.json" ]]; then
-    cfg_args=(--config "$HOME/.dotfiles/.devcontainer/devcontainer.json")
+    my_dotfiles="$(git -C "$(dirname "$SELF_CANONICAL")" rev-parse --show-toplevel)"
+    cfg_args=(--config "$my_dotfiles/.devcontainer/devcontainer.json")
 fi
 
 container_id=$(docker ps --filter "label=devcontainer.local_folder=$workspace_folder" -q | head -1)

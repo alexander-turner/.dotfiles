@@ -2,8 +2,14 @@
 # Shared helpers for the bw-* scripts in this directory. Source from a
 # script via:
 #
-#     DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
+#     _self_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+#     DOTFILES_DIR="${DOTFILES_DIR:-$(git -C "$_self_dir" rev-parse --show-toplevel)}"
 #     source "$DOTFILES_DIR/bin/lib/bw-common.sh"
+#
+# `pwd -P` follows symlinks, so the snippet works whether the caller is
+# invoked by full path or via a ~/.local/bin/* symlink. `git rev-parse`
+# is depth-independent — works for callers anywhere in the repo, not
+# just bin/.
 #
 # All functions return non-zero on failure. Callers should `|| exit` after
 # each call (or rely on `set -e`).

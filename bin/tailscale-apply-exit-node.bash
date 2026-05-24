@@ -2,7 +2,8 @@
 # Applies the default Mullvad exit node after login, retrying while
 # tailscaled is still handshaking with the control plane.
 set -euo pipefail
-DOTFILES_DIR="${DOTFILES_DIR:-$HOME/.dotfiles}"
+_self_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+DOTFILES_DIR="${DOTFILES_DIR:-$(git -C "$_self_dir" rev-parse --show-toplevel)}"
 # shellcheck source=bin/lib/tailscale-resolve.sh disable=SC1091
 source "$DOTFILES_DIR/bin/lib/tailscale-resolve.sh"
 

@@ -18,11 +18,19 @@ function claude --description 'Route claude into devcontainer with per-session w
     set -l target_cwd $PWD
     set -l container_cwd /workspace
 
+    # Resolve the dotfiles repo root from this function's canonical
+    # location so we don't depend on $DOTFILES_DIR being set (config.fish
+    # sets it for interactive sessions, but `fish -c claude` from a
+    # one-off subshell may not have it yet).
+    set -l _self_dir (dirname (realpath (status filename)))
+    set -l my_dotfiles (git -C $_self_dir rev-parse --show-toplevel 2>/dev/null)
+    test -z "$my_dotfiles"; and set my_dotfiles $DOTFILES_DIR
+
     # Prefer the in-repo path so we don't depend on PATH propagation —
     # `~/.local/bin/claude-create-worktree` is the canonical PATH entry,
     # but a fish session that started before setup linked it will miss
     # the symlink until it rehashes.
-    set -l helper $HOME/.dotfiles/bin/claude-create-worktree
+    set -l helper $my_dotfiles/bin/claude-create-worktree
     if not test -x $helper
         set helper claude-create-worktree
     end
@@ -52,7 +60,7 @@ function claude --description 'Route claude into devcontainer with per-session w
 
     set -l cfg_args
     if not test -e "$workspace_folder/.devcontainer/devcontainer.json"
-        set cfg_args --config "$HOME/.dotfiles/.devcontainer/devcontainer.json"
+        set cfg_args --config "$my_dotfiles/.devcontainer/devcontainer.json"
     end
 
     set -l container_id (docker ps --filter "label=devcontainer.local_folder=$workspace_folder" -q | head -1)
