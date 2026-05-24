@@ -20,21 +20,37 @@ for bin in iptables iptables-save iptables-restore ip6tables ipset \
     setcap -r "$path" 2>/dev/null || true
 done
 
-SCRUB_VARS=(
-    GH_TOKEN GITHUB_TOKEN
-    AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
-    NPM_TOKEN PYPI_TOKEN
-    DOCKER_PASSWORD DOCKER_AUTH_CONFIG
-)
-UNSET_LINES=""
-FISH_LINES=""
-for var in "${SCRUB_VARS[@]}"; do
-    UNSET_LINES+="unset $var;"$'\n'
-    FISH_LINES+="set -e $var;"$'\n'
-done
-echo "$UNSET_LINES" >/etc/profile.d/scrub-secrets.sh
+SAFE_VARS="NODE_OPTIONS|NPM_CONFIG_PREFIX|CLAUDE_CONFIG_DIR|CLAUDE_CODE_VERSION"
+BASH_SCRUB=/etc/profile.d/scrub-secrets.sh
+FISH_SCRUB=/etc/fish/conf.d/scrub-secrets.fish
 mkdir -p /etc/fish/conf.d
-echo "$FISH_LINES" >/etc/fish/conf.d/scrub-secrets.fish
+
+cat >"$BASH_SCRUB" <<SCRUB_BASH
+#!/bin/bash
+while IFS='=' read -r name _; do
+    case "\${name,,}" in
+        *token*|*secret*|*key*|*pass*|*credential*|*auth*|*api*)
+            case "\$name" in
+                $SAFE_VARS) ;;
+                *) unset "\$name" ;;
+            esac
+            ;;
+    esac
+done < <(env)
+SCRUB_BASH
+
+cat >"$FISH_SCRUB" <<'SCRUB_FISH'
+for name in (env | string match -r '^[^=]+' )
+    set -l lower (string lower $name)
+    if string match -qr 'token|secret|key|pass|credential|auth|api' $lower
+        switch $name
+            case NODE_OPTIONS NPM_CONFIG_PREFIX CLAUDE_CONFIG_DIR CLAUDE_CODE_VERSION
+            case '*'
+                set -e $name
+        end
+    end
+end
+SCRUB_FISH
 
 WORKSPACE="/workspace"
 if [[ "${CLAUDE_SELF_EDIT:-0}" == "1" ]]; then
