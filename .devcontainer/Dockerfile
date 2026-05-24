@@ -75,8 +75,15 @@ ENV NPM_CONFIG_IGNORE_SCRIPTS=true
 ENV EDITOR=nano
 ENV VISUAL=nano
 
-# claude-code MUST be installed at container runtime (postCreateCommand),
-# not here — its postinstall fetches an arch-specific native binary.
+# Install claude-code at build time.  Each CI matrix leg builds natively
+# on its target arch, so the postinstall fetches the correct binary.
+# Rebuild (or `pnpm add -g ...` inside the container) to change versions.
+ARG CLAUDE_CODE_VERSION=latest
+RUN env -u NPM_CONFIG_IGNORE_SCRIPTS pnpm add -g \
+    --allow-build=@anthropic-ai/claude-code \
+    "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" || \
+    env -u NPM_CONFIG_IGNORE_SCRIPTS pnpm add -g \
+    "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
 
 COPY init-firewall.bash entrypoint.bash install-claude.bash /usr/local/bin/
 USER root
