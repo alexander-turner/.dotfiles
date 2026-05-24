@@ -18,7 +18,15 @@ function claude --description 'Route claude into devcontainer with per-session w
     set -l target_cwd $PWD
     set -l container_cwd /workspace
 
-    set -l wt_dir (claude-create-worktree)
+    # Prefer the in-repo path so we don't depend on PATH propagation —
+    # `~/.local/bin/claude-create-worktree` is the canonical PATH entry,
+    # but a fish session that started before setup linked it will miss
+    # the symlink until it rehashes.
+    set -l helper $HOME/.dotfiles/bin/claude-create-worktree
+    if not test -x $helper
+        set helper claude-create-worktree
+    end
+    set -l wt_dir ($helper)
     or begin
         echo "claude: worktree creation failed; bypass with CLAUDE_NO_WORKTREE=1." >&2
         return 1
