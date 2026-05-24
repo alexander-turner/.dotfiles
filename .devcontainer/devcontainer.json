@@ -43,7 +43,8 @@
     "NODE_OPTIONS": "--max-old-space-size=4096",
     "CLAUDE_CONFIG_DIR": "/home/node/.claude",
     "NPM_CONFIG_IGNORE_SCRIPTS": "true",
-    "CLAUDE_CODE_VERSION": "latest"
+    "CLAUDE_CODE_VERSION": "latest",
+    "IS_SANDBOX": "no"
   },
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
   "workspaceFolder": "/workspace",
