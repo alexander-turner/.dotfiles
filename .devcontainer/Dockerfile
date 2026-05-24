@@ -34,6 +34,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   python3-venv \
   pipx \
   ripgrep \
+  libcap2-bin \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /usr/local/share/npm-global && \
@@ -73,10 +74,10 @@ ENV VISUAL=nano
 # claude-code MUST be installed at container runtime (postCreateCommand),
 # not here — its postinstall fetches an arch-specific native binary.
 
-COPY init-firewall.bash /usr/local/bin/
+COPY init-firewall.bash entrypoint.bash /usr/local/bin/
 USER root
-RUN chmod +x /usr/local/bin/init-firewall.bash && \
-  echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.bash" > /etc/sudoers.d/node-firewall && \
+RUN chmod +x /usr/local/bin/init-firewall.bash /usr/local/bin/entrypoint.bash && \
+  echo "node ALL=(root) NOPASSWD: /usr/local/bin/entrypoint.bash" > /etc/sudoers.d/node-firewall && \
   chmod 0440 /etc/sudoers.d/node-firewall
 USER node
 
@@ -87,4 +88,4 @@ USER node
 # without listing the binary here means the smoke test passes by
 # accident; listing one here without an install step means it fails
 # loudly. Whitespace-separated; alphabetised for diff sanity.
-ENV DOTFILES_TOOLS="bash claude fish fzf gh git iptables ipset jq node npm pnpm python3 rg zsh"
+ENV DOTFILES_TOOLS="bash capsh claude fish fzf gh git iptables ipset jq node npm pnpm python3 rg zsh"
