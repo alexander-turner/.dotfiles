@@ -16,7 +16,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   procps \
   sudo \
   fzf \
-  zsh \
   fish \
   man-db \
   unzip \
@@ -68,18 +67,8 @@ ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
 ENV PATH=$PATH:/usr/local/share/npm-global/bin
 ENV NPM_CONFIG_IGNORE_SCRIPTS=true
 
-ENV SHELL=/bin/zsh
 ENV EDITOR=nano
 ENV VISUAL=nano
-
-ARG ZSH_IN_DOCKER_VERSION=1.2.0
-RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/v${ZSH_IN_DOCKER_VERSION}/zsh-in-docker.sh)" -- \
-  -p git \
-  -p fzf \
-  -a "source /usr/share/doc/fzf/examples/key-bindings.zsh" \
-  -a "source /usr/share/doc/fzf/examples/completion.zsh" \
-  -a "export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" \
-  -x
 
 # claude-code MUST be installed at container runtime (postCreateCommand),
 # not here — its postinstall fetches an arch-specific native binary.
