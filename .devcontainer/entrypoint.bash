@@ -22,7 +22,7 @@ done
 
 echo "Scrubbing sensitive environment variables..."
 ENV_SCRUB_FILE="/home/node/.env_scrub.sh"
-cat > "$ENV_SCRUB_FILE" << 'SCRUB'
+cat >"$ENV_SCRUB_FILE" <<'SCRUB'
 # Sourced by shell profiles to unset leaked host env vars.
 # Patterns: tokens, keys, secrets, passwords, credentials.
 while IFS='=' read -r name _; do
@@ -48,8 +48,18 @@ chmod 644 "$ENV_SCRUB_FILE"
 # Inject into bash/fish profile so it runs for every new shell
 BASH_PROFILE="/home/node/.bashrc"
 if ! grep -q "env_scrub" "$BASH_PROFILE" 2>/dev/null; then
-    echo 'source "$HOME/.env_scrub.sh"' >> "$BASH_PROFILE"
+    echo 'source "$HOME/.env_scrub.sh"' >>"$BASH_PROFILE"
+fi
+
+echo "Making .claude/ config root-owned so the agent cannot modify its own guardrails..."
+WORKSPACE="/workspace"
+if [[ -d "$WORKSPACE/.claude" ]]; then
+    chown -R root:root "$WORKSPACE/.claude"
+    chmod -R a+r,a-w "$WORKSPACE/.claude"
+    chmod a+x "$WORKSPACE/.claude" "$WORKSPACE/.claude/hooks" 2>/dev/null || true
+    find "$WORKSPACE/.claude/hooks" -name '*.bash' -exec chmod a+x {} + 2>/dev/null || true
 fi
 
 echo "Firewall locked — node user cannot modify iptables rules."
+echo ".claude/ is root-owned — agent cannot modify its own settings or hooks."
 echo "Sensitive env vars will be scrubbed in new shells."

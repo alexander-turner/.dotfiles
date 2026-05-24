@@ -10,25 +10,13 @@
       "Bash(ip route *)",
       "Bash(ip rule *)",
       "Bash(ip link *)",
-      "Bash(sudo iptables*)",
-      "Bash(sudo ipset*)",
-      "Bash(sudo ip *)",
+      "Bash(sudo *)",
       "Bash(git remote add *)",
       "Bash(git remote set-url *)",
       "Bash(capsh *)",
       "Bash(setcap *)",
       "Bash(nsenter *)",
-      "Bash(unshare *)",
-      "Edit(.claude/*)",
-      "Write(.claude/*)",
-      "Bash(*>.claude/*)",
-      "Bash(*>> .claude/*)",
-      "Bash(rm *.claude/*)",
-      "Bash(mv *.claude/*)",
-      "Bash(cp *.claude/*)",
-      "Bash(chmod *.claude/*)",
-      "Bash(sed * .claude/*)",
-      "Bash(tee *.claude/*)"
+      "Bash(unshare *)"
     ]
   },
   "hooks": {
