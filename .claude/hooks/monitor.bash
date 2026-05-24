@@ -30,6 +30,12 @@ if [[ "${MONITOR_DISABLED:-0}" == "1" ]]; then
     exit 0
 fi
 
+# Claude Code web/cloud sessions lack persistent API keys and run in
+# managed sandboxes — skip monitoring to avoid noise.
+if [[ "${IS_SANDBOX:-}" == "yes" ]]; then
+    exit 0
+fi
+
 envelope="$(cat)"
 
 if ! command -v jq &>/dev/null; then

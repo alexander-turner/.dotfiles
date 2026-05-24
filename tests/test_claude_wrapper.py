@@ -42,7 +42,18 @@ def _init_repo(path: Path) -> None:
         "GIT_COMMITTER_EMAIL": "t@t",
     }
     subprocess.run(
-        ["git", "-C", str(path), "commit", "-q", "--allow-empty", "-m", "init"],
+        [
+            "git",
+            "-C",
+            str(path),
+            "-c",
+            "commit.gpgsign=false",
+            "commit",
+            "-q",
+            "--allow-empty",
+            "-m",
+            "init",
+        ],
         env=env,
         check=True,
     )
