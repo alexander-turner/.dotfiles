@@ -156,6 +156,18 @@ skip-on-missing to fail-on-missing).
   `gitleaks` against the full git history on every PR — if it flags
   something, rotate the secret first, then fix the commit.
 
+### Trusted infrastructure protection
+
+Safety-critical files — the monitor hook, its audit log, and the
+settings that wire it up — must be protected from modification by
+the AI model being monitored. Prefer OS-level enforcement (root
+ownership, read-only bind mounts) over permission deny rules in
+`settings.json` — deny rules are glob patterns that are trivially
+bypassed via alternative commands, indirect invocations, or
+aliasing. Root ownership is kernel-enforced. In the devcontainer,
+`IS_SANDBOX=no` keeps the monitor active while the container's own
+sandboxing limits blast radius.
+
 ### AI provider routing
 
 - Inference flows through Venice only for new tooling — Venice

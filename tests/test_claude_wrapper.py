@@ -45,7 +45,18 @@ def _init_repo(path: Path) -> None:
         "GIT_CONFIG_VALUE_0": "false",
     }
     subprocess.run(
-        ["git", "-C", str(path), "commit", "-q", "--allow-empty", "-m", "init"],
+        [
+            "git",
+            "-C",
+            str(path),
+            "-c",
+            "commit.gpgsign=false",
+            "commit",
+            "-q",
+            "--allow-empty",
+            "-m",
+            "init",
+        ],
         env=env,
         check=True,
     )
