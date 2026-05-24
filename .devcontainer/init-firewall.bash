@@ -227,17 +227,27 @@ http_port 3128 ssl-bump \
 sslcrtd_program /usr/lib/squid/security_file_certgen -s /var/spool/squid/ssl_db -M 4MB
 
 acl readonly_domains dstdomain "/etc/squid/readonly-domains.txt"
-acl safe_methods method GET HEAD OPTIONS CONNECT
-acl unsafe_to_readonly !safe_methods readonly_domains
+acl safe_methods method GET HEAD OPTIONS
+acl CONNECT method CONNECT
 
-# Deny non-GET/HEAD to read-only domains
-http_access deny unsafe_to_readonly
+# Allow CONNECT tunnels (required for ssl_bump to establish the TLS
+# intercept). CONNECT itself carries no payload — method enforcement
+# happens on the inner HTTP request after bumping.
+http_access allow CONNECT
 
-# SSL bump read-only domains for method inspection
+# Deny non-GET/HEAD to read-only domains (applies to inner requests
+# after ssl_bump decrypts the tunnel).
+http_access deny !safe_methods readonly_domains
+
+# SSL bump read-only domains for method inspection. Splice non-readonly
+# domains (rw — no method restriction needed). Terminate anything that
+# can't be bumped so a failed bump on a readonly domain doesn't fall
+# through to an uninspected splice.
 acl step1 at_step SslBump1
 ssl_bump peek step1
 ssl_bump bump readonly_domains
-ssl_bump splice all
+ssl_bump splice !readonly_domains
+ssl_bump terminate all
 
 http_access allow all
 
