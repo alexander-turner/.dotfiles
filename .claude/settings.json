@@ -83,7 +83,12 @@
       "Bash(*HTTP_PROXY=*)",
       "Bash(*HTTPS_PROXY=*)",
       "Bash(*no_proxy=*)",
-      "Bash(*NO_PROXY=*)"
+      "Bash(*NO_PROXY=*)",
+      "Bash(*--noproxy*)",
+      "Bash(*MONITOR_DISABLED*)",
+      "Bash(su *)",
+      "Bash(su -*)",
+      "Bash(*bash -c *)"
     ]
   },
   "statusLine": {

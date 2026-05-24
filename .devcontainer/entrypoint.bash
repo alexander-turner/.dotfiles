@@ -1,10 +1,11 @@
 #!/bin/bash
-# Post-start entrypoint: configures the firewall as root, then locks
-# it down so the node user cannot modify iptables rules.
+# Post-start entrypoint: hardens the app container after the firewall
+# container has already configured iptables/dnsmasq/squid in the shared
+# network namespace. This container has no NET_ADMIN/NET_RAW.
 #
-# Strategy: after the firewall is up, remove the sudoers entry that
-# allowed node to run this script, and strip setuid/capabilities from
-# network and namespace tools so unprivileged users can't touch them.
+# Strategy: strip setuid/capabilities from network and namespace tools
+# (defense in depth — the app lacks NET_ADMIN anyway), lock down
+# config directories, and scrub credential env vars.
 set -euo pipefail
 
 WORKSPACE="/workspace"
@@ -13,8 +14,6 @@ WORKSPACE="/workspace"
 if [[ -f "$WORKSPACE/.devcontainer/harden-monitor.bash" ]]; then
     bash "$WORKSPACE/.devcontainer/harden-monitor.bash"
 fi
-
-/usr/local/bin/init-firewall.bash
 
 echo "Locking down firewall and namespace tools..."
 
@@ -71,6 +70,25 @@ else
     fi
     echo ".claude/ is root-owned — agent cannot modify its own settings or hooks."
 fi
+
+# Root-own .devcontainer/, CLAUDE.md, and AGENTS.md so the agent
+# cannot modify sandbox infrastructure or project instructions for
+# next-session persistence. Readable so builds and Claude Code can
+# still parse them; just not writable by the node user.
+echo "Locking down sandbox infrastructure and project instructions..."
+if [[ -d "$WORKSPACE/.devcontainer" ]]; then
+    chown -R root:root "$WORKSPACE/.devcontainer"
+    chmod -R a+r,a-w "$WORKSPACE/.devcontainer"
+    find "$WORKSPACE/.devcontainer" -type d -exec chmod a+x {} + 2>/dev/null || true
+    find "$WORKSPACE/.devcontainer" \( -name '*.bash' -o -name '*.py' -o -name '*.sh' \) -exec chmod a+x {} + 2>/dev/null || true
+fi
+for doc in CLAUDE.md AGENTS.md; do
+    if [[ -f "$WORKSPACE/$doc" && ! -L "$WORKSPACE/$doc" ]]; then
+        chown root:root "$WORKSPACE/$doc"
+        chmod 444 "$WORKSPACE/$doc"
+    fi
+done
+echo ".devcontainer/, CLAUDE.md, AGENTS.md are root-owned."
 
 # User-level config is locked unconditionally (including CLAUDE_SELF_EDIT=1)
 # because supervised mode unlocks the *project* config, not global overrides.

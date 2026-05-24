@@ -33,12 +33,12 @@ class MonitorHandler(http.server.BaseHTTPRequestHandler):
                 timeout=30,
                 env=env,
             )
-            response = result.stdout or b'{"decision":"allow"}'
+            response = result.stdout or b'{"decision":"deny","reason":"monitor produced no output"}'
         except subprocess.TimeoutExpired:
-            response = b'{"decision":"ask","reason":"monitor timed out"}'
+            response = b'{"decision":"deny","reason":"monitor timed out"}'
         except Exception as e:
             print(f"monitor error: {e}", file=sys.stderr)
-            response = b'{"decision":"allow"}'
+            response = b'{"decision":"deny","reason":"monitor error -- defaulting to deny"}'
 
         self.send_response(200)
         self.send_header("Content-Type", "application/json")

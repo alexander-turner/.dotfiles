@@ -7,6 +7,9 @@ set -euo pipefail
 WORKSPACE="${WORKSPACE:-/workspace}"
 MONITOR="$WORKSPACE/.claude/hooks/monitor.bash"
 MONITOR_LOG_DIR="/home/node/.cache/claude-monitor"
+POLICY_DIR="/etc/claude-monitor"
+
+mkdir -p "$POLICY_DIR"
 
 # monitor.bash is root:root 700 — unreadable by the monitored model.
 # Bash scripts must be readable to execute, so settings.json points to
@@ -28,9 +31,6 @@ mkdir -p "$MONITOR_LOG_DIR"
 chown root:root "$MONITOR_LOG_DIR"
 chmod 1733 "$MONITOR_LOG_DIR"
 echo "monitor: hardened $MONITOR_LOG_DIR (root:root 1733)"
-
-POLICY_DIR="/etc/claude-monitor"
-mkdir -p "$POLICY_DIR"
 
 # Install default policy if none exists. Users customize by editing
 # this file — it's root-owned so the monitored model can't read it
