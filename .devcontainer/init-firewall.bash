@@ -60,7 +60,6 @@ for domain in \
     "raw.githubusercontent.com" \
     "objects.githubusercontent.com" \
     "sentry.io" \
-    "statsig.anthropic.com" \
     "statsig.com" \
     "marketplace.visualstudio.com" \
     "vscode.blob.core.windows.net" \
