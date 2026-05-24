@@ -37,6 +37,13 @@ keeping `setup.bash`, `doctor.bash`, and CI honest with each other.
   pick up the same project context Claude Code uses.
 - `.mcp.json` — Claude Code MCP server config; currently registers the
   filesystem MCP scoped to `~/.dotfiles`.
+- `.claude/hooks/monitor.bash` — AI safety "trusted monitor" PreToolUse
+  hook. Sends each tool call to a cheap/OSS model for review before
+  execution (the "AI control" pattern). Auto-detects provider from
+  available API keys: Anthropic (Haiku) or Venice (qwen3-coder-480b / OSS).
+  Skips Read by default. Logs decisions to
+  `~/.cache/claude-monitor/monitor.jsonl`. Disable with
+  `MONITOR_DISABLED=1`.
 - `.claude/hooks/notify.bash` — cross-platform desktop notification for
   the Notification lifecycle hook.
 - `Brewfile` — package manifest, gated by `if OS.mac?` for cask blocks.

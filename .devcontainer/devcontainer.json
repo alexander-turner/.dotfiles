@@ -47,6 +47,7 @@
     "CLAUDE_CONFIG_DIR": "/home/node/.claude",
     "NPM_CONFIG_IGNORE_SCRIPTS": "true",
     "CLAUDE_CODE_VERSION": "latest",
+    "IS_SANDBOX": "no",
     "GH_TOKEN": "",
     "GITHUB_TOKEN": "",
     "AWS_ACCESS_KEY_ID": "",
@@ -60,6 +61,6 @@
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
   "workspaceFolder": "/workspace",
   "postCreateCommand": "install-claude.bash",
-  "postStartCommand": "sudo /usr/local/bin/entrypoint.bash",
+  "postStartCommand": "sudo /usr/local/bin/entrypoint.bash && sudo bash /workspace/.devcontainer/harden-monitor.bash",
   "waitFor": "postStartCommand"
 }
