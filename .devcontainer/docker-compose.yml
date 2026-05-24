@@ -1,0 +1,61 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        TZ: ${TZ:-America/Los_Angeles}
+        GIT_DELTA_VERSION: "0.18.2"
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    pids_limit: 512
+    mem_limit: 8g
+    memswap_limit: 8g
+    cpus: 4
+    volumes:
+      - claude-code-bashhistory:/commandhistory
+      - claude-code-config:/home/node/.claude
+      - monitor-socket:/var/run/monitor
+      - ..:/workspace:delegated
+    environment:
+      NODE_OPTIONS: "--max-old-space-size=4096"
+      CLAUDE_CONFIG_DIR: /home/node/.claude
+      NPM_CONFIG_IGNORE_SCRIPTS: "true"
+      CLAUDE_CODE_VERSION: latest
+      IS_SANDBOX: "no"
+      GH_TOKEN: ""
+      GITHUB_TOKEN: ""
+      AWS_ACCESS_KEY_ID: ""
+      AWS_SECRET_ACCESS_KEY: ""
+      AWS_SESSION_TOKEN: ""
+      NPM_TOKEN: ""
+      PYPI_TOKEN: ""
+      DOCKER_PASSWORD: ""
+      DOCKER_AUTH_CONFIG: ""
+    depends_on:
+      monitor:
+        condition: service_started
+
+  monitor:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile.monitor
+    volumes:
+      - monitor-socket:/var/run/monitor
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+    pids_limit: 32
+    mem_limit: 512m
+    memswap_limit: 512m
+    cpus: 1
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  claude-code-bashhistory:
+  claude-code-config:
+  monitor-socket:

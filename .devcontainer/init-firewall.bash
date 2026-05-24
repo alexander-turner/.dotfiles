@@ -127,15 +127,95 @@ else
     echo "Firewall verification passed - able to reach https://api.github.com as expected"
 fi
 
-echo "Tightening DNS to Docker resolver only..."
+# === DNS allowlist via dnsmasq ===
+# Instead of rate-limiting arbitrary DNS (which still allows one-shot
+# exfil), run a local resolver that only forwards whitelisted domains.
+# Queries for non-allowed domains get NXDOMAIN without ever leaving
+# the container — kills DNS exfiltration structurally.
+echo "Configuring dnsmasq DNS allowlist..."
+
+DNSMASQ_CONF="/etc/dnsmasq.d/allowlist.conf"
+mkdir -p /etc/dnsmasq.d
+
+cat > /etc/dnsmasq.conf <<'DNSMASQ_BASE'
+no-resolv
+no-hosts
+listen-address=127.0.0.1
+bind-interfaces
+port=53
+conf-dir=/etc/dnsmasq.d
+DNSMASQ_BASE
+
+# Default: NXDOMAIN for everything not explicitly allowed
+echo "address=/#/" > "$DNSMASQ_CONF"
+
+# Forward allowed domains to Docker's embedded resolver
+ALLOWED_DOMAINS=(
+    "github.com"
+    "api.github.com"
+    "registry.npmjs.org"
+    "api.anthropic.com"
+    "pypi.org"
+    "files.pythonhosted.org"
+    "raw.githubusercontent.com"
+    "objects.githubusercontent.com"
+    "en.wikipedia.org"
+    "en.m.wikipedia.org"
+    "upload.wikimedia.org"
+    "developer.mozilla.org"
+    "docs.python.org"
+    "nodejs.org"
+    "pkg.go.dev"
+    "proxy.golang.org"
+    "docs.rs"
+    "crates.io"
+    "man7.org"
+    "stackoverflow.com"
+    "api.stackexchange.com"
+    "turntrout.com"
+    "www.turntrout.com"
+)
+
+for domain in "${ALLOWED_DOMAINS[@]}"; do
+    echo "server=/$domain/127.0.0.11" >> "$DNSMASQ_CONF"
+done
+
+dnsmasq --test && echo "dnsmasq config valid"
+dnsmasq
+echo "dnsmasq started — $(wc -l < "$DNSMASQ_CONF") rules"
+
+# Replace wide-open DNS rules with locked-down policy:
+# - node user can only query dnsmasq (127.0.0.1)
+# - dnsmasq (running as dnsmasq user) can query Docker's resolver
+# - node user CANNOT bypass dnsmasq to query Docker's resolver directly
 iptables -D OUTPUT -p udp --dport 53 -j ACCEPT
 iptables -D INPUT -p udp --sport 53 -j ACCEPT
-# Rate-limit outgoing DNS to mitigate data exfiltration via subdomain
-# encoding. Docker's resolver forwards queries upstream, so arbitrary
-# domain lookups succeed even though TCP to the resolved IP is blocked.
-# This doesn't prevent one-shot exfiltration (a single query can carry
-# ~60 bytes in subdomain labels), but throttles sustained DNS tunneling
-# (which needs hundreds of queries/sec for meaningful bandwidth).
+
+NODE_UID=$(id -u node)
 iptables -I OUTPUT 1 -p udp --dport 53 -d 127.0.0.11 \
-    -m limit --limit 60/min --limit-burst 50 -j ACCEPT
+    -m owner --uid-owner "$NODE_UID" -j REJECT
+iptables -I OUTPUT 1 -p udp --dport 53 -d 127.0.0.1 -j ACCEPT
+iptables -I OUTPUT 1 -p udp --dport 53 -d 127.0.0.11 -j ACCEPT
+iptables -I INPUT 1 -p udp --sport 53 -s 127.0.0.1 -j ACCEPT
 iptables -I INPUT 1 -p udp --sport 53 -s 127.0.0.11 -j ACCEPT
+
+# Point system DNS to dnsmasq
+cp /etc/resolv.conf /etc/resolv.conf.docker
+echo "nameserver 127.0.0.1" > /etc/resolv.conf
+
+# Verify DNS allowlist works
+echo "Verifying DNS allowlist..."
+if dig +short +timeout=2 @127.0.0.1 api.github.com A | grep -q '^[0-9]'; then
+    echo "DNS allowlist passed — allowed domain resolves"
+else
+    echo "ERROR: DNS allowlist failed — allowed domain did not resolve"
+    cat /etc/resolv.conf.docker > /etc/resolv.conf
+    exit 1
+fi
+if dig +short +timeout=2 @127.0.0.1 evil-exfil.example.com A 2>/dev/null | grep -q '^[0-9]'; then
+    echo "ERROR: DNS allowlist failed — blocked domain resolved"
+    cat /etc/resolv.conf.docker > /etc/resolv.conf
+    exit 1
+else
+    echo "DNS allowlist passed — blocked domain returns NXDOMAIN"
+fi

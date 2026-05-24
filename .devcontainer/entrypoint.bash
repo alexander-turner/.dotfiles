@@ -7,6 +7,15 @@
 # network and namespace tools so unprivileged users can't touch them.
 set -euo pipefail
 
+# Harden the monitor FIRST — before any other work — so monitor.bash is
+# never world-readable during the window between image build and lockdown.
+WORKSPACE="/workspace"
+if [[ -x /workspace/.devcontainer/harden-monitor.bash ]]; then
+    bash /workspace/.devcontainer/harden-monitor.bash
+elif [[ -f /workspace/.devcontainer/harden-monitor.bash ]]; then
+    bash /workspace/.devcontainer/harden-monitor.bash
+fi
+
 /usr/local/bin/init-firewall.bash
 
 echo "Locking down firewall and namespace tools..."

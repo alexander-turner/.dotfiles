@@ -35,6 +35,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   pipx \
   ripgrep \
   libcap2-bin \
+  dnsmasq \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /usr/local/share/pnpm-global && \
@@ -94,4 +95,4 @@ USER node
 # without listing the binary here means the smoke test passes by
 # accident; listing one here without an install step means it fails
 # loudly. Whitespace-separated; alphabetised for diff sanity.
-ENV DOTFILES_TOOLS="bash capsh fish fzf gh git iptables ipset jq node npm pnpm python3 rg"
+ENV DOTFILES_TOOLS="bash capsh dnsmasq fish fzf gh git iptables ipset jq node npm pnpm python3 rg"
