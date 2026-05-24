@@ -90,7 +90,7 @@ for cmd in $RUNTIME_TOOLS; do
         echo "FAIL: runtime tool '$cmd' not on PATH after install"
         echo "  PATH=$PATH"
         echo "  PNPM_HOME=${PNPM_HOME:-<unset>}"
-        ls -la "${PNPM_HOME:-/dev/null}" 2>&1 | head -20
+        find "${PNPM_HOME:-.}" -maxdepth 1 -ls 2>&1 | head -20
         exit 1
     fi
 done
