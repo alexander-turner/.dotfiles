@@ -60,7 +60,11 @@ RUN arch=$(dpkg --print-architecture) \
   && sudo dpkg -i "git-delta_${GIT_DELTA_VERSION}_${arch}.deb" \
   && rm "git-delta_${GIT_DELTA_VERSION}_${arch}.deb"
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+ENV COREPACK_HOME=/usr/local/share/corepack
+RUN mkdir -p "$COREPACK_HOME" && \
+  corepack enable && \
+  corepack prepare pnpm@latest --activate && \
+  chmod -R a+rX "$COREPACK_HOME"
 
 USER node
 
