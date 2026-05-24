@@ -21,9 +21,11 @@ chown root:root "$MONITOR_LOG_DIR"
 chmod 1733 "$MONITOR_LOG_DIR"
 echo "monitor: hardened $MONITOR_LOG_DIR (root:root 1733)"
 
-NTFY_CONF="/home/node/.config/claude-monitor/ntfy.conf"
-if [[ -f "$NTFY_CONF" ]]; then
-    chown root:root "$NTFY_CONF"
-    chmod 600 "$NTFY_CONF"
-    echo "monitor: hardened $NTFY_CONF (root:root 600)"
-fi
+CONF_DIR="/home/node/.config/claude-monitor"
+for f in "$CONF_DIR/ntfy.conf" "$CONF_DIR/policy.txt"; do
+    if [[ -f "$f" ]]; then
+        chown root:root "$f"
+        chmod 644 "$f"
+        echo "monitor: hardened $f (root:root 644)"
+    fi
+done
