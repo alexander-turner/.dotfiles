@@ -34,6 +34,7 @@ $HOME/.claude/commands|$DOTFILES_DIR/ai/prompting/skills|Claude Code slash-comma
 $HOME/.local/bin/claude|$DOTFILES_DIR/bin/claude|claude shim
 $HOME/.local/bin/claude-private|$DOTFILES_DIR/bin/claude-private|claude-private (ccr→Venice default_code, --think → Opus)
 $HOME/.local/bin/claude-paranoid|$DOTFILES_DIR/bin/claude-paranoid|claude-paranoid (ccr→Venice default_code, always)
+$HOME/.local/bin/claude-create-worktree|$DOTFILES_DIR/bin/claude-create-worktree|claude-create-worktree (shared worktree helper)
 $HOME/.devcontainer|$DOTFILES_DIR/.devcontainer|.devcontainer
 EOF
     if [[ "$(uname)" == "Darwin" ]]; then

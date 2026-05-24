@@ -18,18 +18,14 @@ function claude --description 'Route claude into devcontainer with per-session w
     set -l target_cwd $PWD
     set -l container_cwd /workspace
 
-    if test -n "$repo_root"; and not set -q CLAUDE_NO_WORKTREE
-        set -l ts (date -u +%Y%m%dT%H%M%S)-$fish_pid
-        set -l branch "claude/$ts"
-        set -l wt_relpath ".worktrees/claude-$ts"
-        set -l wt_dir "$repo_root/$wt_relpath"
-        mkdir -p "$repo_root/.worktrees"
-        if not git -C "$repo_root" worktree add "$wt_dir" -b "$branch" >&2
-            echo "claude: failed to create worktree; bypass with CLAUDE_NO_WORKTREE=1." >&2
-            return 1
-        end
+    set -l wt_dir (claude-create-worktree)
+    or begin
+        echo "claude: worktree creation failed; bypass with CLAUDE_NO_WORKTREE=1." >&2
+        return 1
+    end
+    if test -n "$wt_dir"; and test -d "$wt_dir"
         set target_cwd "$wt_dir"
-        set container_cwd "/workspace/$wt_relpath"
+        set container_cwd "/workspace/"(string replace "$repo_root/" "" "$wt_dir")
     end
 
     if set -q CLAUDE_NO_SANDBOX

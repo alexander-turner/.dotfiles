@@ -56,18 +56,13 @@ workspace_folder="${repo_root:-$PWD}"
 target_cwd="$PWD"
 container_cwd=/workspace
 
-if [[ -n "$repo_root" && -z "${CLAUDE_NO_WORKTREE:-}" ]]; then
-    ts=$(date -u +%Y%m%dT%H%M%S)-$$
-    branch="claude/$ts"
-    wt_relpath=".worktrees/claude-$ts"
-    wt_dir="$repo_root/$wt_relpath"
-    mkdir -p "$repo_root/.worktrees"
-    if ! git -C "$repo_root" worktree add "$wt_dir" -b "$branch" >&2; then
-        echo "claude: failed to create worktree; bypass with CLAUDE_NO_WORKTREE=1." >&2
-        exit 1
-    fi
+wt_dir=$("$(dirname "$SELF_CANONICAL")/claude-create-worktree") || {
+    echo "claude: worktree creation failed; bypass with CLAUDE_NO_WORKTREE=1." >&2
+    exit 1
+}
+if [[ -n "$wt_dir" ]]; then
     target_cwd="$wt_dir"
-    container_cwd="/workspace/$wt_relpath"
+    container_cwd="/workspace/${wt_dir#"$repo_root"/}"
 fi
 
 run_host_claude() {
