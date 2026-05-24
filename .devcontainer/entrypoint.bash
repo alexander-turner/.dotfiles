@@ -51,15 +51,19 @@ if ! grep -q "env_scrub" "$BASH_PROFILE" 2>/dev/null; then
     echo 'source "$HOME/.env_scrub.sh"' >>"$BASH_PROFILE"
 fi
 
-echo "Making .claude/ config root-owned so the agent cannot modify its own guardrails..."
 WORKSPACE="/workspace"
-if [[ -d "$WORKSPACE/.claude" ]]; then
-    chown -R root:root "$WORKSPACE/.claude"
-    chmod -R a+r,a-w "$WORKSPACE/.claude"
-    chmod a+x "$WORKSPACE/.claude" "$WORKSPACE/.claude/hooks" 2>/dev/null || true
-    find "$WORKSPACE/.claude/hooks" -name '*.bash' -exec chmod a+x {} + 2>/dev/null || true
+if [[ "${CLAUDE_SELF_EDIT:-0}" == "1" ]]; then
+    echo "CLAUDE_SELF_EDIT=1 — skipping .claude/ lockdown (supervised mode)."
+else
+    echo "Making .claude/ config root-owned so the agent cannot modify its own guardrails..."
+    if [[ -d "$WORKSPACE/.claude" ]]; then
+        chown -R root:root "$WORKSPACE/.claude"
+        chmod -R a+r,a-w "$WORKSPACE/.claude"
+        chmod a+x "$WORKSPACE/.claude" "$WORKSPACE/.claude/hooks" 2>/dev/null || true
+        find "$WORKSPACE/.claude/hooks" -name '*.bash' -exec chmod a+x {} + 2>/dev/null || true
+    fi
+    echo ".claude/ is root-owned — agent cannot modify its own settings or hooks."
 fi
 
 echo "Firewall locked — node user cannot modify iptables rules."
-echo ".claude/ is root-owned — agent cannot modify its own settings or hooks."
 echo "Sensitive env vars will be scrubbed in new shells."
