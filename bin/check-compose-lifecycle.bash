@@ -19,6 +19,12 @@ DC="docker compose -p $PROJECT
 
 fail() {
     echo "FAIL: $*" >&2
+    echo "==> Container states at failure:"
+    # shellcheck disable=SC2086
+    $DC ps -a 2>/dev/null || true
+    echo "==> Container logs:"
+    # shellcheck disable=SC2086
+    $DC logs --tail=50 2>/dev/null || true
     exit 1
 }
 pass() { echo "PASS: $*"; }
