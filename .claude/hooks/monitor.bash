@@ -179,13 +179,6 @@ if [[ "$hook_decision" == "ask" ]]; then
                 -d "ASK on ${tool_name}: ${reason:0:100}" \
                 "${ntfy_url}/${ntfy_topic}" >/dev/null 2>&1 || true
         fi
-    else
-        # First ASK without ntfy configured — nudge the user once.
-        setup_nudge="/tmp/claude-monitor-ntfy-nudge-$(printf '%s' "$envelope" | jq -r '.session_id // "unknown"')"
-        if [[ ! -f "$setup_nudge" ]]; then
-            touch "$setup_nudge"
-            reason="${reason:+$reason | }Run 'bash bin/setup-ntfy.bash' in a separate terminal to get push notifications"
-        fi
     fi
 fi
 
