@@ -147,8 +147,22 @@ def test_explicit_model_override() -> None:
     assert "custom-model-123" in json.loads(r.stdout)["hookSpecificOutput"]["permissionDecisionReason"]
 
 
-@pytest.mark.parametrize("fail_mode", ["deny", "ask"])
-def test_api_failure_uses_fail_mode(fail_mode: str) -> None:
+def test_api_failure_defaults_to_deny() -> None:
+    r = _run(
+        _envelope(),
+        ANTHROPIC_API_KEY="sk-invalid",
+        MONITOR_API_URL="http://localhost:1/v1/messages",
+        MONITOR_TIMEOUT="1",
+    )
+    assert r.returncode == 0
+    hook = json.loads(r.stdout)["hookSpecificOutput"]
+    assert hook["hookEventName"] == "PreToolUse"
+    assert hook["permissionDecision"] == "deny"
+    assert "API call failed" in hook["permissionDecisionReason"]
+
+
+@pytest.mark.parametrize("fail_mode", ["allow", "ask"])
+def test_api_failure_respects_override(fail_mode: str) -> None:
     r = _run(
         _envelope(),
         ANTHROPIC_API_KEY="sk-invalid",
@@ -157,7 +171,4 @@ def test_api_failure_uses_fail_mode(fail_mode: str) -> None:
         MONITOR_FAIL_MODE=fail_mode,
     )
     assert r.returncode == 0
-    hook = json.loads(r.stdout)["hookSpecificOutput"]
-    assert hook["hookEventName"] == "PreToolUse"
-    assert hook["permissionDecision"] == fail_mode
-    assert "API call failed" in hook["permissionDecisionReason"]
+    assert json.loads(r.stdout)["hookSpecificOutput"]["permissionDecision"] == fail_mode

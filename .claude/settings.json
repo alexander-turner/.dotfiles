@@ -46,7 +46,11 @@
       "Read(~/.npmrc)",
       "Read(~/.pypirc)",
       "Read(~/.gem/credentials)",
-      "Read(~/Library/Keychains/**)"
+      "Read(~/Library/Keychains/**)",
+      "Read(.claude/hooks/monitor.bash)",
+      "Read(/etc/claude-monitor/**)",
+      "Bash(*cat*.claude/hooks/monitor*)",
+      "Bash(*cat*/etc/claude-monitor*)"
     ]
   },
   "statusLine": {
@@ -71,7 +75,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/monitor.bash"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/monitor-dispatch.bash"
           }
         ]
       },
