@@ -10,7 +10,10 @@
   "runArgs": [
     "--cap-add=NET_ADMIN",
     "--cap-add=NET_RAW",
-    "--pids-limit=512"
+    "--pids-limit=512",
+    "--memory=8g",
+    "--memory-swap=8g",
+    "--cpus=4"
   ],
   "customizations": {
     "vscode": {
