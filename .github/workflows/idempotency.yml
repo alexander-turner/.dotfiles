@@ -26,8 +26,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: true
+
+      - name: Init submodules
+        run: git submodule update --init secure-claude-code-defaults
 
       - name: Run idempotency check
         env:

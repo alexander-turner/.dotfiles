@@ -16,7 +16,9 @@ jobs:
           ref: ${{ github.head_ref || github.ref_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
-          submodules: true
+
+      - name: Init submodules
+        run: git submodule update --init secure-claude-code-defaults
 
       - name: Scan for committed secrets (gitleaks)
         uses: gitleaks/gitleaks-action@v2
