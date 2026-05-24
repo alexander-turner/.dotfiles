@@ -63,7 +63,7 @@ RUN arch=$(dpkg --print-architecture) \
 ENV COREPACK_HOME=/usr/local/share/corepack
 RUN mkdir -p "$COREPACK_HOME" && \
   corepack enable && \
-  corepack prepare pnpm@latest --activate && \
+  corepack prepare pnpm@10 --activate && \
   chmod -R a+rX "$COREPACK_HOME"
 
 USER node
