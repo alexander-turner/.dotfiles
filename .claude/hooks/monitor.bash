@@ -18,6 +18,9 @@
 #   MONITOR_TIMEOUT      curl timeout in seconds (default: 10)
 #   MONITOR_LOG          log path   (default: ~/.cache/claude-monitor/monitor.jsonl)
 #   MONITOR_SKIP_TOOLS   colon-separated tools to skip (default: Read)
+#   MONITOR_NTFY_CONF    path to ntfy config file (default: ~/.config/claude-monitor/ntfy.conf)
+#                        Format: topic=<topic>\nurl=<server> (url defaults to https://ntfy.sh)
+#                        Root-own this file so the monitored model can't read the topic.
 #   MONITOR_DISABLED     set to 1 to pass through without checking
 
 set -uo pipefail
@@ -159,9 +162,36 @@ fi
 
 case "$decision" in
 allow) hook_decision="allow" ;;
+ask) hook_decision="ask" ;;
 deny) hook_decision="deny" ;;
 *) hook_decision="$fail_mode" ;;
 esac
+
+# --- ntfy.sh push for ASK tier ---
+# Topic is read from a file (not an env var) so the monitored model
+# can't see it and craft manipulative notification text. The file
+# should be root-owned in the devcontainer.
+ntfy_conf="${MONITOR_NTFY_CONF:-$HOME/.config/claude-monitor/ntfy.conf}"
+if [[ "$hook_decision" == "ask" && -f "$ntfy_conf" ]]; then
+    ntfy_topic="" ntfy_url="https://ntfy.sh"
+    while IFS='=' read -r key val; do
+        case "$key" in
+        topic) ntfy_topic="$val" ;;
+        url) ntfy_url="$val" ;;
+        esac
+    done <"$ntfy_conf"
+    if [[ -n "$ntfy_topic" ]]; then
+        # Only include the tool name and a sanitized reason — never
+        # echo raw tool_input into the notification, since the model
+        # controls that content and could craft social-engineering text.
+        curl -fsS --max-time 5 \
+            -H "Title: Claude Monitor" \
+            -H "Priority: high" \
+            -H "Tags: warning" \
+            -d "ASK on ${tool_name}: ${reason:0:100}" \
+            "${ntfy_url}/${ntfy_topic}" >/dev/null 2>&1 || true
+    fi
+fi
 
 # --- Log (non-critical) ---
 log_file="${MONITOR_LOG:-$HOME/.cache/claude-monitor/monitor.jsonl}"
