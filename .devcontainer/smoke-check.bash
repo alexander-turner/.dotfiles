@@ -69,7 +69,12 @@ if ! test -x /usr/local/bin/entrypoint.bash; then
     exit 1
 fi
 
-echo "==> Image tools OK: ${#missing[@]} missing, init-firewall.bash + entrypoint.bash present"
+if ! test -x /usr/local/bin/install-claude.bash; then
+    echo "FAIL: /usr/local/bin/install-claude.bash not executable (path drift in Dockerfile COPY?)"
+    exit 1
+fi
+
+echo "==> Image tools OK: ${#missing[@]} missing, init-firewall.bash + entrypoint.bash + install-claude.bash present"
 
 # ── Runtime tool verification ──────────────────────────────────────────
 # claude-code is installed at runtime (not baked into the image) because

@@ -75,10 +75,10 @@ ENV NPM_CONFIG_IGNORE_SCRIPTS=true
 ENV EDITOR=nano
 ENV VISUAL=nano
 
-# claude-code is installed at container runtime (postCreateCommand in
-# devcontainer.json) — its postinstall fetches an arch-specific native
-# binary.  The smoke CI validates the image tools only; claude-code is
-# verified by local use.
+# claude-code is installed at runtime, not baked into the image — its
+# postinstall fetches an arch-specific native binary.  The smoke CI
+# installs it via install-claude.bash during the runCmd phase (not
+# postCreateCommand, whose stderr devcontainers/ci swallows).
 
 COPY init-firewall.bash entrypoint.bash install-claude.bash /usr/local/bin/
 USER root
