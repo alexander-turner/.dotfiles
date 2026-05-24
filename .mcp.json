@@ -4,7 +4,7 @@
       "command": "npx",
       "args": [
         "-y",
-        "@modelcontextprotocol/server-filesystem",
+        "@modelcontextprotocol/server-filesystem@2026.1.14",
         "${HOME}/.dotfiles"
       ]
     }

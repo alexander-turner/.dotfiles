@@ -66,4 +66,8 @@ jobs:
           imageTag: latest,${{ github.sha }}
           configFile: .devcontainer/smoke/devcontainer.json
           push: ${{ matrix.push }}
-          runCmd: bash .devcontainer/smoke-check.bash
+          runCmd: bash .devcontainer/smoke-check.bash 2>&1 | tee /workspace/smoke-check.log
+
+      - name: Show smoke check output on failure
+        if: failure()
+        run: cat smoke-check.log 2>/dev/null || echo "No smoke-check.log found (build failed before runCmd)"
