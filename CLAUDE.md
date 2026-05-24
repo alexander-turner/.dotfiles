@@ -162,9 +162,11 @@ Safety-critical files — the monitor hook, its audit log, and the
 settings that wire it up — must be protected from modification by
 the AI model being monitored. Prefer OS-level enforcement (root
 ownership, read-only bind mounts) over permission deny rules in
-`settings.json`, since deny rules live in the same file the model
-could edit. In the devcontainer, `IS_SANDBOX=no` keeps the monitor
-active while the container's own sandboxing limits blast radius.
+`settings.json` — deny rules are glob patterns that are trivially
+bypassed via alternative commands, indirect invocations, or
+aliasing. Root ownership is kernel-enforced. In the devcontainer,
+`IS_SANDBOX=no` keeps the monitor active while the container's own
+sandboxing limits blast radius.
 
 ### AI provider routing
 
