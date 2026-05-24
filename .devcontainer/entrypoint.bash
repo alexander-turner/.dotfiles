@@ -79,8 +79,21 @@ if [[ -d "$CLAUDE_USER_DIR" ]]; then
     mkdir -p "$CLAUDE_USER_DIR/hooks"
     chown root:root "$CLAUDE_USER_DIR/hooks"
     chmod 555 "$CLAUDE_USER_DIR/hooks"
+
+    # Per-project user overrides live in ~/.claude/projects/<hash>/. Lock
+    # the entire tree so the agent can't create or modify per-project
+    # settings that might widen its own permissions.
+    mkdir -p "$CLAUDE_USER_DIR/projects"
+    chown -R root:root "$CLAUDE_USER_DIR/projects"
+    chmod -R a+r,a-w "$CLAUDE_USER_DIR/projects"
+    find "$CLAUDE_USER_DIR/projects" -type d -exec chmod a+x {} + 2>/dev/null || true
 else
     echo "WARN: $CLAUDE_USER_DIR does not exist — skipping user-level lockdown"
 fi
+
+# History expansion verification: !! and !n show the expanded command
+# for confirmation instead of executing immediately. Prevents planted
+# history entries from executing via blind re-use.
+echo 'shopt -s histverify' >/etc/profile.d/histverify.sh
 
 echo "Lockdown complete."

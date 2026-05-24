@@ -132,3 +132,12 @@ iptables -D OUTPUT -p udp --dport 53 -j ACCEPT
 iptables -D INPUT -p udp --sport 53 -j ACCEPT
 iptables -I OUTPUT 1 -p udp --dport 53 -d 127.0.0.11 -j ACCEPT
 iptables -I INPUT 1 -p udp --sport 53 -s 127.0.0.11 -j ACCEPT
+
+# Rate-limit DNS to mitigate data exfiltration via subdomain encoding.
+# Docker's resolver forwards queries upstream, so arbitrary domain lookups
+# succeed even though TCP to the resolved IP is blocked. 30/min with a
+# burst of 40 accommodates legitimate tool-install storms (pnpm, pip)
+# while throttling sustained DNS tunneling (which needs hundreds/sec).
+iptables -I OUTPUT 1 -p udp --dport 53 -d 127.0.0.11 \
+    -m hashlimit --hashlimit-above 30/min --hashlimit-burst 40 \
+    --hashlimit-mode dstport --hashlimit-name dns_ratelimit -j DROP
