@@ -1,20 +1,8 @@
 {
   "name": "Claude Code Sandbox (.dotfiles)",
-  "build": {
-    "dockerfile": "Dockerfile",
-    "args": {
-      "TZ": "${localEnv:TZ:America/Los_Angeles}",
-      "GIT_DELTA_VERSION": "0.18.2"
-    }
-  },
-  "runArgs": [
-    "--cap-add=NET_ADMIN",
-    "--cap-add=NET_RAW",
-    "--pids-limit=512",
-    "--memory=8g",
-    "--memory-swap=8g",
-    "--cpus=4"
-  ],
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
   "customizations": {
     "vscode": {
       "extensions": [
@@ -38,29 +26,7 @@
     }
   },
   "remoteUser": "node",
-  "mounts": [
-    "source=claude-code-bashhistory-${devcontainerId},target=/commandhistory,type=volume",
-    "source=claude-code-config,target=/home/node/.claude,type=volume"
-  ],
-  "containerEnv": {
-    "NODE_OPTIONS": "--max-old-space-size=4096",
-    "CLAUDE_CONFIG_DIR": "/home/node/.claude",
-    "NPM_CONFIG_IGNORE_SCRIPTS": "true",
-    "CLAUDE_CODE_VERSION": "latest",
-    "IS_SANDBOX": "no",
-    "GH_TOKEN": "",
-    "GITHUB_TOKEN": "",
-    "AWS_ACCESS_KEY_ID": "",
-    "AWS_SECRET_ACCESS_KEY": "",
-    "AWS_SESSION_TOKEN": "",
-    "NPM_TOKEN": "",
-    "PYPI_TOKEN": "",
-    "DOCKER_PASSWORD": "",
-    "DOCKER_AUTH_CONFIG": ""
-  },
-  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
-  "workspaceFolder": "/workspace",
   "postCreateCommand": "install-claude.bash",
-  "postStartCommand": "sudo /usr/local/bin/entrypoint.bash && sudo bash /workspace/.devcontainer/harden-monitor.bash",
+  "postStartCommand": "sudo /usr/local/bin/entrypoint.bash",
   "waitFor": "postStartCommand"
 }
