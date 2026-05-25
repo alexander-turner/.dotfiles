@@ -1,15 +1,19 @@
 # shellcheck shell=bash
-# bin/lib/symlinks.sh — shared list of managed dotfile symlinks.
+# bin/lib/symlinks.sh — shared lists of managed symlinks.
 #
 # Each emitted line is `target|source|label`, pipe-delimited. Callers iterate
 # with `while IFS='|' read -r target source label; do …; done < <(managed_symlinks)`.
 # DOTFILES_DIR must be set in the caller before invoking.
 #
-# Maintenance invariant: every safe_link in setup.bash whose target lives in
-# $HOME should have a matching entry here (or be intentionally bespoke).
-# Anything bespoke — the in-repo .hooks/pre-push relative symlink, the ccr
-# launch agent (in secure-claude-code-defaults/), etc. — stays inline in
-# setup.bash / doctor.bash / uninstall.bash.
+# Two lists:
+#   * managed_symlinks   — user-facing dotfiles whose targets live under $HOME.
+#                          Mirrored by uninstall.bash for backup-restoring removal.
+#   * repo_hook_symlinks — repo-internal git-hook symlinks under $DOTFILES_DIR/.hooks/.
+#                          Relative sources, not in $HOME; uninstall leaves these alone.
+#
+# Maintenance invariant: every safe_link call in setup.bash should iterate one
+# of these lists rather than hardcoding the pair. Genuinely bespoke entries
+# (the ccr launch agent under secure-claude-code-defaults/) stay inline.
 managed_symlinks() {
     cat <<EOF
 $HOME/.bashrc|$DOTFILES_DIR/.bashrc|.bashrc
@@ -57,4 +61,15 @@ EOF
         name="$(basename "$aider_file")"
         printf '%s|%s|%s\n' "$HOME/$name" "$aider_file" "$name"
     done
+}
+
+# Repo-internal git-hook symlinks. Sources are *relative* link contents
+# (e.g. ../bin/pre-push) so the link remains valid wherever the repo is
+# cloned. These targets are under $DOTFILES_DIR, not $HOME — uninstall.bash
+# intentionally ignores them.
+repo_hook_symlinks() {
+    cat <<EOF
+$DOTFILES_DIR/.hooks/pre-push|../bin/pre-push|.hooks/pre-push
+$DOTFILES_DIR/.hooks/prepare-commit-msg|../bin/.prepare-commit-msg|.hooks/prepare-commit-msg
+EOF
 }

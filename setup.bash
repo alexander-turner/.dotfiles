@@ -33,37 +33,18 @@ fi
 
 # ── Symlinks (always run) ────────────────────────────────────────────────────
 status_msg "Linking dotfiles..."
-# Iterate the shared list. safe_link handles the backup-on-clobber logic.
-# Anything bespoke — the in-repo .hooks/pre-push relative symlink, the neovim
-# directory target, and launchagent plists — stays inline below.
+# Iterate both shared lists. safe_link handles all clobber/backup semantics —
+# including directory targets like ~/.config/nvim. Launchagent plists below
+# stay inline because they need bootout/bootstrap calls.
 while IFS='|' read -r target source _label; do
     mkdir -p "$(dirname "$target")"
     safe_link "$source" "$target"
 done < <(managed_symlinks)
 
-# Neovim config — kept as a second pass because the directory branch uses
-# `rm -rf` (more destructive than safe_link's mv-to-backup) after explicit
-# user consent. See CLAUDE.md → "Linker upkeep".
-NEOVIM_CONFIG_DIR="$HOME/.config/nvim"
-if [ -L "$NEOVIM_CONFIG_DIR" ] && [ "$(readlink "$NEOVIM_CONFIG_DIR")" = "$DOTFILES_DIR/apps/nvim" ]; then
-    : # already correct (managed_symlinks handled it)
-elif [ -e "$NEOVIM_CONFIG_DIR" ] && [ ! -L "$NEOVIM_CONFIG_DIR" ]; then
-    read -rp "nvim config dir exists (not a symlink). Overwrite? (y/N) " choice
-    case "$choice" in
-    y | Y)
-        rm -rf "$NEOVIM_CONFIG_DIR"
-        ln -s "$DOTFILES_DIR/apps/nvim" "$NEOVIM_CONFIG_DIR"
-        ;;
-    *) echo "Skipping nvim config" ;;
-    esac
-else
-    rm -f "$NEOVIM_CONFIG_DIR"
-    ln -s "$DOTFILES_DIR/apps/nvim" "$NEOVIM_CONFIG_DIR"
-fi
-
-# Git hooks for this dotfiles repo (relative symlink — target is inside the
-# repo, not under $HOME, so it stays bespoke).
-safe_link "../bin/pre-push" "$DOTFILES_DIR/.hooks/pre-push"
+while IFS='|' read -r target source _label; do
+    mkdir -p "$(dirname "$target")"
+    safe_link "$source" "$target"
+done < <(repo_hook_symlinks)
 
 touch "$HOME"/.extras.{bash,fish}
 touch "$HOME"/.hushlogin

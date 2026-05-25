@@ -71,35 +71,31 @@ source "$DOTFILES_DIR/secure-claude-code-defaults/bin/lib/venice-resolve.bash"
 status_msg "Resolving Venice default_code model..."
 cache_venice_trait default_code "$VENICE_DEFAULT_CODE_FALLBACK"
 
-# ── llm + auto commit-message hook ──────────────────────────────────────────
-# bin/.prepare-commit-msg pipes `git diff --cached` through llm with the
-# system prompt in bin/.system-prompt. Installed as a *template* hook
-# (init.templateDir) rather than core.hooksPath so repo-local hooks still
-# work.
-if command_exists uv; then
-    if ! command_exists llm; then
-        status_msg "Installing llm via uv..."
-        uv tool install --quiet llm
-    fi
+# ── llm CLI (ad-hoc shell prompts; unrelated to the commit-msg hook) ────────
+if command_exists uv && ! command_exists llm; then
+    status_msg "Installing llm via uv..."
+    uv tool install --quiet llm
+fi
 
-    if command_exists llm; then
-        LLM_DIR="$(dirname "$(llm logs path)")"
-        mkdir -p "$LLM_DIR"
-        cat >"$LLM_DIR/extra-openai-models.yaml" <<'YAML'
+if command_exists llm; then
+    LLM_DIR="$(dirname "$(llm logs path)")"
+    mkdir -p "$LLM_DIR"
+    cat >"$LLM_DIR/extra-openai-models.yaml" <<'YAML'
 - model_id: redpill-sonnet
   model_name: anthropic/claude-sonnet-4.5
   api_base: "https://api.redpill.ai/v1"
 YAML
-        llm models default redpill-sonnet >/dev/null 2>&1 || true
-    fi
-
-    mkdir -p "$HOME/.config/prompts" "$HOME/.git_templates/hooks"
-    install -m 0644 "$DOTFILES_DIR/bin/.system-prompt" \
-        "$HOME/.config/prompts/commit-system-prompt.txt"
-    install -m 0755 "$DOTFILES_DIR/bin/.prepare-commit-msg" \
-        "$HOME/.git_templates/hooks/prepare-commit-msg"
-
-    # core.hooksPath hijacks hooks for all repos; unset if a previous
-    # install set it.
-    git config --global --unset core.hooksPath 2>/dev/null || true
+    llm models default redpill-sonnet >/dev/null 2>&1 || true
 fi
+
+# ── prepare-commit-msg template hook (Venice/qwen3-coder-480b via `mods`) ──
+# Installed as a template hook (init.templateDir) so new repos pick it up at
+# clone/init time. Repos that override core.hooksPath (e.g. this dotfiles
+# repo's .hooks/) need a per-repo symlink — see setup.bash.
+mkdir -p "$HOME/.config/prompts" "$HOME/.git_templates/hooks"
+install -m 0644 "$DOTFILES_DIR/bin/.system-prompt" \
+    "$HOME/.config/prompts/commit-system-prompt.txt"
+install -m 0755 "$DOTFILES_DIR/bin/.prepare-commit-msg" \
+    "$HOME/.git_templates/hooks/prepare-commit-msg"
+
+git config --global --unset core.hooksPath 2>/dev/null || true
