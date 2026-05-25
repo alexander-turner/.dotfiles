@@ -102,6 +102,13 @@ repos:
         language: system
         files: \.py$
 
+      - id: no-hardcoded-pnpm
+        name: strip hardcoded pnpm blocks from shell configs
+        entry: bin/strip-pnpm-block.bash
+        language: script
+        files: (config\.fish|\.bashrc|\.zshrc)$
+        exclude: ^setup\.bash$
+
       - id: safe-link-tests
         name: pytest tests/test_safe_link.py
         entry: pytest -q tests/test_safe_link.py
