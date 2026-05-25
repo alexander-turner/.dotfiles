@@ -108,8 +108,9 @@ mirror set is:
 - Loops over a directory (e.g. `for aider_file in ...`) should iterate
   the same source list in both files — don't hard-code the names.
 
-`uninstall.bash` MUST NOT touch the in-repo `.hooks/pre-push` symlink (that
-one's repo plumbing, not a user dotfile).
+`uninstall.bash` MUST NOT touch the entries from `repo_hook_symlinks`
+(`.hooks/pre-push`, `.hooks/prepare-commit-msg`, …). Those are repo
+plumbing, not user dotfiles — they leave with the repo itself.
 
 ### Idempotency upkeep
 
@@ -121,19 +122,27 @@ When editing the `--link-only` path:
 - Don't add commands that produce side effects on every run (e.g.
   unconditional `cp`, appending to a file). Guard with an existence or
   content check.
-- Anything that writes outside `$HOME` (e.g. the in-repo `.hooks/pre-push`
-  symlink, sudoers fragments) must also be a no-op on re-run.
+- Anything that writes outside `$HOME` (e.g. entries from
+  `repo_hook_symlinks`, sudoers fragments) must also be a no-op on re-run.
 
 ### Linker upkeep
 
-`safe_link` is the sole entry point for symlink creation. If you find
-yourself writing `ln -s` directly in `setup.bash`, route it through
-`safe_link` instead so the backup-on-clobber behaviour is uniform.
+`safe_link` is the sole entry point for symlink creation. `setup.bash`
+must not contain any direct `ln -s` — route every link through `safe_link`
+(directly or via the `managed_symlinks` / `repo_hook_symlinks` iteration
+loops) so the backup-on-clobber behaviour is uniform. `safe_link` handles
+directory targets the same way it handles files: real-path collisions
+prompt, then move to `~/.dotfiles-backup/<stamp>/` before linking.
 
-The neovim config block in `setup.bash` predates `safe_link` and handles
-directory targets specially. If you extend it (e.g. for a new IDE config
-dir), keep the three-branch structure: already-correct symlink → no-op,
-real dir → prompt, missing → create.
+Where a new symlink belongs:
+
+- Target under `$HOME` → add to `managed_symlinks` in `bin/lib/symlinks.sh`
+  and add a matching `remove_dotfile_symlink` in `bin/uninstall.bash`.
+- Target under `$DOTFILES_DIR/.hooks/` (repo-internal git hook) → add to
+  `repo_hook_symlinks` in `bin/lib/symlinks.sh`. `uninstall.bash` ignores
+  these by design.
+- Genuinely bespoke (launchd plists that also need bootstrap/bootout) →
+  inline `safe_link` in `setup.bash`.
 
 ### Session-setup upkeep (Claude Code on the web)
 

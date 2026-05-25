@@ -8,7 +8,8 @@
 #     repo. Real files at the target path are left alone.
 #   * Restores from the lex-largest backup directory (UTC ISO 8601 ⇒ lex sort
 #     equals chronological sort).
-#   * Does not touch the in-repo .hooks/pre-push relative symlink.
+#   * Does not touch repo_hook_symlinks (in-repo .hooks/*) — those are
+#     repo plumbing, not user dotfiles.
 #
 # Usage:
 #   bash bin/uninstall.bash           # prompts before each macOS launchd unload

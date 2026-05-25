@@ -33,37 +33,18 @@ fi
 
 # ── Symlinks (always run) ────────────────────────────────────────────────────
 status_msg "Linking dotfiles..."
-# Iterate the shared list. safe_link handles the backup-on-clobber logic.
-# Anything bespoke — the in-repo .hooks/pre-push relative symlink, the neovim
-# directory target, and launchagent plists — stays inline below.
+# Iterate both shared lists. safe_link handles all clobber/backup semantics —
+# including directory targets like ~/.config/nvim. Launchagent plists below
+# stay inline because they need bootout/bootstrap calls.
 while IFS='|' read -r target source _label; do
     mkdir -p "$(dirname "$target")"
     safe_link "$source" "$target"
 done < <(managed_symlinks)
 
-# Neovim config — kept as a second pass because the directory branch uses
-# `rm -rf` (more destructive than safe_link's mv-to-backup) after explicit
-# user consent. See CLAUDE.md → "Linker upkeep".
-NEOVIM_CONFIG_DIR="$HOME/.config/nvim"
-if [ -L "$NEOVIM_CONFIG_DIR" ] && [ "$(readlink "$NEOVIM_CONFIG_DIR")" = "$DOTFILES_DIR/apps/nvim" ]; then
-    : # already correct (managed_symlinks handled it)
-elif [ -e "$NEOVIM_CONFIG_DIR" ] && [ ! -L "$NEOVIM_CONFIG_DIR" ]; then
-    read -rp "nvim config dir exists (not a symlink). Overwrite? (y/N) " choice
-    case "$choice" in
-    y | Y)
-        rm -rf "$NEOVIM_CONFIG_DIR"
-        ln -s "$DOTFILES_DIR/apps/nvim" "$NEOVIM_CONFIG_DIR"
-        ;;
-    *) echo "Skipping nvim config" ;;
-    esac
-else
-    rm -f "$NEOVIM_CONFIG_DIR"
-    ln -s "$DOTFILES_DIR/apps/nvim" "$NEOVIM_CONFIG_DIR"
-fi
-
-# Git hooks for this dotfiles repo (relative symlink — target is inside the
-# repo, not under $HOME, so it stays bespoke).
-safe_link "../bin/pre-push" "$DOTFILES_DIR/.hooks/pre-push"
+while IFS='|' read -r target source _label; do
+    mkdir -p "$(dirname "$target")"
+    safe_link "$source" "$target"
+done < <(repo_hook_symlinks)
 
 touch "$HOME"/.extras.{bash,fish}
 touch "$HOME"/.hushlogin
@@ -218,6 +199,16 @@ if [ "$(uname)" = "Darwin" ]; then
         needs_bootstrap=true
     fi
 
+    # App-Store Tailscale leaves /usr/local/bin/tailscale as a root-owned shim
+    # pointing at /Applications/Tailscale.app/Contents/MacOS/tailscale. When
+    # the app is uninstalled, the shim survives and shadows brew tailscale on
+    # any Intel Mac (or any user with /usr/local/bin earlier in PATH).
+    TAILSCALE_SHIM="/usr/local/bin/tailscale"
+    if [ -e "$TAILSCALE_SHIM" ] && ! "$TAILSCALE_SHIM" version >/dev/null 2>&1; then
+        status_msg "Removing broken App-Store tailscale shim at $TAILSCALE_SHIM"
+        sudo rm -f "$TAILSCALE_SHIM"
+    fi
+
     if $needs_bootstrap; then
         if sudo launchctl print "system/com.$USER.tailscaled" &>/dev/null; then
             sudo launchctl bootout "system/com.$USER.tailscaled"
@@ -292,7 +283,53 @@ fi
 tmux source ~/.tmux.conf >/dev/null 2>&1 || true
 ~/.tmux/plugins/tpm/bin/install_plugins >/dev/null
 
+write_pnpm_extras() {
+    local bash_file="$HOME/.extras.bash"
+    local fish_file="$HOME/.extras.fish"
+
+    if ! grep -q '^# pnpm$' "$bash_file" 2>/dev/null; then
+        cat >>"$bash_file" <<'BASH_PNPM'
+
+# pnpm
+if [ "$(uname)" = "Darwin" ]; then
+    export PNPM_HOME="$HOME/Library/pnpm"
+else
+    export PNPM_HOME="$HOME/.local/share/pnpm"
+fi
+case ":$PATH:" in
+*":$PNPM_HOME:"*) ;;
+*) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+case ":$PATH:" in
+*":$PNPM_HOME/bin:"*) ;;
+*) export PATH="$PNPM_HOME/bin:$PATH" ;;
+esac
+# pnpm end
+BASH_PNPM
+    fi
+
+    if ! grep -q '^# pnpm$' "$fish_file" 2>/dev/null; then
+        cat >>"$fish_file" <<'FISH_PNPM'
+
+# pnpm
+if test (uname) = Darwin
+    set -gx PNPM_HOME "$HOME/Library/pnpm"
+else
+    set -gx PNPM_HOME "$HOME/.local/share/pnpm"
+end
+if not string match -q -- "$PNPM_HOME" $PATH
+    set -gx PATH "$PNPM_HOME" $PATH
+end
+if not string match -q -- "$PNPM_HOME/bin" $PATH
+    set -gx PATH "$PNPM_HOME/bin" $PATH
+end
+# pnpm end
+FISH_PNPM
+    fi
+}
+
 if command_exists pnpm; then
+    write_pnpm_extras
     if [ "$(uname)" = "Darwin" ]; then
         export PNPM_HOME="${PNPM_HOME:-$HOME/Library/pnpm}"
     else
@@ -308,8 +345,6 @@ if command_exists pnpm; then
     *) export PATH="$PNPM_HOME:$PATH" ;;
     esac
     pnpm install -g prettier
-    # @bitwarden/cli (Node bw) is required for bin/bw-*.bash scripts — the
-    # Rust bw 2026.x has scripting quirks the helpers can't work around.
     pnpm install -g @bitwarden/cli
 fi
 

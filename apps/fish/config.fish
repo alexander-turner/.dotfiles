@@ -398,18 +398,3 @@ abbr -a mvus 'mullvad us'
 abbr -a mvoff 'mullvad off'
 
 fish_add_path $HOME/go/bin
-
-# pnpm
-if $IS_MAC
-    set -gx PNPM_HOME "$HOME/Library/pnpm"
-else
-    set -gx PNPM_HOME "$HOME/.local/share/pnpm"
-end
-
-if not string match -q -- "$PNPM_HOME/bin" $PATH
-    set -gx PATH "$PNPM_HOME/bin" $PATH
-end
-if not string match -q -- "$PNPM_HOME" $PATH
-    set -gx PATH "$PNPM_HOME" $PATH
-end
-# pnpm end
