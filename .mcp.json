@@ -1,9 +1,9 @@
 {
   "mcpServers": {
     "filesystem": {
-      "command": "npx",
+      "command": "pnpm",
       "args": [
-        "-y",
+        "dlx",
         "@modelcontextprotocol/server-filesystem@2026.1.14",
         "${HOME}/.dotfiles"
       ]
