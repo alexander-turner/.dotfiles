@@ -283,6 +283,22 @@ fi
 tmux source ~/.tmux.conf >/dev/null 2>&1 || true
 ~/.tmux/plugins/tpm/bin/install_plugins >/dev/null
 
+strip_pnpm_from_shell_configs() {
+    local file
+    for file in "$HOME/.bashrc" "$HOME/.zshrc" \
+        "$DOTFILES_DIR/apps/fish/config.fish" \
+        "$DOTFILES_DIR/.bashrc"; do
+        [[ -f "$file" ]] || continue
+        if grep -q '^# pnpm$' "$file" 2>/dev/null; then
+            if [[ "$(uname)" == "Darwin" ]]; then
+                sed -i '' '/^# pnpm$/,/^# pnpm end$/d' "$file"
+            else
+                sed -i '/^# pnpm$/,/^# pnpm end$/d' "$file"
+            fi
+        fi
+    done
+}
+
 write_pnpm_extras() {
     local bash_file="$HOME/.extras.bash"
     local fish_file="$HOME/.extras.fish"
@@ -330,6 +346,7 @@ FISH_PNPM
 
 if command_exists pnpm; then
     write_pnpm_extras
+    strip_pnpm_from_shell_configs
     if [ "$(uname)" = "Darwin" ]; then
         export PNPM_HOME="${PNPM_HOME:-$HOME/Library/pnpm}"
     else
