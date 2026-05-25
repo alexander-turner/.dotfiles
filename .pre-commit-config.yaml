@@ -68,11 +68,9 @@ repos:
   - repo: local
     hooks:
       - id: check-json
-        # The upstream pre-commit-hooks/check-json rejects duplicate keys;
-        # stdlib json.load silently keeps the last value (the old lint.bash
-        # check behavior). Mirror that so this migration is behavior-neutral.
-        # Switch to the strict upstream hook once duplicates in
-        # ai/prompting/settings.json are resolved.
+        # Custom hook: stdlib json.load silently keeps last duplicate key
+        # (lenient). Upstream pre-commit-hooks/check-json rejects duplicates
+        # (strict). Using lenient for now; switch to upstream when ready.
         name: JSON validity
         entry: python3 -c "import json, sys; [json.load(open(p)) for p in sys.argv[1:]]"
         language: system
