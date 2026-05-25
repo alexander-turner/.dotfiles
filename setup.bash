@@ -356,8 +356,8 @@ if command_exists mise; then
 fi
 
 # devcontainer CLI — used by the host-side `claude` wrappers
-# (secure-claude-code-defaults/bin/claude and fish/claude.fish) to bring up
-# .devcontainer/ on demand.
+# (secure-claude-code-defaults/bin/claude and apps/fish/functions/claude.fish)
+# to bring up .devcontainer/ on demand.
 # pnpm is configured above (PNPM_HOME + PATH), so this lands alongside the
 # other globals (claude-code, ccr, prettier, @bitwarden/cli).
 if command_exists pnpm; then
