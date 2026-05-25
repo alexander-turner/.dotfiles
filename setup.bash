@@ -292,7 +292,53 @@ fi
 tmux source ~/.tmux.conf >/dev/null 2>&1 || true
 ~/.tmux/plugins/tpm/bin/install_plugins >/dev/null
 
+write_pnpm_extras() {
+    local bash_file="$HOME/.extras.bash"
+    local fish_file="$HOME/.extras.fish"
+
+    if ! grep -q '^# pnpm$' "$bash_file" 2>/dev/null; then
+        cat >>"$bash_file" <<'BASH_PNPM'
+
+# pnpm
+if [ "$(uname)" = "Darwin" ]; then
+    export PNPM_HOME="$HOME/Library/pnpm"
+else
+    export PNPM_HOME="$HOME/.local/share/pnpm"
+fi
+case ":$PATH:" in
+*":$PNPM_HOME:"*) ;;
+*) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+case ":$PATH:" in
+*":$PNPM_HOME/bin:"*) ;;
+*) export PATH="$PNPM_HOME/bin:$PATH" ;;
+esac
+# pnpm end
+BASH_PNPM
+    fi
+
+    if ! grep -q '^# pnpm$' "$fish_file" 2>/dev/null; then
+        cat >>"$fish_file" <<'FISH_PNPM'
+
+# pnpm
+if test (uname) = Darwin
+    set -gx PNPM_HOME "$HOME/Library/pnpm"
+else
+    set -gx PNPM_HOME "$HOME/.local/share/pnpm"
+end
+if not string match -q -- "$PNPM_HOME" $PATH
+    set -gx PATH "$PNPM_HOME" $PATH
+end
+if not string match -q -- "$PNPM_HOME/bin" $PATH
+    set -gx PATH "$PNPM_HOME/bin" $PATH
+end
+# pnpm end
+FISH_PNPM
+    fi
+}
+
 if command_exists pnpm; then
+    write_pnpm_extras
     if [ "$(uname)" = "Darwin" ]; then
         export PNPM_HOME="${PNPM_HOME:-$HOME/Library/pnpm}"
     else
@@ -308,8 +354,6 @@ if command_exists pnpm; then
     *) export PATH="$PNPM_HOME:$PATH" ;;
     esac
     pnpm install -g prettier
-    # @bitwarden/cli (Node bw) is required for bin/bw-*.bash scripts — the
-    # Rust bw 2026.x has scripting quirks the helpers can't work around.
     pnpm install -g @bitwarden/cli
 fi
 
