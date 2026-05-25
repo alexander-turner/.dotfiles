@@ -79,6 +79,7 @@ _maybe_print_section() {
 # ── Symlinks ────────────────────────────────────────────────────────────────
 section "Symlinks"
 
+MANAGED_LINK_FAIL=0
 check_symlink() {
     local target="$1"
     local expected_source="$2"
@@ -89,12 +90,14 @@ check_symlink() {
         else
             fail "$label" "$target missing (run setup.bash --link-only)"
         fi
+        MANAGED_LINK_FAIL=$((MANAGED_LINK_FAIL + 1))
         return
     fi
     local actual
     actual="$(readlink "$target")"
     if [[ "$actual" != "$expected_source" ]]; then
         fail "$label" "$target -> $actual, expected $expected_source"
+        MANAGED_LINK_FAIL=$((MANAGED_LINK_FAIL + 1))
     else
         pass "$label"
     fi
@@ -366,6 +369,19 @@ fi
 
 # ── Summary ─────────────────────────────────────────────────────────────────
 printf "\n%d passed, %d failed, %d skipped\n" "$PASS" "$FAIL" "$SKIP"
+
+if [[ -t 0 && -t 1 ]] && ((stale_count + MANAGED_LINK_FAIL > 0)); then
+    read -rp "Refresh symlinks now? (y/N) " choice
+    case "$choice" in
+    y | Y)
+        while IFS='|' read -r entry _; do
+            rm -f "$entry" && printf "  removed stale %s\n" "$entry"
+        done < <(stale_symlinks)
+        bash "$DOTFILES_DIR/setup.bash" --link-only
+        exit $?
+        ;;
+    esac
+fi
 
 if [[ $FAIL -gt 0 ]]; then
     exit 1

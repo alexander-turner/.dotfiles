@@ -218,6 +218,16 @@ if [ "$(uname)" = "Darwin" ]; then
         needs_bootstrap=true
     fi
 
+    # App-Store Tailscale leaves /usr/local/bin/tailscale as a root-owned shim
+    # pointing at /Applications/Tailscale.app/Contents/MacOS/tailscale. When
+    # the app is uninstalled, the shim survives and shadows brew tailscale on
+    # any Intel Mac (or any user with /usr/local/bin earlier in PATH).
+    TAILSCALE_SHIM="/usr/local/bin/tailscale"
+    if [ -e "$TAILSCALE_SHIM" ] && ! "$TAILSCALE_SHIM" version >/dev/null 2>&1; then
+        status_msg "Removing broken App-Store tailscale shim at $TAILSCALE_SHIM"
+        sudo rm -f "$TAILSCALE_SHIM"
+    fi
+
     if $needs_bootstrap; then
         if sudo launchctl print "system/com.$USER.tailscaled" &>/dev/null; then
             sudo launchctl bootout "system/com.$USER.tailscaled"
