@@ -32,7 +32,7 @@ $HOME/.ssh/config|$DOTFILES_DIR/apps/ssh/config|ssh config
 $HOME/.config/mise/config.toml|$DOTFILES_DIR/apps/mise/config.toml|mise config
 $HOME/.config/nvim|$DOTFILES_DIR/apps/nvim|nvim config
 $HOME/.local/bin/bw-node|$DOTFILES_DIR/bin/bw-node|bw-node wrapper
-$HOME/.claude/settings.json|$DOTFILES_DIR/secure-claude-code-defaults/user-config/settings.json|Claude Code settings
+$HOME/.claude/settings.json|$DOTFILES_DIR/apps/claude-user/settings.json|Claude Code settings
 $HOME/.claude/CLAUDE.md|$DOTFILES_DIR/secure-claude-code-defaults/user-config/CLAUDE.md|Claude Code global CLAUDE.md
 $HOME/.claude/commands|$DOTFILES_DIR/secure-claude-code-defaults/user-config/skills|Claude Code slash-command dir
 $HOME/.local/bin/claude|$DOTFILES_DIR/secure-claude-code-defaults/bin/claude|claude shim
