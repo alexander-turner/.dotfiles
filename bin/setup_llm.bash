@@ -51,10 +51,15 @@ fi
 
 if command_exists codium; then
     status_msg "Installing VSCodium extensions..."
+    _ext_failures=0
     while IFS= read -r ext; do
         [[ -z "$ext" || "$ext" =~ ^# ]] && continue
-        codium --install-extension "$ext" >/dev/null 2>&1 || true
+        codium --install-extension "$ext" >/dev/null 2>&1 || {
+            status_msg "WARN: failed to install VSCodium extension: $ext"
+            _ext_failures=$((_ext_failures + 1))
+        }
     done <"$DOTFILES_DIR/apps/vscodium/extensions.txt"
+    [[ $_ext_failures -eq 0 ]] || status_msg "WARN: $_ext_failures VSCodium extension(s) failed to install"
 fi
 
 # ── wut-cli ─────────────────────────────────────────────────────────────────

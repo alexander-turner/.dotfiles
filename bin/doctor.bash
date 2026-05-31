@@ -98,6 +98,9 @@ check_symlink() {
     if [[ "$actual" != "$expected_source" ]]; then
         fail "$label" "$target -> $actual, expected $expected_source"
         MANAGED_LINK_FAIL=$((MANAGED_LINK_FAIL + 1))
+    elif [[ ! -e "$target" ]]; then
+        fail "$label" "$target -> $expected_source (dangling — source does not exist)"
+        MANAGED_LINK_FAIL=$((MANAGED_LINK_FAIL + 1))
     else
         pass "$label"
     fi
