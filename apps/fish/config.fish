@@ -241,7 +241,8 @@ function rm
         echo "rm is disabled; using the reversible 'trash-put' instead (aliased to 'tp'). To force rm, use 'command rm'." >&2
         trash-put $argv
     else
-        command rm $argv
+        echo "rm is disabled and 'trash-put' is not installed (uv tool install trash-cli). Refusing to delete — run 'command rm' yourself if you really mean it." >&2
+        return 1
     end
 end
 
