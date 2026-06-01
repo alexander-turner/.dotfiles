@@ -46,9 +46,10 @@ while IFS='|' read -r target source _label; do
     safe_link "$source" "$target"
 done < <(repo_hook_symlinks)
 
-touch "$HOME"/.extras.{bash,fish}
-touch "$HOME"/.hushlogin
-touch "$HOME"/.vimextras
+[[ -f "$HOME/.extras.bash" ]] || touch "$HOME/.extras.bash"
+[[ -f "$HOME/.extras.fish" ]] || touch "$HOME/.extras.fish"
+[[ -f "$HOME/.hushlogin" ]] || touch "$HOME/.hushlogin"
+[[ -f "$HOME/.vimextras" ]] || touch "$HOME/.vimextras"
 
 if [ "$LINK_ONLY" = true ]; then
     status_msg "Symlinks refreshed."

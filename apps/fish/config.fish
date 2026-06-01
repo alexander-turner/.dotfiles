@@ -237,8 +237,13 @@ abbr -a tp trash-put
 abbr -a tl trash-list
 
 function rm
-    echo "rm is disabled; using the reversible 'trash-put' instead (aliased to 'tp'). To force rm, use 'command rm'."
-    trash-put $argv
+    if command -q trash-put
+        echo "rm is disabled; using the reversible 'trash-put' instead (aliased to 'tp'). To force rm, use 'command rm'." >&2
+        trash-put $argv
+    else
+        echo "rm is disabled and 'trash-put' is not installed (uv tool install trash-cli). Refusing to delete — run 'command rm' yourself if you really mean it." >&2
+        return 1
+    end
 end
 
 # Load iTerm2 integration before the grep/cat shadows so its internal

@@ -19,6 +19,7 @@ on:
 jobs:
   uninstall-roundtrip:
     name: setup → uninstall leaves no repo symlinks (${{ matrix.os }})
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
