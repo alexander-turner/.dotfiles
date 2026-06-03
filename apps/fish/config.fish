@@ -398,3 +398,6 @@ abbr -a mvus 'mullvad us'
 abbr -a mvoff 'mullvad off'
 
 fish_add_path $HOME/go/bin
+
+# secure-claude-code-defaults: ~/.local/bin on PATH
+fish_add_path --move "$HOME/.local/bin"
