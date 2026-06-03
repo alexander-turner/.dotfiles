@@ -8,7 +8,6 @@ brew "envchain"
 # Bitwarden CLI is installed via pnpm (@bitwarden/cli) — see setup.bash.
 # The Rust brew flavor has scripting quirks our bin/bw-*.bash can't dodge.
 brew "safe-rm"
-brew "xclip"
 brew "gcc"
 brew "python"
 brew "uv"
@@ -24,6 +23,7 @@ brew "gitleaks"   # pre-push secrets scan; CI runs it too
 brew "fzf"
 brew "ripgrep"
 brew "fd"
+brew "jq"
 brew "bat"
 brew "eza"
 brew "git-delta"
@@ -64,6 +64,7 @@ if OS.mac?
   brew "git"
   brew "colima"
   brew "docker"
+  brew "docker-buildx"
   brew "docker-compose"
   brew "fortune"
   brew "lolcat"
@@ -93,4 +94,6 @@ if OS.mac?
   cask "ente"
   cask "lookaway"
   cask "mullvad-vpn"
+else 
+  brew "xclip"
 end
