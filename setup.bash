@@ -124,7 +124,7 @@ if command_exists bw-node && [ -t 0 ]; then
         esac
     fi
 elif ! command_exists bw-node; then
-    status_msg "WARN: bw-node not on PATH (run: pnpm add -g @bitwarden/cli, then symlinks will wire bw-node)"
+    status_msg "WARN: bw-node not on PATH — Bitwarden bootstrap skipped. Run bin/bw-login.bash after setup completes."
 fi
 
 # GitHub CLI — install and authenticate on first login
