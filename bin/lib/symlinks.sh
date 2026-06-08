@@ -36,10 +36,6 @@ $HOME/.local/bin/bw-node|$DOTFILES_DIR/bin/bw-node|bw-node wrapper
 $HOME/.claude/settings.json|$DOTFILES_DIR/apps/claude-user/settings.json|Claude Code settings
 $HOME/.claude/CLAUDE.md|$DOTFILES_DIR/secure-claude-code-defaults/user-config/CLAUDE.md|Claude Code global CLAUDE.md
 $HOME/.claude/commands|$DOTFILES_DIR/secure-claude-code-defaults/user-config/skills|Claude Code slash-command dir
-$HOME/.local/bin/claude|$DOTFILES_DIR/secure-claude-code-defaults/bin/claude|claude shim
-$HOME/.local/bin/claude-private|$DOTFILES_DIR/secure-claude-code-defaults/bin/claude-private|claude-private (ccr→Venice default_code, --think → Opus)
-$HOME/.local/bin/claude-paranoid|$DOTFILES_DIR/secure-claude-code-defaults/bin/claude-paranoid|claude-paranoid (ccr→Venice default_code, always)
-$HOME/.local/bin/claude-create-worktree|$DOTFILES_DIR/secure-claude-code-defaults/bin/claude-create-worktree|claude-create-worktree (shared worktree helper)
 $HOME/.devcontainer|$DOTFILES_DIR/.devcontainer|.devcontainer
 EOF
     if [[ "$(uname)" == "Darwin" ]]; then
