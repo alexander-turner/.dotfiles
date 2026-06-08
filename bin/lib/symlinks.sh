@@ -23,6 +23,7 @@ $HOME/.tmux.conf|$DOTFILES_DIR/.tmux.conf|.tmux.conf
 $HOME/.npmrc|$DOTFILES_DIR/.npmrc|.npmrc
 $HOME/.pnpmrc|$DOTFILES_DIR/.pnpmrc|.pnpmrc
 $HOME/.config/fish/config.fish|$DOTFILES_DIR/apps/fish/config.fish|fish config
+$HOME/.config/fish/fish_plugins|$DOTFILES_DIR/apps/fish/fish_plugins|fish_plugins (fisher manifest)
 $HOME/.config/fish/completions/dotfiles.fish|$DOTFILES_DIR/apps/fish/completions/dotfiles.fish|dotfiles fish completion
 $HOME/.config/fish/conf.d/carapace.fish|$DOTFILES_DIR/apps/fish/conf.d/carapace.fish|carapace conf.d snippet
 $HOME/.config/fish/conf.d/mise.fish|$DOTFILES_DIR/apps/fish/conf.d/mise.fish|mise conf.d snippet

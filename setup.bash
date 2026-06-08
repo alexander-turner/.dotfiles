@@ -111,11 +111,11 @@ done
 # can run unattended at shell startup.
 #
 # All prompts inside bw-login.bash are skippable (empty input).
-if command_exists bw && [ -t 0 ]; then
+if command_exists bw-node && [ -t 0 ]; then
     # `bw status` exits 0 with JSON containing status: "unauthenticated" |
     # "locked" | "unlocked". We grep for the logged-in markers; absence ==
     # not logged in (the safe default that triggers the bootstrap prompt).
-    if ! bw status --raw 2>/dev/null | grep -qE '"status":"(locked|unlocked)"'; then
+    if ! bw-node status --raw 2>/dev/null | grep -qE '"status":"(locked|unlocked)"'; then
         status_msg "Bitwarden CLI not logged in."
         read -rp "Run bw login bootstrap now? (y/N) " choice
         case "$choice" in
@@ -123,8 +123,8 @@ if command_exists bw && [ -t 0 ]; then
         *) status_msg "Skipping. Rerun later with: bash $DOTFILES_DIR/bin/bw-login.bash" ;;
         esac
     fi
-elif ! command_exists bw; then
-    status_msg "WARN: bw (bitwarden-cli) not installed; check Brewfile."
+elif ! command_exists bw-node; then
+    status_msg "WARN: bw-node not on PATH (run: pnpm add -g @bitwarden/cli, then symlinks will wire bw-node)"
 fi
 
 # GitHub CLI — install and authenticate on first login
@@ -391,9 +391,11 @@ if [ "$(uname)" != "Darwin" ] && ! command_exists xmllint; then
     sudo apt-get install -y libxml2-utils
 fi
 
-# Backup existing neovim data
+# Backup existing neovim data (only on first run — skip if .bak already exists to
+# avoid clobbering the original pre-dotfiles snapshot on repeated setup.bash runs).
 for directory in ~/.local/{share,state}/nvim ~/.cache/nvim; do
-    cp -r "$directory"{,.bak} >/dev/null 2>&1 || true
+    [[ -d "$directory" && ! -d "${directory}.bak" ]] || continue
+    cp -r "$directory" "${directory}.bak" >/dev/null 2>&1 || true
 done
 
 status_msg "Setup complete. Running doctor.bash..."

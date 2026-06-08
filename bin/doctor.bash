@@ -140,7 +140,7 @@ check_command() {
     fi
 }
 
-for cmd in git fish nvim tmux brew zoxide gh fzf rg fd bat eza delta tokei dust btm mise carapace shfmt mods gitleaks pre-commit; do
+for cmd in git fish nvim tmux brew zoxide gh fzf rg fd bat eza delta tokei dust btm mise carapace shfmt mods gitleaks pre-commit uv; do
     check_command "$cmd"
 done
 
@@ -276,7 +276,9 @@ fi
 section "tmux"
 
 TPM_DIR="$HOME/.tmux/plugins/tpm"
-if [[ -d "$TPM_DIR/.git" ]]; then
+if ! command -v tmux >/dev/null 2>&1; then
+    skip "TPM" "tmux not installed"
+elif [[ -d "$TPM_DIR/.git" ]]; then
     pass "tmux plugin manager (TPM) cloned"
 else
     fail "TPM" "$TPM_DIR is not a git checkout (run setup.bash)"

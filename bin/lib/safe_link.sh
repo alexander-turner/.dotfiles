@@ -69,5 +69,9 @@ safe_link() {
 # When executed directly, dispatch args to the function
 if [[ "${BASH_SOURCE[0]:-}" == "${0}" ]]; then
     set -euo pipefail
+    if [[ $# -ne 2 ]]; then
+        printf "usage: %s <source> <target>\n" "$(basename "$0")" >&2
+        exit 1
+    fi
     safe_link "$@"
 fi
