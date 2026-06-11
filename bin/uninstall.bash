@@ -66,8 +66,12 @@ remove_dotfile_symlink() {
         echo "  skip $target -> $actual (not pointing into this dotfiles repo)"
         return
     fi
-    rm -f "$target"
-    echo "  removed $target"
+    if rm -f "$target"; then
+        echo "  removed $target"
+    else
+        echo "  FAILED to remove $target"
+        return 1
+    fi
     # Try to restore from most recent backup.
     local backup_root rel src
     if ! backup_root="$(latest_backup_root)"; then
@@ -80,8 +84,11 @@ remove_dotfile_symlink() {
     fi
     src="$backup_root/$rel"
     if [[ -e "$src" ]]; then
-        mv "$src" "$target"
-        echo "  restored backup from $src"
+        if mv "$src" "$target"; then
+            echo "  restored backup from $src"
+        else
+            echo "  FAILED to restore backup from $src (still at that path)"
+        fi
     fi
 }
 
@@ -115,8 +122,9 @@ if $IS_MAC; then
         esac
     fi
 
+    # Rendered real file (see setup.bash) — remove with rm.
     TS_EXIT_PLIST="$HOME/Library/LaunchAgents/com.turntrout.tailscale-exit-node.plist"
-    if [[ -L "$TS_EXIT_PLIST" ]]; then
+    if [[ -f "$TS_EXIT_PLIST" ]]; then
         if $ASSUME_YES; then
             choice=y
         else
@@ -125,7 +133,11 @@ if $IS_MAC; then
         case "$choice" in
         y | Y)
             launchctl bootout "gui/$(id -u)" "$TS_EXIT_PLIST" 2>/dev/null || true
-            remove_dotfile_symlink "$TS_EXIT_PLIST" "$DOTFILES_DIR/launchagents/com.turntrout.tailscale-exit-node.plist"
+            if rm -f "$TS_EXIT_PLIST"; then
+                echo "  removed tailscale-exit-node launch agent"
+            else
+                echo "  FAILED to remove $TS_EXIT_PLIST"
+            fi
             ;;
         *) echo "  skip tailscale-exit-node launch agent" ;;
         esac
@@ -143,8 +155,11 @@ if $IS_MAC; then
             if sudo launchctl print "system/com.$USER.tailscaled" &>/dev/null; then
                 sudo launchctl bootout "system/com.$USER.tailscaled"
             fi
-            sudo rm -f "$TAILSCALED_PLIST"
-            echo "  removed tailscaled launch daemon"
+            if sudo rm -f "$TAILSCALED_PLIST"; then
+                echo "  removed tailscaled launch daemon"
+            else
+                echo "  FAILED to remove $TAILSCALED_PLIST"
+            fi
             ;;
         *) echo "  skip tailscaled launch daemon" ;;
         esac
@@ -154,8 +169,13 @@ fi
 # Remove trash-empty cron job if present
 if command -v crontab >/dev/null 2>&1; then
     if crontab -l 2>/dev/null | grep -q "trash-empty"; then
-        crontab -l 2>/dev/null | grep -v "trash-empty" | crontab -
-        echo "  removed trash-empty cron job"
+        # grep -v exits 1 when trash-empty was the only line; || true keeps the
+        # remaining (possibly empty) crontab flowing into `crontab -`.
+        if { crontab -l 2>/dev/null | grep -v "trash-empty" || true; } | crontab -; then
+            echo "  removed trash-empty cron job"
+        else
+            echo "  FAILED to update crontab"
+        fi
     fi
 fi
 

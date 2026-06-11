@@ -74,6 +74,11 @@ jobs:
       - name: Test Claude Code hooks
         run: bash secure-claude-code-defaults/tests/test-claude-hooks.bash
 
+      - name: Run repo unit tests
+        # pytest is installed above but was never invoked here, so the
+        # safe_link / stale-symlink / security-argv guards ran nowhere in CI.
+        run: pytest tests/
+
       - name: Commit fixes if any
         run: bash bin/commit-lint-fixes.bash
 
