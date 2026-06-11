@@ -18,14 +18,21 @@ STALE_SH = DOTFILES / "bin" / "lib" / "stale-symlinks.sh"
 
 
 def _run_stale(home: Path) -> str:
-    return subprocess.run(
+    proc = subprocess.run(
         ["bash", str(STALE_SH)],
         env={**os.environ, "HOME": str(home)},
         capture_output=True,
         text=True,
         stdin=subprocess.DEVNULL,
         timeout=5,
-    ).stdout
+    )
+    # A crash (bad source, syntax error) yields empty stdout, which would make
+    # the flagged=False cases pass vacuously. Fail loudly instead.
+    assert proc.returncode == 0, (
+        f"stale-symlinks.sh exited {proc.returncode}\n"
+        f"stdout: {proc.stdout!r}\nstderr: {proc.stderr!r}"
+    )
+    return proc.stdout
 
 
 @pytest.mark.parametrize(

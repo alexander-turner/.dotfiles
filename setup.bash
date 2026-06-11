@@ -229,9 +229,18 @@ if [ "$(uname)" = "Darwin" ]; then
 
     # Tailscale exit-node applier: reasserts the configured Mullvad exit node
     # at login, retrying while tailscaled finishes its handshake.
+    # The plist bakes in absolute /Users/$USER paths, so render it from the
+    # __USERNAME__ template — same convention as tailscaled/sudoers above.
     TS_EXIT_PLIST_DEST="$HOME/Library/LaunchAgents/com.turntrout.tailscale-exit-node.plist"
     mkdir -p "$HOME/Library/Logs/com.turntrout.tailscale-exit-node"
-    safe_link "$DOTFILES_DIR/launchagents/com.turntrout.tailscale-exit-node.plist" "$TS_EXIT_PLIST_DEST"
+    TS_EXIT_PLIST_RENDERED="$(mktemp)"
+    sed "s/__USERNAME__/$ESCAPED_USER/g" \
+        "$DOTFILES_DIR/launchagents/com.turntrout.tailscale-exit-node.plist.template" \
+        >"$TS_EXIT_PLIST_RENDERED"
+    if [ ! -f "$TS_EXIT_PLIST_DEST" ] || ! cmp -s "$TS_EXIT_PLIST_RENDERED" "$TS_EXIT_PLIST_DEST"; then
+        install -m 0644 "$TS_EXIT_PLIST_RENDERED" "$TS_EXIT_PLIST_DEST"
+    fi
+    rm -f "$TS_EXIT_PLIST_RENDERED"
     launchctl bootout "gui/$(id -u)" "$TS_EXIT_PLIST_DEST" 2>/dev/null || true
     launchctl bootstrap "gui/$(id -u)" "$TS_EXIT_PLIST_DEST" 2>/dev/null || true
 
@@ -267,10 +276,13 @@ fi
 if command_exists crontab && command_exists trash-empty; then
     CRON_ENTRY="@monthly $(command -v trash-empty) 30"
     if [ "$(crontab -l 2>/dev/null | grep "trash-empty" || true)" != "$CRON_ENTRY" ]; then
-        (
-            crontab -l 2>/dev/null | grep -v "trash-empty"
+        # `grep -v` exits 1 on empty input; under `set -e`/pipefail that would
+        # abort with an EMPTY crontab installed. `|| true` keeps the existing
+        # entries (minus any stale trash-empty line) and appends the new one.
+        {
+            crontab -l 2>/dev/null | grep -v "trash-empty" || true
             echo "$CRON_ENTRY"
-        ) | crontab -
+        } | crontab -
     fi
 fi
 
