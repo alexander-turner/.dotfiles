@@ -1,9 +1,5 @@
 #!/usr/bin/env fish
 
-if set -q ANTIGRAVITY_AGENT
-    exec bash -c "$argv"
-end
-
 # Kill detached tmux sessions with auto-numbered names. Run before reboot to
 # keep continuum's snapshot from accumulating orphan sessions across restores.
 # Named sessions (`main`, `website`, ...) are preserved.
