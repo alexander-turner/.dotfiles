@@ -254,6 +254,19 @@ running. `doctor.bash` fails if `homebrew.mxcl.tailscale.plist` exists,
 if `tailscale status` returns a socket-reachability error, or if the
 daemon is logged out.
 
+The race recurs only when something re-registers homebrew's service —
+in practice `sudo brew services start tailscale` (plain `brew
+install`/`upgrade` don't resurrect a booted-out plist). Defenses, in
+order of when they fire: the `brew` fish wrapper in
+`apps/fish/config.fish` refuses the non-sudo `brew services
+start|run|restart|load tailscale` (the form brew makes you type before
+it tells you to add sudo); `setup.bash` re-evicts the plist on every
+run; and `doctor.bash` FAILs if it ever lands. The wrapper can't see
+`sudo brew …` (sudo runs brew as root, bypassing fish functions), so
+doctor is the real backstop, not the wrapper. We deliberately do *not*
+`brew pin tailscale`: it wouldn't stop the trigger and would freeze
+security updates on a VPN daemon.
+
 `tailscale_health` in `bin/lib/tailscale-resolve.sh` is the single
 classifier for CLI↔daemon health (`ok` / `stopped` / `no-daemon` /
 `eperm` / `logged-out` / `error`). Its consumers must stay in sync:
