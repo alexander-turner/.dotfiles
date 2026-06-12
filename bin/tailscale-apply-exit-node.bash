@@ -14,11 +14,21 @@ TAILSCALE="$(find_tailscale)" || {
     log "no working tailscale CLI" >&2
     exit 127
 }
+health=unknown
 for i in $(seq 1 20); do
-    "$TAILSCALE" status >/dev/null 2>&1 &&
+    health="$(tailscale_health "$TAILSCALE")"
+    case "$health" in
+    ok | stopped)
         exec "$DOTFILES_DIR/bin/tailscale-set-exit-node.bash" "$DEFAULT_COUNTRY"
-    log "tailscaled not ready (attempt $i/20), sleeping 3s"
+        ;;
+    logged-out)
+        # Interactive browser re-auth required — retrying can't fix this.
+        log "tailscaled is logged out; cannot apply exit node — run: tailscale up" >&2
+        exit 1
+        ;;
+    esac
+    log "tailscaled not ready ($health, attempt $i/20), sleeping 3s"
     sleep 3
 done
-log "gave up waiting for tailscaled" >&2
+log "gave up waiting for tailscaled (last health: $health)" >&2
 exit 1

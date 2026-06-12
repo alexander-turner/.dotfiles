@@ -56,8 +56,11 @@ keeping `setup.bash`, `doctor.bash`, and CI honest with each other.
   pick up the same project context Claude Code uses.
 - `.mcp.json` — Claude Code MCP server config; currently registers the
   filesystem MCP scoped to `~/.dotfiles`.
-- `.claude/` — symlinks into `secure-claude-code-defaults/`:
-  `settings.json`, `hooks/`, `skills/`, `README.md`.
+- `.claude/` — mostly symlinks into `secure-claude-code-defaults/`:
+  `settings.json`, `hooks/`, `README.md`. `.claude/skills/` is a real
+  tracked directory populated by `template-sync` from the upstream template;
+  any private skills from `secure-claude-code-defaults/skills/` must be
+  individually symlinked in by `setup.bash` if needed.
 - `Brewfile` — package manifest, gated by `if OS.mac?` for cask blocks.
 - `launchagents/`, `etc/sudoers.d/` — `__USERNAME__` templates rendered
   during install.
@@ -249,10 +252,51 @@ boots out `homebrew.mxcl.tailscale` (the daemon homebrew installs when
 run) and removes its plist before bootstrapping ours. Two daemons
 racing on `/var/run/tailscaled.socket` leave the socket carrying
 provenance for whichever lost the race, after which the homebrew CLI
-hits `connect: operation not permitted` and SwiftBar's `vpn.10s.bash`
-shows "🔴 off" even though `tailscaled` is running. `doctor.bash`
-fails if `homebrew.mxcl.tailscale.plist` exists or if
-`tailscale status` returns a socket-reachability error.
+hits `connect: operation not permitted` even though `tailscaled` is
+running. `doctor.bash` fails if `homebrew.mxcl.tailscale.plist` exists,
+if `tailscale status` returns a socket-reachability error, or if the
+daemon is logged out.
+
+The race recurs only when something re-registers homebrew's service —
+in practice `sudo brew services start tailscale` (plain `brew
+install`/`upgrade` don't resurrect a booted-out plist). Defenses, in
+order of when they fire: the `brew` fish wrapper in
+`apps/fish/config.fish` refuses the non-sudo `brew services
+start|run|restart|load tailscale` (the form brew makes you type before
+it tells you to add sudo); `setup.bash` re-evicts the plist on every
+run; and `doctor.bash` FAILs if it ever lands. The wrapper can't see
+`sudo brew …` (sudo runs brew as root, bypassing fish functions), so
+doctor is the real backstop, not the wrapper. We deliberately do *not*
+`brew pin tailscale`: it wouldn't stop the trigger and would freeze
+security updates on a VPN daemon.
+
+`tailscale_health` in `bin/lib/tailscale-resolve.sh` is the single
+classifier for CLI↔daemon health (`ok` / `stopped` / `no-daemon` /
+`eperm` / `logged-out` / `error`). Its consumers must stay in sync:
+
+- `apps/swiftbar/vpn.10s.bash` shows a distinct glyph + repair menu
+  item per state — "🔴 off" strictly means "daemon healthy, exit node
+  deliberately off". (Logged-out matters: the node key expiring while
+  a Mullvad exit node is engaged blackholes all traffic, and `pkill
+  tailscaled` can't fix it because the LaunchDaemon's KeepAlive
+  respawns it with the persisted exit-node pref.)
+- `bin/tailscale-set-exit-node.bash` pre-flights the daemon and logs a
+  remediation hint instead of relaying `tailscale set`'s misleading
+  errors (a logged-out daemon yields `invalid value ... must be IP or
+  hostname` because the netmap is gone). Failures hit both `menu.log`
+  and stderr.
+- `bin/tailscale-apply-exit-node.bash` (login agent) retries through
+  boot-time `no-daemon`/`error` states but bails immediately on
+  `logged-out` — interactive browser re-auth can't be retried into
+  existence.
+- `bin/doctor.bash` maps each unhealthy state to a FAIL with the exact
+  recovery command; logged-out is a FAIL, not "reachable".
+
+Adding a failure mode = new state in `tailscale_health` + handling in
+every consumer + a case in `tests/test_tailscale_health.py`. The
+set-exit-node exit-code/stderr/menu.log contract is locked by
+`tests/test_set_exit_node.py` (which self-skips when a real tailscale
+CLI is installed, so it can never drive an actual VPN).
 
 ## Conventions
 

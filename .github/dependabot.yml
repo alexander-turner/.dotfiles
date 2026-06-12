@@ -1,10 +1,6 @@
 version: 2
 
-updates:
-  # Devcontainer Dockerfile — tracks the node:20 base image SHA and pinned
-  # ARG versions (git-delta, zsh-in-docker, claude-code). Without this,
-  # the digest pin in .devcontainer/Dockerfile silently goes stale.
-  - package-ecosystem: docker
-    directory: /.devcontainer
-    schedule:
-      interval: monthly
+# .devcontainer/ is a symlink into the gitignored secure-claude-code-defaults/
+# subrepo; Dependabot can't resolve it and fails with "no Dockerfiles found".
+# Docker dependency tracking is handled inside the private subrepo instead.
+updates: []

@@ -19,6 +19,7 @@ on:
 jobs:
   link-only-idempotent:
     name: setup.bash --link-only is idempotent (${{ matrix.os }})
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:

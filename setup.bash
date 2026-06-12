@@ -46,9 +46,10 @@ while IFS='|' read -r target source _label; do
     safe_link "$source" "$target"
 done < <(repo_hook_symlinks)
 
-touch "$HOME"/.extras.{bash,fish}
-touch "$HOME"/.hushlogin
-touch "$HOME"/.vimextras
+[[ -f "$HOME/.extras.bash" ]] || touch "$HOME/.extras.bash"
+[[ -f "$HOME/.extras.fish" ]] || touch "$HOME/.extras.fish"
+[[ -f "$HOME/.hushlogin" ]] || touch "$HOME/.hushlogin"
+[[ -f "$HOME/.vimextras" ]] || touch "$HOME/.vimextras"
 
 if [ "$LINK_ONLY" = true ]; then
     status_msg "Symlinks refreshed."
@@ -110,11 +111,11 @@ done
 # can run unattended at shell startup.
 #
 # All prompts inside bw-login.bash are skippable (empty input).
-if command_exists bw && [ -t 0 ]; then
+if command_exists bw-node && [ -t 0 ]; then
     # `bw status` exits 0 with JSON containing status: "unauthenticated" |
     # "locked" | "unlocked". We grep for the logged-in markers; absence ==
     # not logged in (the safe default that triggers the bootstrap prompt).
-    if ! bw status --raw 2>/dev/null | grep -qE '"status":"(locked|unlocked)"'; then
+    if ! bw-node status --raw 2>/dev/null | grep -qE '"status":"(locked|unlocked)"'; then
         status_msg "Bitwarden CLI not logged in."
         read -rp "Run bw login bootstrap now? (y/N) " choice
         case "$choice" in
@@ -122,8 +123,8 @@ if command_exists bw && [ -t 0 ]; then
         *) status_msg "Skipping. Rerun later with: bash $DOTFILES_DIR/bin/bw-login.bash" ;;
         esac
     fi
-elif ! command_exists bw; then
-    status_msg "WARN: bw (bitwarden-cli) not installed; check Brewfile."
+elif ! command_exists bw-node; then
+    status_msg "WARN: bw-node not on PATH — Bitwarden bootstrap skipped. Run bin/bw-login.bash after setup completes."
 fi
 
 # GitHub CLI — install and authenticate on first login
@@ -228,9 +229,18 @@ if [ "$(uname)" = "Darwin" ]; then
 
     # Tailscale exit-node applier: reasserts the configured Mullvad exit node
     # at login, retrying while tailscaled finishes its handshake.
+    # The plist bakes in absolute /Users/$USER paths, so render it from the
+    # __USERNAME__ template — same convention as tailscaled/sudoers above.
     TS_EXIT_PLIST_DEST="$HOME/Library/LaunchAgents/com.turntrout.tailscale-exit-node.plist"
     mkdir -p "$HOME/Library/Logs/com.turntrout.tailscale-exit-node"
-    safe_link "$DOTFILES_DIR/launchagents/com.turntrout.tailscale-exit-node.plist" "$TS_EXIT_PLIST_DEST"
+    TS_EXIT_PLIST_RENDERED="$(mktemp)"
+    sed "s/__USERNAME__/$ESCAPED_USER/g" \
+        "$DOTFILES_DIR/launchagents/com.turntrout.tailscale-exit-node.plist.template" \
+        >"$TS_EXIT_PLIST_RENDERED"
+    if [ ! -f "$TS_EXIT_PLIST_DEST" ] || ! cmp -s "$TS_EXIT_PLIST_RENDERED" "$TS_EXIT_PLIST_DEST"; then
+        install -m 0644 "$TS_EXIT_PLIST_RENDERED" "$TS_EXIT_PLIST_DEST"
+    fi
+    rm -f "$TS_EXIT_PLIST_RENDERED"
     launchctl bootout "gui/$(id -u)" "$TS_EXIT_PLIST_DEST" 2>/dev/null || true
     launchctl bootstrap "gui/$(id -u)" "$TS_EXIT_PLIST_DEST" 2>/dev/null || true
 
@@ -266,10 +276,13 @@ fi
 if command_exists crontab && command_exists trash-empty; then
     CRON_ENTRY="@monthly $(command -v trash-empty) 30"
     if [ "$(crontab -l 2>/dev/null | grep "trash-empty" || true)" != "$CRON_ENTRY" ]; then
-        (
-            crontab -l 2>/dev/null | grep -v "trash-empty"
+        # `grep -v` exits 1 on empty input; under `set -e`/pipefail that would
+        # abort with an EMPTY crontab installed. `|| true` keeps the existing
+        # entries (minus any stale trash-empty line) and appends the new one.
+        {
+            crontab -l 2>/dev/null | grep -v "trash-empty" || true
             echo "$CRON_ENTRY"
-        ) | crontab -
+        } | crontab -
     fi
 fi
 
@@ -390,9 +403,11 @@ if [ "$(uname)" != "Darwin" ] && ! command_exists xmllint; then
     sudo apt-get install -y libxml2-utils
 fi
 
-# Backup existing neovim data
+# Backup existing neovim data (only on first run — skip if .bak already exists to
+# avoid clobbering the original pre-dotfiles snapshot on repeated setup.bash runs).
 for directory in ~/.local/{share,state}/nvim ~/.cache/nvim; do
-    cp -r "$directory"{,.bak} >/dev/null 2>&1 || true
+    [[ -d "$directory" && ! -d "${directory}.bak" ]] || continue
+    cp -r "$directory" "${directory}.bak" >/dev/null 2>&1 || true
 done
 
 status_msg "Setup complete. Running doctor.bash..."

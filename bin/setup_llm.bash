@@ -27,7 +27,9 @@ if command_exists pnpm; then
 
     CLAUDE_INSTALLER="$(pnpm root -g)/@anthropic-ai/claude-code/install.cjs"
     if [[ -f "$CLAUDE_INSTALLER" ]] && command_exists node; then
-        node "$CLAUDE_INSTALLER" || true
+        # Best-effort: the pnpm-global claude-code already works without the
+        # native binary. Surface failure as a WARN instead of discarding it.
+        node "$CLAUDE_INSTALLER" || status_msg "WARN: claude-code native installer failed; continuing with pnpm-global claude"
     fi
 else
     status_msg "WARN: pnpm not found — skipping claude-code + ccr install"
@@ -51,10 +53,15 @@ fi
 
 if command_exists codium; then
     status_msg "Installing VSCodium extensions..."
+    _ext_failures=0
     while IFS= read -r ext; do
         [[ -z "$ext" || "$ext" =~ ^# ]] && continue
-        codium --install-extension "$ext" >/dev/null 2>&1 || true
+        codium --install-extension "$ext" >/dev/null 2>&1 || {
+            status_msg "WARN: failed to install VSCodium extension: $ext"
+            _ext_failures=$((_ext_failures + 1))
+        }
     done <"$DOTFILES_DIR/apps/vscodium/extensions.txt"
+    [[ $_ext_failures -eq 0 ]] || status_msg "WARN: $_ext_failures VSCodium extension(s) failed to install"
 fi
 
 # ── wut-cli ─────────────────────────────────────────────────────────────────

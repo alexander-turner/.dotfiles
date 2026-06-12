@@ -233,8 +233,13 @@ abbr -a tp trash-put
 abbr -a tl trash-list
 
 function rm
-    echo "rm is disabled; using the reversible 'trash-put' instead (aliased to 'tp'). To force rm, use 'command rm'."
-    trash-put $argv
+    if command -q trash-put
+        echo "rm is disabled; using the reversible 'trash-put' instead (aliased to 'tp'). To force rm, use 'command rm'." >&2
+        trash-put $argv
+    else
+        echo "rm is disabled and 'trash-put' is not installed (uv tool install trash-cli). Refusing to delete — run 'command rm' yourself if you really mean it." >&2
+        return 1
+    end
 end
 
 # Load iTerm2 integration before the grep/cat shadows so its internal
@@ -392,6 +397,26 @@ abbr -a mvca 'mullvad ca'
 abbr -a mvjp 'mullvad jp'
 abbr -a mvus 'mullvad us'
 abbr -a mvoff 'mullvad off'
+
+# `brew services start tailscale` registers homebrew.mxcl.tailscale, a second
+# tailscaled that races com.$USER.tailscaled on /var/run/tailscaled.socket and
+# leaves the CLI hitting EPERM (see CLAUDE.md "Tailscale daemon"). Refuse the
+# service-starting forms here: brew rejects the non-sudo attempt and tells you
+# to re-run with sudo, so catching it now stops the footgun before sudo is
+# reached. Caveat: `sudo brew …` runs brew as root and never sees this
+# function — doctor.bash is the backstop that flags the conflict if it lands.
+function brew --wraps brew --description 'Guard against starting homebrew tailscaled'
+    if contains -- services $argv; and contains -- tailscale $argv
+        for action in start run restart load
+            if contains -- $action $argv
+                echo "brew: refusing to start homebrew's tailscale service — it races com.$USER.tailscaled on /var/run/tailscaled.socket." >&2
+                echo "      tailscaled already runs via our LaunchDaemon; pick an exit node with: mullvad ca|us|jp|off" >&2
+                return 1
+            end
+        end
+    end
+    command brew $argv
+end
 
 fish_add_path $HOME/go/bin
 

@@ -23,6 +23,7 @@ $HOME/.tmux.conf|$DOTFILES_DIR/.tmux.conf|.tmux.conf
 $HOME/.npmrc|$DOTFILES_DIR/.npmrc|.npmrc
 $HOME/.pnpmrc|$DOTFILES_DIR/.pnpmrc|.pnpmrc
 $HOME/.config/fish/config.fish|$DOTFILES_DIR/apps/fish/config.fish|fish config
+$HOME/.config/fish/fish_plugins|$DOTFILES_DIR/apps/fish/fish_plugins|fish_plugins (fisher manifest)
 $HOME/.config/fish/completions/dotfiles.fish|$DOTFILES_DIR/apps/fish/completions/dotfiles.fish|dotfiles fish completion
 $HOME/.config/fish/conf.d/carapace.fish|$DOTFILES_DIR/apps/fish/conf.d/carapace.fish|carapace conf.d snippet
 $HOME/.config/fish/conf.d/mise.fish|$DOTFILES_DIR/apps/fish/conf.d/mise.fish|mise conf.d snippet
@@ -32,13 +33,9 @@ $HOME/.ssh/config|$DOTFILES_DIR/apps/ssh/config|ssh config
 $HOME/.config/mise/config.toml|$DOTFILES_DIR/apps/mise/config.toml|mise config
 $HOME/.config/nvim|$DOTFILES_DIR/apps/nvim|nvim config
 $HOME/.local/bin/bw-node|$DOTFILES_DIR/bin/bw-node|bw-node wrapper
-$HOME/.claude/settings.json|$DOTFILES_DIR/secure-claude-code-defaults/user-config/settings.json|Claude Code settings
+$HOME/.claude/settings.json|$DOTFILES_DIR/apps/claude-user/settings.json|Claude Code settings
 $HOME/.claude/CLAUDE.md|$DOTFILES_DIR/secure-claude-code-defaults/user-config/CLAUDE.md|Claude Code global CLAUDE.md
 $HOME/.claude/commands|$DOTFILES_DIR/secure-claude-code-defaults/user-config/skills|Claude Code slash-command dir
-$HOME/.local/bin/claude|$DOTFILES_DIR/secure-claude-code-defaults/bin/claude|claude shim
-$HOME/.local/bin/claude-private|$DOTFILES_DIR/secure-claude-code-defaults/bin/claude-private|claude-private (ccr→Venice default_code, --think → Opus)
-$HOME/.local/bin/claude-paranoid|$DOTFILES_DIR/secure-claude-code-defaults/bin/claude-paranoid|claude-paranoid (ccr→Venice default_code, always)
-$HOME/.local/bin/claude-create-worktree|$DOTFILES_DIR/secure-claude-code-defaults/bin/claude-create-worktree|claude-create-worktree (shared worktree helper)
 $HOME/.devcontainer|$DOTFILES_DIR/.devcontainer|.devcontainer
 EOF
     if [[ "$(uname)" == "Darwin" ]]; then

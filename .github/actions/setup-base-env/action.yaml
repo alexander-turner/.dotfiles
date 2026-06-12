@@ -54,7 +54,7 @@ runs:
 
     - name: Set up uv
       if: inputs.setup-python == 'true'
-      uses: astral-sh/setup-uv@v3
+      uses: astral-sh/setup-uv@v6
       with:
         enable-cache: true
         cache-dependency-glob: "uv.lock"
