@@ -14,7 +14,53 @@ DOTFILES_DIR="${DOTFILES_DIR:-$(git -C "$_self_dir" rev-parse --show-toplevel)}"
 source "$DOTFILES_DIR/bin/lib/tailscale-resolve.sh"
 
 APPLY="$DOTFILES_DIR/bin/tailscale-set-exit-node.bash"
-TAILSCALE="$(find_tailscale || echo /opt/homebrew/bin/tailscale)"
+
+if ! TAILSCALE="$(find_tailscale)"; then
+    printf '⚠️ vpn\n---\nno working tailscale CLI — brew install tailscale\n'
+    exit 0
+fi
+
+# Surface daemon failures distinctly so "🔴 off" strictly means "healthy,
+# exit node deliberately off" — not "daemon dead and traffic blackholed".
+# States come from tailscale_health in bin/lib/tailscale-resolve.sh.
+health="$(tailscale_health "$TAILSCALE")"
+case "$health" in
+no-daemon)
+    echo "⚠️ vpn"
+    echo "---"
+    echo "tailscaled is not running | font=Menlo size=11"
+    echo "Start daemon… | shell=/usr/bin/sudo param1=launchctl param2=bootstrap param3=system param4=/Library/LaunchDaemons/com.$USER.tailscaled.plist terminal=true refresh=true"
+    exit 0
+    ;;
+eperm)
+    echo "⚠️ vpn"
+    echo "---"
+    echo "socket EPERM — daemons raced on tailscaled.socket | font=Menlo size=11"
+    echo "Restart daemon… | shell=/usr/bin/sudo param1=launchctl param2=kickstart param3=-k param4=system/com.$USER.tailscaled terminal=true refresh=true"
+    exit 0
+    ;;
+stopped)
+    echo "⏸ vpn"
+    echo "---"
+    echo "tunnel is down (tailscale down) | font=Menlo size=11"
+    echo "Connect… | shell=$TAILSCALE param1=up terminal=false refresh=true"
+    exit 0
+    ;;
+logged-out)
+    echo "🔓 vpn"
+    echo "---"
+    echo "logged out — node key gone or expired | font=Menlo size=11"
+    echo "Log in… | shell=$TAILSCALE param1=up terminal=true refresh=true"
+    exit 0
+    ;;
+error)
+    echo "⚠️ vpn"
+    echo "---"
+    echo "tailscale status failed — run it in a terminal | font=Menlo size=11"
+    exit 0
+    ;;
+esac
+# ok → show the exit-node picker below.
 
 line=$("$TAILSCALE" status 2>/dev/null | awk '/mullvad\.ts\.net.*exit node/ {print; exit}')
 host=$(awk '{print $2}' <<<"$line")
