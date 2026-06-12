@@ -56,8 +56,11 @@ keeping `setup.bash`, `doctor.bash`, and CI honest with each other.
   pick up the same project context Claude Code uses.
 - `.mcp.json` — Claude Code MCP server config; currently registers the
   filesystem MCP scoped to `~/.dotfiles`.
-- `.claude/` — symlinks into `secure-claude-code-defaults/`:
-  `settings.json`, `hooks/`, `skills/`, `README.md`.
+- `.claude/` — mostly symlinks into `secure-claude-code-defaults/`:
+  `settings.json`, `hooks/`, `README.md`. `.claude/skills/` is a real
+  tracked directory populated by `template-sync` from the upstream template;
+  any private skills from `secure-claude-code-defaults/skills/` must be
+  individually symlinked in by `setup.bash` if needed.
 - `Brewfile` — package manifest, gated by `if OS.mac?` for cask blocks.
 - `launchagents/`, `etc/sudoers.d/` — `__USERNAME__` templates rendered
   during install.
