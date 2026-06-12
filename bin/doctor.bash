@@ -338,25 +338,34 @@ if $IS_MAC; then
         skip "Tailscale daemon" "tailscale CLI not installed"
     fi
 
-    if command -v tailscale >/dev/null 2>&1 && [[ -f "$TAILSCALE_PLIST" ]]; then
-        if ts_output=$(tailscale status 2>&1); then
-            pass "Tailscale daemon reachable"
-        elif grep -q "operation not permitted" <<<"$ts_output"; then
-            fail "Tailscale daemon" "CLI denied access to socket (run: sudo launchctl kickstart -k system/com.$USER.tailscaled)"
-        elif grep -q "failed to connect" <<<"$ts_output"; then
-            fail "Tailscale daemon" "daemon not running (run: sudo launchctl bootstrap system $TAILSCALE_PLIST)"
-        else
-            # Non-zero but daemon talks back (e.g., logged out) — still healthy.
-            pass "Tailscale daemon reachable"
-        fi
-    fi
-
     # shellcheck source=lib/tailscale-resolve.sh disable=SC1091
     source "$DOTFILES_DIR/bin/lib/tailscale-resolve.sh"
     if ts="$(find_tailscale)"; then
         pass "tailscale CLI ($ts)"
     else
         fail "tailscale CLI" "no working binary (brew install tailscale)"
+    fi
+
+    if [[ -n "$ts" && -f "$TAILSCALE_PLIST" ]]; then
+        case "$(tailscale_health "$ts")" in
+        ok | stopped)
+            pass "Tailscale daemon reachable"
+            ;;
+        eperm)
+            fail "Tailscale daemon" "CLI denied access to socket (run: sudo launchctl kickstart -k system/com.$USER.tailscaled)"
+            ;;
+        no-daemon)
+            fail "Tailscale daemon" "daemon not running (run: sudo launchctl bootstrap system $TAILSCALE_PLIST)"
+            ;;
+        logged-out)
+            # Logged out is NOT healthy: the exit-node applier can't engage
+            # and `tailscale set` fails with misleading errors until re-auth.
+            fail "Tailscale login" "daemon up but logged out (run: tailscale up)"
+            ;;
+        *)
+            fail "Tailscale daemon" "unrecognized 'tailscale status' failure (run: tailscale status)"
+            ;;
+        esac
     fi
     SHIM=/usr/local/bin/tailscale
     if [[ -e "$SHIM" ]] && ! "$SHIM" version >/dev/null 2>&1; then
