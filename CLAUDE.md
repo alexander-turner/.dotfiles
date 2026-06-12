@@ -269,11 +269,18 @@ classifier for CLI↔daemon health (`ok` / `stopped` / `no-daemon` /
   errors (a logged-out daemon yields `invalid value ... must be IP or
   hostname` because the netmap is gone). Failures hit both `menu.log`
   and stderr.
+- `bin/tailscale-apply-exit-node.bash` (login agent) retries through
+  boot-time `no-daemon`/`error` states but bails immediately on
+  `logged-out` — interactive browser re-auth can't be retried into
+  existence.
 - `bin/doctor.bash` maps each unhealthy state to a FAIL with the exact
   recovery command; logged-out is a FAIL, not "reachable".
 
 Adding a failure mode = new state in `tailscale_health` + handling in
-all three consumers + a case in `tests/test_tailscale_health.py`.
+every consumer + a case in `tests/test_tailscale_health.py`. The
+set-exit-node exit-code/stderr/menu.log contract is locked by
+`tests/test_set_exit_node.py` (which self-skips when a real tailscale
+CLI is installed, so it can never drive an actual VPN).
 
 ## Conventions
 

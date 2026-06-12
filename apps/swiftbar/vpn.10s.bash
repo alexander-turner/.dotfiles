@@ -39,6 +39,13 @@ eperm)
     echo "Restart daemon… | shell=/usr/bin/sudo param1=launchctl param2=kickstart param3=-k param4=system/com.$USER.tailscaled terminal=true refresh=true"
     exit 0
     ;;
+stopped)
+    echo "⏸ vpn"
+    echo "---"
+    echo "tunnel is down (tailscale down) | font=Menlo size=11"
+    echo "Connect… | shell=$TAILSCALE param1=up terminal=false refresh=true"
+    exit 0
+    ;;
 logged-out)
     echo "🔓 vpn"
     echo "---"
@@ -53,7 +60,7 @@ error)
     exit 0
     ;;
 esac
-# ok | stopped → show the exit-node picker below.
+# ok → show the exit-node picker below.
 
 line=$("$TAILSCALE" status 2>/dev/null | awk '/mullvad\.ts\.net.*exit node/ {print; exit}')
 host=$(awk '{print $2}' <<<"$line")
