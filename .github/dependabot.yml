@@ -1,6 +1,6 @@
 version: 2
 
-# .devcontainer/ is a symlink into the gitignored claude-guard/
+# .devcontainer/ is a symlink into the gitignored secure-claude-code-defaults/
 # subrepo; Dependabot can't resolve it and fails with "no Dockerfiles found".
 # Docker dependency tracking is handled inside the private subrepo instead.
 updates: []
