@@ -22,13 +22,13 @@ source "$DOTFILES_DIR/bin/lib/safe_link.sh"
 # shellcheck source=bin/lib/symlinks.sh disable=SC1091
 source "$DOTFILES_DIR/bin/lib/symlinks.sh"
 
-# ── secure-claude-code-defaults (always run) ────────────────────────────────
-SCCD_DIR="$DOTFILES_DIR/secure-claude-code-defaults"
-SCCD_URL="https://github.com/alexander-turner/secure-claude-code-defaults.git"
-if [[ -d "$SCCD_DIR/.git" ]]; then
-    git -C "$SCCD_DIR" pull --ff-only origin main 2>/dev/null || true
+# ── claude-guard (always run) ────────────────────────────────
+CLAUDE_GUARD_DIR="$DOTFILES_DIR/claude-guard"
+CLAUDE_GUARD_URL="https://github.com/alexander-turner/claude-guard.git"
+if [[ -d "$CLAUDE_GUARD_DIR/.git" ]]; then
+    git -C "$CLAUDE_GUARD_DIR" pull --ff-only origin main 2>/dev/null || true
 else
-    git clone "$SCCD_URL" "$SCCD_DIR"
+    git clone "$CLAUDE_GUARD_URL" "$CLAUDE_GUARD_DIR"
 fi
 
 # ── Symlinks (always run) ────────────────────────────────────────────────────
@@ -232,7 +232,7 @@ if [ "$(uname)" = "Darwin" ]; then
     # and respawned if it crashes.
     CCR_PLIST_DEST="$HOME/Library/LaunchAgents/com.turntrout.ccr.plist"
     mkdir -p "$HOME/Library/LaunchAgents" "$HOME/Library/Logs/com.turntrout.ccr"
-    safe_link "$DOTFILES_DIR/secure-claude-code-defaults/launchagents/com.turntrout.ccr.plist" "$CCR_PLIST_DEST"
+    safe_link "$DOTFILES_DIR/claude-guard/launchagents/com.turntrout.ccr.plist" "$CCR_PLIST_DEST"
     launchctl bootout "gui/$(id -u)" "$CCR_PLIST_DEST" 2>/dev/null || true
     launchctl bootstrap "gui/$(id -u)" "$CCR_PLIST_DEST" 2>/dev/null || true
 
@@ -395,7 +395,7 @@ if command_exists mise; then
 fi
 
 # devcontainer CLI — used by the host-side `claude` wrappers
-# (secure-claude-code-defaults/bin/claude and apps/fish/functions/claude.fish)
+# (claude-guard/bin/claude and apps/fish/functions/claude.fish)
 # to bring up .devcontainer/ on demand.
 # pnpm is configured above (PNPM_HOME + PATH), so this lands alongside the
 # other globals (claude-code, ccr, prettier, @bitwarden/cli).
