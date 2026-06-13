@@ -56,13 +56,19 @@ safe_link() {
         case "$choice" in
         y | Y)
             _safe_link_backup "$target_file"
-            ln -sf "$source_file" "$target_file"
+            ln -sfn "$source_file" "$target_file"
             ;;
         *) echo "Skipping $display" ;;
         esac
     else
-        # Stale symlink (or no target) — ln -sf handles atomically
-        ln -sf "$source_file" "$target_file"
+        # Stale symlink (or no target) — ln -sfn handles atomically.
+        # -n (--no-dereference) is load-bearing: when $target_file is an
+        # existing symlink that resolves to a *directory* (e.g. ~/.claude/
+        # commands, ~/.config/nvim, ~/.devcontainer), a plain `ln -sf`
+        # dereferences it and drops the new link *inside* that directory,
+        # leaving the symlink itself still pointing at the old target. -n
+        # replaces the symlink atomically instead.
+        ln -sfn "$source_file" "$target_file"
     fi
 }
 

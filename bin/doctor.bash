@@ -376,13 +376,16 @@ fi
 # ── Summary ─────────────────────────────────────────────────────────────────
 printf "\n%d passed, %d failed, %d skipped\n" "$PASS" "$FAIL" "$SKIP"
 
-if [[ -t 0 && -t 1 ]] && ((stale_count + MANAGED_LINK_FAIL > 0)); then
+# Offer the interactive fix only when run standalone at a terminal.
+# DOCTOR_NONINTERACTIVE is set when setup.bash invokes doctor as its final
+# step: setup has already reconciled the symlinks (including pruning stale
+# ones), so re-prompting would block the run and recurse back into setup.bash.
+if [[ -z "${DOCTOR_NONINTERACTIVE:-}" && -t 0 && -t 1 ]] &&
+    ((stale_count + MANAGED_LINK_FAIL > 0)); then
     read -rp "Refresh symlinks now? (y/N) " choice
     case "$choice" in
     y | Y)
-        while IFS='|' read -r entry _; do
-            rm -f "$entry" && printf "  removed stale %s\n" "$entry"
-        done < <(stale_symlinks)
+        prune_stale_symlinks
         bash "$DOTFILES_DIR/setup.bash" --link-only
         exit $?
         ;;

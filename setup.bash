@@ -46,6 +46,14 @@ while IFS='|' read -r target source _label; do
     safe_link "$source" "$target"
 done < <(repo_hook_symlinks)
 
+# Prune rename-leftover symlinks (e.g. ~/.local/bin/claude-* pointing at a
+# since-removed path under $DOTFILES_DIR). Without this, stale links linger
+# until someone answers doctor.bash's interactive "Refresh symlinks now?"
+# prompt — which can't run on the --link-only path.
+# shellcheck source=bin/lib/stale-symlinks.sh disable=SC1091
+source "$DOTFILES_DIR/bin/lib/stale-symlinks.sh"
+prune_stale_symlinks
+
 [[ -f "$HOME/.extras.bash" ]] || touch "$HOME/.extras.bash"
 [[ -f "$HOME/.extras.fish" ]] || touch "$HOME/.extras.fish"
 [[ -f "$HOME/.hushlogin" ]] || touch "$HOME/.hushlogin"
@@ -53,7 +61,10 @@ done < <(repo_hook_symlinks)
 
 if [ "$LINK_ONLY" = true ]; then
     status_msg "Symlinks refreshed."
-    bash "$DOTFILES_DIR/bin/doctor.bash" --quiet || true
+    # setup.bash just reconciled every symlink, so doctor must not re-offer its
+    # interactive "Refresh symlinks now?" prompt here — that would block the
+    # --link-only path on input (and recurse back into setup.bash).
+    DOCTOR_NONINTERACTIVE=1 bash "$DOTFILES_DIR/bin/doctor.bash" --quiet || true
     exit 0
 fi
 
@@ -411,4 +422,4 @@ for directory in ~/.local/{share,state}/nvim ~/.cache/nvim; do
 done
 
 status_msg "Setup complete. Running doctor.bash..."
-bash "$DOTFILES_DIR/bin/doctor.bash" || true
+DOCTOR_NONINTERACTIVE=1 bash "$DOTFILES_DIR/bin/doctor.bash" || true

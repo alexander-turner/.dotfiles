@@ -147,6 +147,21 @@ Where a new symlink belongs:
 - Genuinely bespoke (launchd plists that also need bootstrap/bootout) →
   inline `safe_link` in `setup.bash`.
 
+`safe_link` always repoints with `ln -sfn` — the `-n` is load-bearing.
+A symlink whose current target resolves to a *directory* (e.g.
+`~/.claude/commands`, `~/.config/nvim`, `~/.devcontainer`) would, under a
+plain `ln -sf`, be dereferenced so the new link lands *inside* the old
+directory while the symlink itself stays pointed at the stale target. Never
+drop the `-n`.
+
+Removal is the inverse: `setup.bash` runs `prune_stale_symlinks` (in
+`bin/lib/stale-symlinks.sh`) right after the link loops, so a rename that
+orphans a link under `$DOTFILES_DIR` (e.g. `~/.local/bin/claude-*`) is
+cleaned up on the next `--link-only` run rather than lingering until someone
+answers `doctor.bash`'s interactive "Refresh symlinks now?" prompt. That
+prompt only fires for standalone `doctor` runs — `setup.bash` invokes doctor
+with `DOCTOR_NONINTERACTIVE=1` so the success path never blocks on input.
+
 ### Session-setup upkeep (Claude Code on the web)
 
 `secure-claude-code-defaults/hooks/session-setup.bash` (symlinked via

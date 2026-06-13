@@ -135,6 +135,24 @@ def test_stale_symlink_relinked_atomically(home: Path, tmp_path: Path) -> None:
     assert stamp_dirs() == []
 
 
+def test_symlink_to_directory_is_repointed(home: Path, tmp_path: Path) -> None:
+    """Repointing a symlink whose current target is a *directory* needs
+    `ln -sfn`: plain `ln -sf` dereferences the link and drops the new symlink
+    *inside* the old directory, leaving the link itself pointing at the old
+    target. This is the ~/.claude/commands / ~/.config/nvim failure mode."""
+    old = tmp_path / "olddir"
+    new = tmp_path / "newdir"
+    old.mkdir()
+    new.mkdir()
+    tgt = home / ".configdir"
+    tgt.symlink_to(old)
+    assert run_script(new, tgt) == 0
+    assert os.readlink(tgt) == str(new), "symlink must be repointed, not descended into"
+    # No junk symlink should have been created inside the old directory.
+    assert list(old.iterdir()) == []
+    assert stamp_dirs() == []
+
+
 def test_real_file_backed_up_before_clobber(home: Path) -> None:
     """Data-preservation contract — exercised through _safe_link_backup
     directly because the prompted overwrite branch needs a real PTY."""

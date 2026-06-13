@@ -30,6 +30,17 @@ stale_symlinks() {
     done < <(printf '%s' "$unique_parents")
 }
 
+# Remove every rename-leftover symlink stale_symlinks() reports, printing one
+# line per removal. setup.bash --link-only calls this so a full reconcile
+# (create managed links + prune leftovers) happens in one pass, instead of
+# leaving the cleanup to doctor.bash's interactive prompt. Idempotent: a second
+# run finds nothing to remove.
+prune_stale_symlinks() {
+    while IFS='|' read -r entry _; do
+        rm -f "$entry" && printf "  removed stale symlink %s\n" "$entry"
+    done < <(stale_symlinks)
+}
+
 if [[ "${BASH_SOURCE[0]:-}" == "${0}" ]]; then
     set -euo pipefail
     : "${DOTFILES_DIR:=$(cd "$(dirname "$0")/../.." && pwd)}"
