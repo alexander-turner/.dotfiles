@@ -40,7 +40,11 @@ end
 set fish_greeting ''
 
 set -l _self_dir (dirname (realpath (status filename)))
-set -gx DOTFILES_DIR (git -C $_self_dir rev-parse --show-toplevel)
+# config.fish is re-sourced by tide's async prompt subprocess on every repaint,
+# so this git call runs once per prompt. Suppress its stderr (a bare copy of the
+# dotfiles, or git not on PATH, would otherwise leak "fatal: not a git
+# repository" into the terminal each enter) and fall back to apps/fish's parent.
+set -gx DOTFILES_DIR (git -C $_self_dir rev-parse --show-toplevel 2>/dev/null; or realpath $_self_dir/../..)
 
 # These elements don't scale with font size
 set --universal tide_right_prompt_prefix ''
