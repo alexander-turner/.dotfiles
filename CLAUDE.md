@@ -35,7 +35,10 @@ keeping `setup.bash`, `doctor.bash`, and CI honest with each other.
     to `~/.claude/` by `symlinks.sh`.
 - `bin/setup_llm.bash` — AI tooling installer invoked from `setup.bash`:
   claude-code + ccr (pnpm), aider/llm/wut (uv), VSCodium + extensions,
-  llm-based commit-msg template hook. Also refreshes the Venice
+  llm-based commit-msg template hook. claude-code + ccr are pinned to the
+  versions in `claude-guard/package.json` (the canonical pin
+  `claude-guard`'s own setup + `test_claude_code_version.py` enforce), not
+  installed as unpinned `latest`. Also refreshes the Venice
   `default_code` model cache via the subrepo's
   `bin/lib/venice-resolve.bash`. The ccr binary it installs is what the
   `com.turntrout.ccr` LaunchAgent starts; without this script, that

@@ -21,9 +21,25 @@ IS_MAC=false
 # ── claude-code + claude-code-router (ccr) ──────────────────────────────────
 # pnpm keeps both under $PNPM_HOME, matching the path baked into
 # claude-guard/launchagents/com.turntrout.ccr.plist.
+#
+# Pin both to the versions in claude-guard/package.json — the canonical pin
+# that claude-guard's own setup.bash reads and tests/test_claude_code_version.py
+# enforces, so the guardrails are validated against exactly this claude-code.
+# Installing unpinned "latest" here would drift the CLI ahead of that tested
+# version. Fall back to unpinned only when the pin can't be read (subrepo not
+# cloned yet, or jq missing) so a partial bootstrap still installs something.
 if command_exists pnpm; then
-    status_msg "Installing claude-code + claude-code-router via pnpm..."
-    pnpm add --global --reporter=append-only @anthropic-ai/claude-code @musistudio/claude-code-router
+    cc_pkg="$DOTFILES_DIR/claude-guard/package.json"
+    cc_spec="@anthropic-ai/claude-code"
+    ccr_spec="@musistudio/claude-code-router"
+    if [[ -f "$cc_pkg" ]] && command_exists jq; then
+        cc_ver="$(jq -re '.devDependencies["@anthropic-ai/claude-code"]' "$cc_pkg" 2>/dev/null)" &&
+            cc_spec="@anthropic-ai/claude-code@${cc_ver}"
+        ccr_ver="$(jq -re '.devDependencies["@musistudio/claude-code-router"]' "$cc_pkg" 2>/dev/null)" &&
+            ccr_spec="@musistudio/claude-code-router@${ccr_ver}"
+    fi
+    status_msg "Installing ${cc_spec} + ${ccr_spec} via pnpm..."
+    pnpm add --global --reporter=append-only "$cc_spec" "$ccr_spec"
 
     CLAUDE_INSTALLER="$(pnpm root -g)/@anthropic-ai/claude-code/install.cjs"
     if [[ -f "$CLAUDE_INSTALLER" ]] && command_exists node; then
