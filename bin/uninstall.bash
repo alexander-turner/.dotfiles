@@ -116,7 +116,7 @@ if $IS_MAC; then
         case "$choice" in
         y | Y)
             launchctl bootout "gui/$(id -u)" "$CCR_PLIST" 2>/dev/null || true
-            remove_dotfile_symlink "$CCR_PLIST" "$DOTFILES_DIR/secure-claude-code-defaults/launchagents/com.turntrout.ccr.plist"
+            remove_dotfile_symlink "$CCR_PLIST" "$DOTFILES_DIR/claude-guard/launchagents/com.turntrout.ccr.plist"
             ;;
         *) echo "  skip ccr launch agent" ;;
         esac

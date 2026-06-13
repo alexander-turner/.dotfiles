@@ -194,7 +194,7 @@ for cmd in pnpm ccr aider llm wut devcontainer; do
         aider) hint="run: uv tool install aider-chat (or bash bin/setup_llm.bash)" ;;
         llm) hint="run: uv tool install llm (or bash bin/setup_llm.bash)" ;;
         wut) hint="run: uv tool install wut-cli (or bash bin/setup_llm.bash)" ;;
-        devcontainer) hint="run: pnpm add -g @devcontainers/cli (or bash setup.bash) — required by secure-claude-code-defaults/bin/claude sandbox wrapper" ;;
+        devcontainer) hint="run: pnpm add -g @devcontainers/cli (or bash setup.bash) — required by claude-guard/bin/claude sandbox wrapper" ;;
         esac
         skip "$cmd" "$hint"
     fi

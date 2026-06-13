@@ -18,8 +18,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Clone secure-claude-code-defaults
-        run: git clone https://github.com/alexander-turner/secure-claude-code-defaults.git secure-claude-code-defaults
+      - name: Clone claude-guard
+        run: git clone https://github.com/alexander-turner/claude-guard.git claude-guard
 
       - name: Scan for committed secrets (gitleaks)
         uses: gitleaks/gitleaks-action@v2
@@ -72,7 +72,7 @@ jobs:
           [ "${rc:-0}" -le 1 ] || exit "$rc"
 
       - name: Test Claude Code hooks
-        run: bash secure-claude-code-defaults/tests/test-claude-hooks.bash
+        run: bash claude-guard/tests/test-claude-hooks.bash
 
       - name: Run repo unit tests
         # pytest is installed above but was never invoked here, so the

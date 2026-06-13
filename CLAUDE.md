@@ -8,8 +8,8 @@ keeping `setup.bash`, `doctor.bash`, and CI honest with each other.
 - `setup.bash` — top-level installer; idempotent, supports `--link-only`.
   Always finishes by running `bin/doctor.bash` so the user sees a green
   health summary (or knows exactly what's still broken).
-- `secure-claude-code-defaults/` — cloned repo
-  (`alexander-turner/secure-claude-code-defaults`), `.gitignore`d.
+- `claude-guard/` — cloned repo
+  (`alexander-turner/claude-guard`), `.gitignore`d.
   `setup.bash` clones or pulls it on every run. Contains all
   Claude Code configuration: hooks, skills, project/global settings,
   wrapper scripts, Venice/ccr routing, and the ccr LaunchAgent plist.
@@ -56,10 +56,10 @@ keeping `setup.bash`, `doctor.bash`, and CI honest with each other.
   pick up the same project context Claude Code uses.
 - `.mcp.json` — Claude Code MCP server config; currently registers the
   filesystem MCP scoped to `~/.dotfiles`.
-- `.claude/` — mostly symlinks into `secure-claude-code-defaults/`:
+- `.claude/` — mostly symlinks into `claude-guard/`:
   `settings.json`, `hooks/`, `README.md`. `.claude/skills/` is a real
   tracked directory populated by `template-sync` from the upstream template;
-  any private skills from `secure-claude-code-defaults/skills/` must be
+  any private skills from `claude-guard/skills/` must be
   individually symlinked in by `setup.bash` if needed.
 - `Brewfile` — package manifest, gated by `if OS.mac?` for cask blocks.
 - `launchagents/`, `etc/sudoers.d/` — `__USERNAME__` templates rendered
@@ -166,7 +166,7 @@ never blocks on input.
 
 ### Session-setup upkeep (Claude Code on the web)
 
-`secure-claude-code-defaults/hooks/session-setup.bash` (symlinked via
+`claude-guard/hooks/session-setup.bash` (symlinked via
 `.claude/hooks/`) bootstraps fresh web/cloud sessions.
 When a hook in `.pre-commit-config.yaml` or `bin/pre-push` gains a new
 tool dependency, install it from `session-setup.bash` — otherwise the
