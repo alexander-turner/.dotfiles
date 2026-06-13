@@ -154,13 +154,15 @@ plain `ln -sf`, be dereferenced so the new link lands *inside* the old
 directory while the symlink itself stays pointed at the stale target. Never
 drop the `-n`.
 
-Removal is the inverse: `setup.bash` runs `prune_stale_symlinks` (in
-`bin/lib/stale-symlinks.sh`) right after the link loops, so a rename that
-orphans a link under `$DOTFILES_DIR` (e.g. `~/.local/bin/claude-*`) is
-cleaned up on the next `--link-only` run rather than lingering until someone
-answers `doctor.bash`'s interactive "Refresh symlinks now?" prompt. That
-prompt only fires for standalone `doctor` runs — `setup.bash` invokes doctor
-with `DOCTOR_NONINTERACTIVE=1` so the success path never blocks on input.
+Removal is the inverse: `setup.bash` runs `bin/lib/stale-symlinks.sh --prune`
+right after the link loops, so a rename that orphans a link under
+`$DOTFILES_DIR` (e.g. `~/.local/bin/claude-private` after the wrapper became
+`claude-guard`) is cleaned up on the next `--link-only` run rather than
+lingering until someone answers `doctor.bash`'s interactive "Refresh symlinks
+now?" prompt. Prune only ever removes already-dangling symlinks, so unlike
+`safe_link` it needs no backup. That prompt only fires for standalone `doctor`
+runs — `setup.bash` invokes doctor with `--no-refresh` so the success path
+never blocks on input.
 
 ### Session-setup upkeep (Claude Code on the web)
 

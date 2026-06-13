@@ -18,17 +18,10 @@ STALE_SH = DOTFILES / "bin" / "lib" / "stale-symlinks.sh"
 
 
 def _run_prune(home: Path) -> str:
-    """Source the lib and run prune_stale_symlinks() — the entry point
-    setup.bash --link-only uses to remove rename-leftover symlinks."""
-    # Mirror setup.bash's environment: DOTFILES_DIR set + symlinks.sh sourced
-    # (so managed_symlinks is defined) before the lib is sourced.
-    script = (
-        f'export DOTFILES_DIR={DOTFILES}; '
-        f'source {DOTFILES / "bin" / "lib" / "symlinks.sh"}; '
-        f"source {STALE_SH}; prune_stale_symlinks"
-    )
+    """Invoke the `--prune` entry point — exactly what setup.bash runs to
+    remove rename-leftover symlinks."""
     proc = subprocess.run(
-        ["bash", "-c", script],
+        ["bash", str(STALE_SH), "--prune"],
         env={**os.environ, "HOME": str(home)},
         capture_output=True,
         text=True,
