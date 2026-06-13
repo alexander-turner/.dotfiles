@@ -1,1 +1,1 @@
-../secure-claude-code-defaults/README.md
+../claude-guard/README.md

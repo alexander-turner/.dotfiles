@@ -8,8 +8,8 @@ keeping `setup.bash`, `doctor.bash`, and CI honest with each other.
 - `setup.bash` — top-level installer; idempotent, supports `--link-only`.
   Always finishes by running `bin/doctor.bash` so the user sees a green
   health summary (or knows exactly what's still broken).
-- `secure-claude-code-defaults/` — cloned repo
-  (`alexander-turner/secure-claude-code-defaults`), `.gitignore`d.
+- `claude-guard/` — cloned repo
+  (`alexander-turner/claude-guard`), `.gitignore`d.
   `setup.bash` clones or pulls it on every run. Contains all
   Claude Code configuration: hooks, skills, project/global settings,
   wrapper scripts, Venice/ccr routing, and the ccr LaunchAgent plist.
@@ -35,7 +35,10 @@ keeping `setup.bash`, `doctor.bash`, and CI honest with each other.
     to `~/.claude/` by `symlinks.sh`.
 - `bin/setup_llm.bash` — AI tooling installer invoked from `setup.bash`:
   claude-code + ccr (pnpm), aider/llm/wut (uv), VSCodium + extensions,
-  llm-based commit-msg template hook. Also refreshes the Venice
+  llm-based commit-msg template hook. claude-code + ccr are pinned to the
+  versions in `claude-guard/package.json` (the canonical pin
+  `claude-guard`'s own setup + `test_claude_code_version.py` enforce), not
+  installed as unpinned `latest`. Also refreshes the Venice
   `default_code` model cache via the subrepo's
   `bin/lib/venice-resolve.bash`. The ccr binary it installs is what the
   `com.turntrout.ccr` LaunchAgent starts; without this script, that
@@ -56,10 +59,10 @@ keeping `setup.bash`, `doctor.bash`, and CI honest with each other.
   pick up the same project context Claude Code uses.
 - `.mcp.json` — Claude Code MCP server config; currently registers the
   filesystem MCP scoped to `~/.dotfiles`.
-- `.claude/` — mostly symlinks into `secure-claude-code-defaults/`:
+- `.claude/` — mostly symlinks into `claude-guard/`:
   `settings.json`, `hooks/`, `README.md`. `.claude/skills/` is a real
   tracked directory populated by `template-sync` from the upstream template;
-  any private skills from `secure-claude-code-defaults/skills/` must be
+  any private skills from `claude-guard/skills/` must be
   individually symlinked in by `setup.bash` if needed.
 - `Brewfile` — package manifest, gated by `if OS.mac?` for cask blocks.
 - `launchagents/`, `etc/sudoers.d/` — `__USERNAME__` templates rendered
@@ -147,9 +150,26 @@ Where a new symlink belongs:
 - Genuinely bespoke (launchd plists that also need bootstrap/bootout) →
   inline `safe_link` in `setup.bash`.
 
+`safe_link` always repoints with `ln -sfn` — the `-n` is load-bearing.
+A symlink whose current target resolves to a *directory* (e.g.
+`~/.claude/commands`, `~/.config/nvim`, `~/.devcontainer`) would, under a
+plain `ln -sf`, be dereferenced so the new link lands *inside* the old
+directory while the symlink itself stays pointed at the stale target. Never
+drop the `-n`.
+
+Removal is the inverse: `setup.bash` runs `bin/lib/stale-symlinks.sh --prune`
+right after the link loops, so a rename that orphans a link under
+`$DOTFILES_DIR` (e.g. `~/.local/bin/claude-private` after the wrapper became
+`claude-guard`) is cleaned up on the next `--link-only` run rather than
+lingering until someone answers `doctor.bash`'s interactive "Refresh symlinks
+now?" prompt. Prune only ever removes already-dangling symlinks, so unlike
+`safe_link` it needs no backup. That prompt only fires for standalone `doctor`
+runs — `setup.bash` invokes doctor with `--no-refresh` so the success path
+never blocks on input.
+
 ### Session-setup upkeep (Claude Code on the web)
 
-`secure-claude-code-defaults/hooks/session-setup.bash` (symlinked via
+`claude-guard/hooks/session-setup.bash` (symlinked via
 `.claude/hooks/`) bootstraps fresh web/cloud sessions.
 When a hook in `.pre-commit-config.yaml` or `bin/pre-push` gains a new
 tool dependency, install it from `session-setup.bash` — otherwise the

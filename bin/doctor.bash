@@ -7,9 +7,14 @@
 # isn't installed — `doctor.bash` is meant to be safe to run anywhere.
 #
 # Usage:
-#   bash bin/doctor.bash             # only print failing/skipped checks + summary
-#   bash bin/doctor.bash --verbose   # also print every passing check
-#   bash bin/doctor.bash --quiet     # alias of the default (kept for compat)
+#   bash bin/doctor.bash              # only print failing/skipped checks + summary
+#   bash bin/doctor.bash --verbose    # also print every passing check
+#   bash bin/doctor.bash --quiet      # alias of the default (kept for compat)
+#   bash bin/doctor.bash --no-refresh # never offer the interactive symlink fix
+#
+# setup.bash passes --no-refresh: it has already reconciled the symlinks, so
+# re-offering the prompt there would block the run on input (and recurse back
+# into setup.bash).
 #
 # Maintenance invariant: every new feature added to setup.bash that creates a
 # symlink, daemon, or external dependency MUST add a matching check here.
@@ -18,14 +23,18 @@
 set -uo pipefail
 
 VERBOSE=false
-case "${1:-}" in
---verbose) VERBOSE=true ;;
---quiet | "") ;;
-*)
-    printf "doctor.bash: unknown flag %q\n" "$1" >&2
-    exit 2
-    ;;
-esac
+ALLOW_REFRESH=true
+for arg in "$@"; do
+    case "$arg" in
+    --verbose) VERBOSE=true ;;
+    --quiet) ;; # default verbosity; kept for compat
+    --no-refresh) ALLOW_REFRESH=false ;;
+    *)
+        printf "doctor.bash: unknown flag %q\n" "$arg" >&2
+        exit 2
+        ;;
+    esac
+done
 
 DOTFILES_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 IS_MAC=false
@@ -185,7 +194,7 @@ for cmd in pnpm ccr aider llm wut devcontainer; do
         aider) hint="run: uv tool install aider-chat (or bash bin/setup_llm.bash)" ;;
         llm) hint="run: uv tool install llm (or bash bin/setup_llm.bash)" ;;
         wut) hint="run: uv tool install wut-cli (or bash bin/setup_llm.bash)" ;;
-        devcontainer) hint="run: pnpm add -g @devcontainers/cli (or bash setup.bash) — required by secure-claude-code-defaults/bin/claude sandbox wrapper" ;;
+        devcontainer) hint="run: pnpm add -g @devcontainers/cli (or bash setup.bash) — required by claude-guard/bin/claude sandbox wrapper" ;;
         esac
         skip "$cmd" "$hint"
     fi
@@ -376,13 +385,15 @@ fi
 # ── Summary ─────────────────────────────────────────────────────────────────
 printf "\n%d passed, %d failed, %d skipped\n" "$PASS" "$FAIL" "$SKIP"
 
-if [[ -t 0 && -t 1 ]] && ((stale_count + MANAGED_LINK_FAIL > 0)); then
+# Offer the interactive fix only when run standalone at a terminal. --no-refresh
+# (passed by setup.bash, which has already reconciled the symlinks) suppresses
+# it so the run can't block on input or recurse back into setup.bash.
+if [[ "$ALLOW_REFRESH" == true && -t 0 && -t 1 ]] &&
+    ((stale_count + MANAGED_LINK_FAIL > 0)); then
     read -rp "Refresh symlinks now? (y/N) " choice
     case "$choice" in
     y | Y)
-        while IFS='|' read -r entry _; do
-            rm -f "$entry" && printf "  removed stale %s\n" "$entry"
-        done < <(stale_symlinks)
+        prune_stale_symlinks
         bash "$DOTFILES_DIR/setup.bash" --link-only
         exit $?
         ;;

@@ -1,7 +1,7 @@
 """Contract test for the trusted-monitor safe-list (`monitor.py --check-allow`).
 
-The AI-safety monitor lives in the secure-claude-code-defaults subrepo
-(cloned to ./secure-claude-code-defaults by setup.bash) and is owned and
+The AI-safety monitor lives in the claude-guard subrepo
+(cloned to ./claude-guard by setup.bash) and is owned and
 exhaustively tested there. This dotfiles-side test is a focused smoke check
 of the one contract the dotfiles install depends on: which tool calls skip
 monitor review. A regression that silently widens the safe-list — e.g.
@@ -21,11 +21,11 @@ import pytest
 DOTFILES = Path(
     subprocess.check_output(["git", "rev-parse", "--show-toplevel"], text=True).strip()
 )
-MONITOR = DOTFILES / "secure-claude-code-defaults" / ".claude" / "hooks" / "monitor.py"
+MONITOR = DOTFILES / "claude-guard" / ".claude" / "hooks" / "monitor.py"
 
 pytestmark = pytest.mark.skipif(
     not MONITOR.exists(),
-    reason="secure-claude-code-defaults not cloned; run setup.bash (or the CI clone step)",
+    reason="claude-guard not cloned; run setup.bash (or the CI clone step)",
 )
 
 SKIPPED = 0  # on the safe-list → monitor review skipped (latency optimization)

@@ -28,8 +28,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Clone secure-claude-code-defaults
-        run: git clone https://github.com/alexander-turner/secure-claude-code-defaults.git secure-claude-code-defaults
+      - name: Clone claude-guard
+        run: git clone https://github.com/alexander-turner/claude-guard.git claude-guard
 
       - name: Run idempotency check
         env:
