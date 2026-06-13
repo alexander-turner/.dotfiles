@@ -1,6 +1,21 @@
 version: 2
 
-# .devcontainer/ is a symlink into the gitignored secure-claude-code-defaults/
-# subrepo; Dependabot can't resolve it and fails with "no Dockerfiles found".
-# Docker dependency tracking is handled inside the private subrepo instead.
-updates: []
+# Claude Code ships two ways in this repo:
+#   * the CLI (@anthropic-ai/claude-code) — installed unpinned via
+#     `pnpm add --global` in bin/setup_llm.bash, so it's always latest and
+#     there's no manifest version for Dependabot to bump.
+#   * the GitHub Action (anthropics/claude-code-action) — pinned in the
+#     workflows, so Dependabot can watch it for new releases and (via
+#     dependabot-auto-merge.yaml) keep it current.
+#
+# The github-actions ecosystem is scoped to that action via `allow` so this
+# config stays focused on Claude Code updates. Docker isn't tracked:
+# .devcontainer/ is a symlink into the gitignored claude-guard/ subrepo, which
+# Dependabot can't resolve ("no Dockerfiles found").
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    allow:
+      - dependency-name: anthropics/claude-code-action
