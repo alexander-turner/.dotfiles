@@ -33,10 +33,14 @@ if command_exists pnpm; then
     cc_spec="@anthropic-ai/claude-code"
     ccr_spec="@musistudio/claude-code-router"
     if [[ -f "$cc_pkg" ]] && command_exists jq; then
-        cc_ver="$(jq -re '.devDependencies["@anthropic-ai/claude-code"]' "$cc_pkg" 2>/dev/null)" &&
+        if cc_ver="$(jq -re '.devDependencies["@anthropic-ai/claude-code"]' "$cc_pkg" 2>/dev/null)"; then
             cc_spec="@anthropic-ai/claude-code@${cc_ver}"
-        ccr_ver="$(jq -re '.devDependencies["@musistudio/claude-code-router"]' "$cc_pkg" 2>/dev/null)" &&
+        else
+            status_msg "WARN: could not read claude-code pin from $cc_pkg — installing latest"
+        fi
+        if ccr_ver="$(jq -re '.devDependencies["@musistudio/claude-code-router"]' "$cc_pkg" 2>/dev/null)"; then
             ccr_spec="@musistudio/claude-code-router@${ccr_ver}"
+        fi
     fi
     status_msg "Installing ${cc_spec} + ${ccr_spec} via pnpm..."
     pnpm add --global --reporter=append-only "$cc_spec" "$ccr_spec"

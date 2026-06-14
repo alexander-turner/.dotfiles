@@ -303,7 +303,8 @@ if [ ! -d "$TPM_DIR/.git" ]; then
     git clone --quiet https://github.com/tmux-plugins/tpm "$TPM_DIR" >/dev/null
 fi
 tmux source ~/.tmux.conf >/dev/null 2>&1 || true
-~/.tmux/plugins/tpm/bin/install_plugins >/dev/null
+~/.tmux/plugins/tpm/bin/install_plugins >/dev/null ||
+    status_msg "WARN: TPM plugin install failed; rerun ~/.tmux/plugins/tpm/bin/install_plugins manually"
 
 strip_pnpm_from_shell_configs() {
     local file
@@ -383,15 +384,21 @@ if command_exists pnpm; then
     *":$PNPM_HOME:"*) ;;
     *) export PATH="$PNPM_HOME:$PATH" ;;
     esac
-    pnpm install -g prettier
-    pnpm install -g @bitwarden/cli
+    pnpm install -g prettier ||
+        status_msg "WARN: 'pnpm install -g prettier' failed; formatting may be unavailable"
+    pnpm install -g @bitwarden/cli ||
+        status_msg "WARN: 'pnpm install -g @bitwarden/cli' failed; rerun to get bw CLI"
 fi
 
 # Make sure mise has a Node 22 install available for bin/bw-node, which
 # pins Node 22 to avoid the inquirer/readline crash on Node 26+. Doesn't
 # change the user's per-project Node default.
 if command_exists mise; then
-    mise install node@22 2>/dev/null || status_msg "WARN: mise install node@22 failed; bin/bw-node will fall back to PATH's node."
+    if ! mise_err="$(mise install node@22 2>&1)"; then
+        status_msg "WARN: mise install node@22 failed; bin/bw-node will fall back to PATH's node."
+        [[ -n "$mise_err" ]] && printf '%s\n' "$mise_err" >&2
+    fi
+    unset mise_err
 fi
 
 # devcontainer CLI — used by the host-side `claude` wrappers
