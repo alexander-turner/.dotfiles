@@ -158,8 +158,12 @@ done
 # pre-commit to fail when initialising hook virtualenvs with a cryptic error.
 precommit_py=$(awk '
     /^default_language_version:/ { in_block=1; next }
-    in_block && /^  python:/ { gsub(/.*python:[[:space:]]*/,""); print; exit }
-    in_block && /^[^ ]/ { exit }
+    in_block && /^[[:space:]]+python:/ {
+        sub(/.*python:[[:space:]]*/,"")
+        sub(/[[:space:]]*(#.*)?$/, "")
+        print; exit
+    }
+    in_block && /^[^[:space:]]/ { exit }
 ' "$DOTFILES_DIR/.pre-commit-config.yaml")
 if [[ -z "$precommit_py" ]]; then
     skip "pre-commit Python" "no default_language_version set in .pre-commit-config.yaml"
