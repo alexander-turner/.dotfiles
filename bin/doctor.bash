@@ -156,8 +156,15 @@ done
 # Verify the Python version pinned in .pre-commit-config.yaml is functional.
 # A broken pyexpat (e.g. Homebrew Python 3.14 / libexpat ABI mismatch) causes
 # pre-commit to fail when initialising hook virtualenvs with a cryptic error.
-precommit_py=$(grep -A1 'default_language_version' "$DOTFILES_DIR/.pre-commit-config.yaml" |
-    awk '/python:/{print $2}' | head -1)
+precommit_py=$(awk '
+    /^default_language_version:/ { in_block=1; next }
+    in_block && /^[[:space:]]+python:/ {
+        sub(/.*python:[[:space:]]*/,"")
+        sub(/[[:space:]]*(#.*)?$/, "")
+        print; exit
+    }
+    in_block && /^[^[:space:]]/ { exit }
+' "$DOTFILES_DIR/.pre-commit-config.yaml")
 if [[ -z "$precommit_py" ]]; then
     skip "pre-commit Python" "no default_language_version set in .pre-commit-config.yaml"
 elif ! command -v "$precommit_py" >/dev/null 2>&1; then
