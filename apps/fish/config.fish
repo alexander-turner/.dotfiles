@@ -387,7 +387,7 @@ function mullvad --description 'Switch Tailscale Mullvad exit node'
         case st status
             tailscale status | head -3
         case '*'
-            if bash "$DOTFILES_DIR/bin/tailscale-set-exit-node.bash" $argv[1]
+            if bash "$DOTFILES_DIR/bin/tailscale-set-exit-node.bash" "$argv[1]"
                 tailscale status | head -3
             end
     end
