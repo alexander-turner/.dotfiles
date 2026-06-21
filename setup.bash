@@ -26,8 +26,8 @@ source "$DOTFILES_DIR/bin/lib/symlinks.sh"
 CLAUDE_GUARD_DIR="$DOTFILES_DIR/claude-guard"
 CLAUDE_GUARD_URL="https://github.com/alexander-turner/claude-guard.git"
 if [[ -d "$CLAUDE_GUARD_DIR/.git" ]]; then
-    git -C "$CLAUDE_GUARD_DIR" pull --ff-only origin main 2>/dev/null \
-        || status_msg "WARN: claude-guard pull failed (network issue or diverged branch?); using existing version."
+    git -C "$CLAUDE_GUARD_DIR" pull --ff-only origin main 2>/dev/null ||
+        status_msg "WARN: claude-guard pull failed (network issue or diverged branch?); using existing version."
 else
     git clone "$CLAUDE_GUARD_URL" "$CLAUDE_GUARD_DIR"
 fi

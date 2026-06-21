@@ -16,8 +16,8 @@ DOTFILES_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 out=$(bash "$DOTFILES_DIR/bin/doctor.bash" --verbose || true)
 printf '%s\n' "$out"
 
-symlinks_section=$(printf '%s\n' "$out" \
-    | awk '/=== Symlinks ===/{flag=1;next} /^=== /{flag=0} flag')
+symlinks_section=$(printf '%s\n' "$out" |
+    awk '/=== Symlinks ===/{flag=1;next} /^=== /{flag=0} flag')
 
 if [ -z "$symlinks_section" ]; then
     printf '::error::doctor.bash --verbose produced no Symlinks section (section header changed?)\n' >&2
