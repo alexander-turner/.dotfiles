@@ -26,7 +26,8 @@ source "$DOTFILES_DIR/bin/lib/symlinks.sh"
 CLAUDE_GUARD_DIR="$DOTFILES_DIR/claude-guard"
 CLAUDE_GUARD_URL="https://github.com/alexander-turner/claude-guard.git"
 if [[ -d "$CLAUDE_GUARD_DIR/.git" ]]; then
-    git -C "$CLAUDE_GUARD_DIR" pull --ff-only origin main 2>/dev/null || true
+    git -C "$CLAUDE_GUARD_DIR" pull --ff-only origin main 2>/dev/null \
+        || status_msg "WARN: claude-guard pull failed (network issue or diverged branch?); using existing version."
 else
     git clone "$CLAUDE_GUARD_URL" "$CLAUDE_GUARD_DIR"
 fi
@@ -103,8 +104,10 @@ brew_quiet_install() {
 # second attempt almost always succeeds. doctor.bash at the end of setup
 # catches anything that's still missing after 3 tries.
 status_msg "Installing from Brewfile..."
+brew_ok=false
 for attempt in 1 2 3; do
     if brew bundle --quiet --file="$DOTFILES_DIR/Brewfile"; then
+        brew_ok=true
         break
     fi
     if [ "$attempt" -lt 3 ]; then
@@ -112,6 +115,9 @@ for attempt in 1 2 3; do
         sleep $((attempt * 10))
     fi
 done
+if [ "$brew_ok" = false ]; then
+    status_msg "WARN: brew bundle failed after 3 attempts — doctor.bash will report missing packages."
+fi
 
 # Bitwarden CLI bootstrap. Bitwarden is the cross-machine source of truth
 # for secrets; envchain is the local runtime cache. We use the personal

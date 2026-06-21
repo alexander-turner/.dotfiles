@@ -374,27 +374,23 @@ if status is-interactive; and type -q bw
 end
 
 # Tailscale's Mullvad exit node — choice persists in daemon prefs across reboots.
+# Routes set/clear through tailscale-set-exit-node.bash so the exit-node list
+# and daemon health checks live in one place (bin/lib/tailscale-resolve.sh).
 function mullvad --description 'Switch Tailscale Mullvad exit node'
-    switch "$argv[1]"
-        case ca
-            tailscale set --exit-node=ca-mtr-wg-001.mullvad.ts.net --exit-node-allow-lan-access=true
-        case jp
-            tailscale set --exit-node=jp-tyo-wg-001.mullvad.ts.net --exit-node-allow-lan-access=true
-        case us
-            tailscale set --exit-node=us-chi-wg-301.mullvad.ts.net --exit-node-allow-lan-access=true
-        case off
-            tailscale set --exit-node=
+    if test (count $argv) -eq 0
+        echo "usage: mullvad [ca|jp|us|off|ls|st]" >&2
+        return 1
+    end
+    switch $argv[1]
         case ls list
             tailscale exit-node list
-            return
         case st status
             tailscale status | head -3
-            return
         case '*'
-            echo "usage: mullvad [ca|jp|us|off|ls|st]"
-            return 1
+            if bash "$DOTFILES_DIR/bin/tailscale-set-exit-node.bash" $argv[1]
+                tailscale status | head -3
+            end
     end
-    tailscale status | head -3
 end
 
 abbr -a mvca 'mullvad ca'
