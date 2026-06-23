@@ -378,9 +378,7 @@ run, so any local edits get clobbered:
 
 - `.github/workflows/template-sync.yaml`
 - `.github/workflows/dependabot-auto-merge.yaml`
-- `.github/workflows/claude.yaml`
 - `.github/workflows/phone-home.yaml`
-- `.github/workflows/security-vulnerability-scan.yaml`
 
 The full list is in `template-sync.yaml`'s `SYNC_PATHS` env. Any
 refactor for shellcheck coverage of those scripts has to land upstream
